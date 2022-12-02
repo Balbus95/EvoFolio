@@ -39,7 +39,7 @@ BOUND_LOW, BOUND_UP = 0.0, 10.0
 # BOUND_LOW, BOUND_UP = [0.0] + [-5.0]*9, [1.0] + [5.0]*9
 
 # Functions zdt1, zdt2, zdt3 have 30 dimensions, zdt4 and zdt6 have 10
-NDIM = 2
+NDIM = 2 #dimensione singola tupla default 30
 
 def uniform(low, up, size=None):
     try:
@@ -60,13 +60,13 @@ toolbox.register("select", tools.selNSGA2)
 def main(seed=None):
     random.seed(seed)
  
-    NGEN = 30 #numero generazioni
-    MU = 2 #numero iterazioni population
+    NGEN = 20 #numero generazioni
+    MU = 100 #generazione tuple population, deve essere multiplo di 4 (Dimensione popolazione)
     CXPB = 0.9
 
     stats = tools.Statistics(lambda ind: ind.fitness.values)
-    # stats.register("avg", numpy.mean, axis=0)
-    # stats.register("std", numpy.std, axis=0)
+    stats.register("avg", numpy.mean, axis=0)
+    stats.register("std", numpy.std, axis=0)
     stats.register("min", numpy.min, axis=0)
     stats.register("max", numpy.max, axis=0)
 
