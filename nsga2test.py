@@ -15,7 +15,6 @@
 
 import array
 import random
-import time
 import json
 
 import numpy
@@ -33,25 +32,24 @@ toolbox = base.Toolbox()
 
 # Problem definition
 # Functions zdt1, zdt2, zdt3, zdt6 have bounds [0, 1]
-BOUND_LOW, BOUND_UP = 0.0, 10.0
+BOUND_LOW, BOUND_UP = 0.0, 1.0
 
 # Functions zdt4 has bounds x1 = [0, 1], xn = [-5, 5], with n = 2, ..., 10
 # BOUND_LOW, BOUND_UP = [0.0] + [-5.0]*9, [1.0] + [5.0]*9
 
 # Functions zdt1, zdt2, zdt3 have 30 dimensions, zdt4 and zdt6 have 10
-NDIM = 2 #dimensione singola tupla default 30
+NDIM = 30 #dimensione singola tupla default 30
 
-def uniform(low, up, size=None):
+def uniform(low, up, size=None): #creazione popolazione (funzione base)
     try:
-        a1=[random.uniform(a, b) for a, b in zip(low, up)]
-        return a1
-    except TypeError:
-        a2=[random.uniform(a, b) for a, b in zip([low] * size, [up] * size)]
-        return a2
+        return [random.uniform(a, b) for a, b in zip(low, up)] #viene ripetuto per MU volte
+    except TypeError:  #non so perchè fa 4 giri nell'except, returna al try il numero per NDIM volte 
+        return [random.uniform(a, b) for a, b in zip([low] * size, [up] * size)]
 
 toolbox.register("attr_float", uniform, BOUND_LOW, BOUND_UP, NDIM)
 toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float)
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+
 toolbox.register("evaluate", benchmarks.zdt1)
 toolbox.register("mate", tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0)
 toolbox.register("mutate", tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0/NDIM)
@@ -60,7 +58,7 @@ toolbox.register("select", tools.selNSGA2)
 def main(seed=None):
     random.seed(seed)
  
-    NGEN = 20 #numero generazioni
+    NGEN = 100 #numero generazioni
     MU = 100 #generazione tuple population, deve essere multiplo di 4 (Dimensione popolazione)
     CXPB = 0.9
 
@@ -74,7 +72,6 @@ def main(seed=None):
     logbook.header = "gen", "evals", "std", "min", "avg", "max"
 
     pop = toolbox.population(n=MU)
-    print(pop)
 
 
     #  Valutare gli individui con un'idoneità non valida
