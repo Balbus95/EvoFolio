@@ -38,7 +38,7 @@ BOUND_LOW, BOUND_UP = 0.0, 1.0
 # BOUND_LOW, BOUND_UP = [0.0] + [-5.0]*9, [1.0] + [5.0]*9
 
 # Functions zdt1, zdt2, zdt3 have 30 dimensions, zdt4 and zdt6 have 10
-NDIM = 30 #dimensione singola tupla default 30
+NDIM = 2 #dimensione singola tupla default 30
 
 def uniform(low, up, size=None): #creazione popolazione (funzione base)
     try:
@@ -46,19 +46,19 @@ def uniform(low, up, size=None): #creazione popolazione (funzione base)
     except TypeError:  #non so perchè fa 4 giri nell'except, returna al try il numero per NDIM volte 
         return [random.uniform(a, b) for a, b in zip([low] * size, [up] * size)]
 
-toolbox.register("attr_float", uniform, BOUND_LOW, BOUND_UP, NDIM)
-toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float)
-toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+toolbox.register("attr_float", uniform, BOUND_LOW, BOUND_UP, NDIM) #genera numeri
+toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float) #crea individui con attr_float
+toolbox.register("population", tools.initRepeat, list, toolbox.individual) #ripete funzione individual
 
-toolbox.register("evaluate", benchmarks.zdt1)
-toolbox.register("mate", tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0)
-toolbox.register("mutate", tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0/NDIM)
-toolbox.register("select", tools.selNSGA2)
+toolbox.register("evaluate", benchmarks.zdt1) #funzione zdt1
+toolbox.register("mate", tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0) #crossover function
+toolbox.register("mutate", tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0/NDIM) #mutation function
+toolbox.register("select", tools.selNSGA2) # funzione di selection nsga2
 
 def main(seed=None):
     random.seed(seed)
- 
-    NGEN = 100 #numero generazioni
+    
+    NGEN = 50 #numero generazioni
     MU = 100 #generazione tuple population, deve essere multiplo di 4 (Dimensione popolazione)
     CXPB = 0.9
 
@@ -72,10 +72,11 @@ def main(seed=None):
     logbook.header = "gen", "evals", "std", "min", "avg", "max"
 
     pop = toolbox.population(n=MU)
-
+    #print('pop {}: {} '.format(len(pop), pop))
 
     #  Valutare gli individui con un'idoneità non valida
     invalid_ind = [ind for ind in pop if not ind.fitness.valid]
+    #print('invalid {}: {} '.format(len(invalid_ind), invalid_ind))
     fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
     for ind, fit in zip(invalid_ind, fitnesses):
         ind.fitness.values = fit
@@ -83,8 +84,10 @@ def main(seed=None):
     # Questo serve solo ad assegnare la distanza di affollamento agli individui
     # non viene effettuata una vera e propria selezione
     pop = toolbox.select(pop, len(pop))
+    #print('pop {}: {} '.format(len(pop), pop))
 
-    record = stats.compile(pop)
+
+    record = stats.compile(pop) #compile()Applica ai dati della sequenza di input ogni funzione registrata e restituisce i risultati come dizionario. 
     logbook.record(gen=0, evals=len(invalid_ind), **record)
     print(logbook.stream)
 
@@ -95,6 +98,7 @@ def main(seed=None):
         offspring = [toolbox.clone(ind) for ind in offspring]
 
         for ind1, ind2 in zip(offspring[::2], offspring[1::2]):
+
             if random.random() <= CXPB:
                 toolbox.mate(ind1, ind2)
 
@@ -102,15 +106,15 @@ def main(seed=None):
             toolbox.mutate(ind2)
             del ind1.fitness.values, ind2.fitness.values
 
-        # Evaluate the individuals with an invalid fitness
+        # Valutare gli individual con un fitness non valido
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
         fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
         for ind, fit in zip(invalid_ind, fitnesses):
             ind.fitness.values = fit
 
-        # Select the next generation population
+        # Seleziona la popolazione di nuova generazione
         pop = toolbox.select(pop + offspring, MU)
-        record = stats.compile(pop)
+        record = stats.compile(pop) #compile()Applica ai dati della sequenza di input ogni funzione registrata e restituisce i risultati come dizionario. 
         logbook.record(gen=gen, evals=len(invalid_ind), **record)
         print(logbook.stream)
 
