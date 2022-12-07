@@ -53,22 +53,3 @@ def genport2(lista):
 generaportfolio(PortfolioNames,PortfolioValue)
 print("\n")
 genport2(portfolio)
-
-def func(a, b, c=3):
-     print (a, b, c)
-
-tools = base.Toolbox()
-tools.register("myFunc", func, 1,c=66)
-tools.myFunc(22)
-   
-def uniform(a):
-    try:
-        print("CRISTO")
-        return [a]
-    except TypeError:
-        print("MARONNA")
-        a=2
-        return [a]
-x=uniform(44444)
-print("aaa", x)
-
