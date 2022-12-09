@@ -3,11 +3,23 @@ import pandas as pd
 import numpy as np
 from deap import creator, base, tools, algorithms
 
-
-PortfolioNames=["Apple","Amazon","Tesla"]
+PortfolioNames=["123","Amazon","Tesla"]
 PortfolioValue=[1,2,17]
 portfolio=[["Apple",1],["Amazon",2],["Tesla",17]]
-
+df=pd.read_csv('ADBE.csv',usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
+df1=pd.read_csv('example.csv',usecols=["Apple", "Amazon", "Telsa"], nrows=5)
+print(PortfolioNames)
+for index,row in df1.iterrows():
+    i=1
+    PortfolioNames[index]= row[i]
+    i=i+1
+    print(PortfolioNames)
+    if(index==df1.last_valid_index()):
+        print(row)
+        print(index)
+        print("Aaaaaaaa")
+print(PortfolioNames)
+print("---------------------")
 def tofloat(str):
     str=str.replace(",", "." )
     str=str.strip(" $")
@@ -15,6 +27,15 @@ def tofloat(str):
     return str
 
 def calcyield(ultimo,penultimo,azioni):
+    yeld = azioni * np.log(ultimo/penultimo)
+    return yeld
+
+def calcyield2(df,azioni):
+    i=df.last_valid_index()
+    ultimo = df["Telsa"][i]
+    penultimo = df["Telsa"][i-1]
+    ultimo= tofloat(ultimo)
+    penultimo= tofloat(penultimo)
     yeld = azioni * np.log(ultimo/penultimo)
     return yeld
 
@@ -67,24 +88,13 @@ def genport2(lista):
 
 #df = pd.read_csv(r'/Users/balbus/Documents/GitHub/evoport/stock/WEEK/ADBE.csv',sep = ',',usecols=["Open", "High", "Low"])
 #df = pd.read_csv(r'/Users/balbus/Documents/GitHub/evoport/stock/WEEK/ADBE.csv',sep = ',',usecols=[1,2,3,4,5])
-df = pd.read_csv('ADBE.csv',usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
-df["Low"][1]+df["Low"][0]
-
-df1=pd.read_csv('example.csv',usecols=["Apple", "Amazon", "Telsa"], nrows=5)
-i=4
-azioni=PortfolioValue[0]
-print(azioni)
-ultimo = df1["Apple"][i]
-penultimo = df1["Apple"][i-1]
-ultimo= tofloat(ultimo)
-penultimo= tofloat(penultimo)
-print(type(ultimo))
-print(ultimo+penultimo)
-yeld = calcyield(ultimo,penultimo,azioni)
+azioni=PortfolioValue[2]
+yeld = calcyield2(df1,azioni)
 #x=(df1["Apple"][4])(df1["Apple"][3])
 #yeld = 1 * np.log(df1["Close"][4]/df1["Close"][3])
 #yeld = calcyield(df1,4,1)
 #print(yeld)
+
 print(df1)
 print(yeld)
 
