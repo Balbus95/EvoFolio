@@ -2,40 +2,31 @@ import random
 import pandas as pd
 import numpy as np
 from deap import creator, base, tools, algorithms
+import os
 
-PortfolioNames=["123","Amazon","Tesla"]
-PortfolioValue=[1,2,17]
-portfolio=[["Apple",1],["Amazon",2],["Tesla",17]]
-df=pd.read_csv('ADBE.csv',usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
-df1=pd.read_csv('example.csv',usecols=["Apple", "Amazon", "Telsa"], nrows=5)
-print(PortfolioNames)
-for index,row in df1.iterrows():
-    i=1
-    PortfolioNames[index]= row[i]
-    i=i+1
-    print(PortfolioNames)
-    if(index==df1.last_valid_index()):
-        print(row)
-        print(index)
-        print("Aaaaaaaa")
-print(PortfolioNames)
-print("---------------------")
+PATHCSVFOLDER="C:\\Users\\mario\\OneDrive\\Documenti\\GitHub\\evoport\\stock\\WEEK"
+PATHCSV1="C:\\Users\\mario\\OneDrive\\Documenti\\GitHub\\evoport\\stock\\WEEK\\AAPL.csv"
+
 def tofloat(str):
     str=str.replace(",", "." )
     str=str.strip(" $")
     str=float(str)
     return str
 
+def calcdevstd(df):
+    std=np.std
+    return std
+
 def calcyield(ultimo,penultimo,azioni):
     yeld = azioni * np.log(ultimo/penultimo)
     return yeld
 
-def calcyield2(df,azioni):
+def calcyield2(df,azioni,col="Close"):
     i=df.last_valid_index()
-    ultimo = df["Telsa"][i]
-    penultimo = df["Telsa"][i-1]
-    ultimo= tofloat(ultimo)
-    penultimo= tofloat(penultimo)
+    ultimo = df[col][i]
+    penultimo = df[col][i-1]
+    #ultimo= tofloat(ultimo)
+    #penultimo= tofloat(penultimo)
     yeld = azioni * np.log(ultimo/penultimo)
     return yeld
 
@@ -82,21 +73,44 @@ def genport2(lista):
         risk= topercento(minrisk())
         print("{:<12}| {:<12}| {:<12}| {:<12}| {:<12}|".format(name,value,cost,yeld,risk))
 
-#generaportfolio(PortfolioNames,PortfolioValue)
-#print("\n")
-#genport2(portfolio)
+def main():
 
-#df = pd.read_csv(r'/Users/balbus/Documents/GitHub/evoport/stock/WEEK/ADBE.csv',sep = ',',usecols=["Open", "High", "Low"])
-#df = pd.read_csv(r'/Users/balbus/Documents/GitHub/evoport/stock/WEEK/ADBE.csv',sep = ',',usecols=[1,2,3,4,5])
-azioni=PortfolioValue[2]
-yeld = calcyield2(df1,azioni)
-#x=(df1["Apple"][4])(df1["Apple"][3])
-#yeld = 1 * np.log(df1["Close"][4]/df1["Close"][3])
-#yeld = calcyield(df1,4,1)
-#print(yeld)
+    PortfolioNames=[]
+    #PortfolioValue=[]
+    PortfolioValue=[1,2,17,3,4,5,3,1,0,6]
+    for stock in os.listdir(PATHCSVFOLDER): #per ogni file nella cartella myFolder
+        PortfolioNames.append(stock[:-4]) # ci metto il nome del file senza i quattro caratteri finali cioè .csv
+        #azioni = int(input(f'Quante azioni hai di {stock[:-4]} ? ')) #per mettere il numero di azioni da tastiera
+        #PortfolioValue.append(azioni)
 
-print(df1)
-print(yeld)
+
+
+    print(PortfolioNames)
+    print(PortfolioValue)
+    #portfolio=[["Apple",1],["Amazon",2],["Tesla",17]]
+    df=pd.read_csv(PATHCSV1,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
+    df1=pd.read_csv('example.csv',usecols=["Apple", "Amazon", "Telsa"], nrows=5)
+
+    sums=df.sum()
+    print("Column-wise Sum:")
+    print(sums)    
+    #generaportfolio(PortfolioNames,PortfolioValue)
+    #print("\n")
+    #genport2(portfolio)
+
+    #df = pd.read_csv(r'/Users/balbus/Documents/GitHub/evoport/stock/WEEK/ADBE.csv',sep = ',',usecols=["Open", "High", "Low"])
+    #df = pd.read_csv(r'/Users/balbus/Documents/GitHub/evoport/stock/WEEK/ADBE.csv',sep = ',',usecols=[1,2,3,4,5])
+    azioni=PortfolioValue[0]
+    yeld = calcyield2(df,azioni)
+    #x=(df1["Apple"][4])(df1["Apple"][3])
+    #yeld = 1 * np.log(df1["Close"][4]/df1["Close"][3])
+    #yeld = calcyield(df1,4,1)
+    #print(yeld)
+    print(df1)
+    print(yeld)
+
+if __name__ == "__main__":
+    main()
 
 
 
