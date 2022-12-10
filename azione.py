@@ -91,9 +91,8 @@ def main():
     df=pd.read_csv(PATHCSV1,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
     df1=pd.read_csv('example.csv',usecols=["Apple", "Amazon", "Telsa"], nrows=5)
 
-    sums=df.sum()
-    print("Column-wise Sum:")
-    print(sums)    
+    sums=df.to_numpy()
+    df.std()    
     #generaportfolio(PortfolioNames,PortfolioValue)
     #print("\n")
     #genport2(portfolio)
