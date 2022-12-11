@@ -5,12 +5,26 @@ import numpy as np
 from deap import creator, base, tools, algorithms
 import os
 
-PATHCSVFOLDER="C:\\Users\\mario\\OneDrive\\Documenti\\GitHub\\evoport\\stock\\WEEK"
+ABSPATH=os.path.dirname(os.path.abspath(__file__))
+PATHCSVFOLDER= ABSPATH+"\\stock\\WEEK"
+
 PATHCSV1=PATHCSVFOLDER+"\\AAPL.csv"
-PATHCSV2=PATHCSVFOLDER+"\\ADBE.csv"
+PATHCSV2=PATHCSVFOLDER+"\\AAPL.csv"
 
 
-
+def genlistrisk(azioni,liststd,col):
+    listrisk=[]
+    comb=combinator()
+    x=comb[0][0]
+    y=comb[0][1]
+    for coppia in comb:
+        x=coppia[0]
+        y=coppia[1]
+        df1=getdfbyindex(x)
+        df2=getdfbyindex(y)
+        listrisk.append(calcpearson(df1,df2,col))
+        #print(f"coppia: {coppia} x:{x}, y:{y}")
+    return listrisk
 
 def genlistyield(col,azioni):
     listyield=[]
@@ -35,34 +49,16 @@ def genliststd(col):
 def genlistpearson(col):
     listpearson=[]
     comb=combinator()
-    print(comb)
     x=comb[0][0]
     y=comb[0][1]
-    i=0
     for coppia in comb:
-        i+=1
         x=coppia[0]
         y=coppia[1]
         df1=getdfbyindex(x)
         df2=getdfbyindex(y)
-        pearson=calcpearson(df1,df2,col)
-        listpearson.append(pearson)
-        print(listpearson)
-        print(f"coppia: {coppia} x:{x}, y:{y}")
-        print(i)
-
+        listpearson.append(calcpearson(df1,df2,col))
+        #print(f"coppia: {coppia} x:{x}, y:{y}")
     return listpearson
-
-
-
-def calcpearson(df1,df2,col):
-    list1=df1[col].values.tolist()
-    list2=df2[col].values.tolist()
-    pearson=np.corrcoef(list1,list2)
-    pearson=float(pearson[1][0])
-    #print(f"{col} pearson: {pearson}")
-    return pearson
-
 
 def getdfbyindex(index):
     names=[]
@@ -72,7 +68,6 @@ def getdfbyindex(index):
         if names[index]==stock[:-4]:
             path=os.path.join(PATHCSVFOLDER, stock)
             df=pd.read_csv(path,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
-            print(path)
             return df
 
 def getcolfromfile(portfolio,index,col):
@@ -83,6 +78,18 @@ def getcolfromfile(portfolio,index,col):
             df=pd.read_csv(path,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
             list=df[col].values.tolist()
             return list
+
+def calcrisk(az1,az2,std1,std2,pearson):
+    risk=az1*az2*std1*std2*pearson
+    return risk
+
+def calcpearson(df1,df2,col):
+    list1=df1[col].values.tolist()
+    list2=df2[col].values.tolist()
+    pearson=np.corrcoef(list1,list2)
+    pearson=float(pearson[1][0])
+    #print(f"{col} pearson: {pearson}")
+    return pearson
 
 def calcdevstd(df,col):
     list=df[col].values.tolist()
@@ -169,7 +176,6 @@ def genport2(lista):
         print("{:<12}| {:<12}| {:<12}| {:<12}| {:<12}|".format(name,value,cost,yeld,risk))
 
 def main():
-
     PortfolioNames=[]
     #PortfolioValue=[]
     PortfolioValue=[1,2,17,3,4,5,3,1]
@@ -177,35 +183,46 @@ def main():
         PortfolioNames.append(stock[:-4]) # ci metto il nome del file senza i quattro caratteri finali cioè .csv
         #azioni = int(input(f'Quante azioni hai di {stock[:-4]} ? ')) #per mettere il numero di azioni da tastiera
         #PortfolioValue.append(azioni)
-
- 
-    listyield=genlistyield("Close",PortfolioValue)
-    listyieldadj=genlistyield("Adj Close",PortfolioValue)
-
-    liststd=genliststd("Close")
-    liststdadj=genliststd("Adj Close")
-
-    print(listyield)
-    print(listyieldadj)
-    print(liststd)
-    print(liststdadj)
-
-    azioni=PortfolioValue[0] #1
-
+    print(f"\nLISTA NOMI == DA AZIONI ({len(PortfolioNames)} != {len(PortfolioValue)})")
     print(PortfolioNames)
     print(PortfolioValue)
-    #portfolio=[["Apple",1],["Amazon",2],["Tesla",17]]
-    df1=pd.read_csv(PATHCSV1,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
-    df2=pd.read_csv(PATHCSV2,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
-    pearson=calcpearson(df1,df2,"Close")
-    print(pearson)
-    listpearson=genlistpearson("Close")
-    print(listpearson)
+    
+    if(len(PortfolioNames)==len(PortfolioValue)):
+ 
+        listyield=genlistyield("Close",PortfolioValue)
+        liststd=genliststd("Close")
+        listpearson=genlistpearson("Close")
+        listrisk=genlistrisk(PortfolioValue,liststd,"Close")
 
-    list1=getcolfromfile(PortfolioNames,azioni,"Close")
-    #df = pd.read_csv(r'/Users/balbus/Documents/GitHub/evoport/stock/WEEK/ADBE.csv',sep = ',',usecols=["Open", "High", "Low"])
-    #df = pd.read_csv(r'/Users/balbus/Documents/GitHub/evoport/stock/WEEK/ADBE.csv',sep = ',',usecols=[1,2,3,4,5])
-   
+        print("\n")
+        print("LISTA YIELD:")
+        print(listyield)
+        print("LISTA STD:")
+        print(liststd)
+        print("LISTA PEARSON:")
+        print(listpearson)
+        print("LISTA RISK:")
+        print(listrisk)
+        print("\n")
+
+        #risk=calcrisk(1,2,46.39180962,15.77973384,-0.248616759)
+        #print(risk)
+
+        azioni=PortfolioValue[0] #1
+        
+
+        df1=pd.read_csv(PATHCSV1,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
+        df2=pd.read_csv(PATHCSV2,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
+
+        list1=getcolfromfile(PortfolioNames,azioni,"Close")
+        #df = pd.read_csv(r'/Users/balbus/Documents/GitHub/evoport/stock/WEEK/ADBE.csv',sep = ',',usecols=["Open", "High", "Low"])
+        #df = pd.read_csv(r'/Users/balbus/Documents/GitHub/evoport/stock/WEEK/ADBE.csv',sep = ',',usecols=[1,2,3,4,5])
+    
+    
+    
+    else:
+        print(f"LISTA NOMI != DA AZIONI ({len(PortfolioNames)} != {len(PortfolioValue)})")
+    
  
 
 if __name__ == "__main__":
