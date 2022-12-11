@@ -1,3 +1,4 @@
+import itertools as iter
 import random
 import pandas as pd
 import numpy as np
@@ -6,112 +7,119 @@ import os
 
 PATHCSVFOLDER="C:\\Users\\mario\\OneDrive\\Documenti\\GitHub\\evoport\\stock\\WEEK"
 PATHCSV1=PATHCSVFOLDER+"\\AAPL.csv"
-PATHCSV2=PATHCSVFOLDER+"\\ADBE.csv"
+PATHCSV2=PATHCSVFOLDER+"\\AMZN.csv"
 
 
-def genlistyield(azioni):
+
+
+def genlistyield(col,azioni):
     listyield=[]
     i=0
     for stock in os.listdir(PATHCSVFOLDER): #per ogni file nella cartella myFolder
-        path=addpath(PATHCSVFOLDER,str(stock))
+        path=os.path.join(PATHCSVFOLDER, stock)
         stock=pd.read_csv(path,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
-        listyield.append(calcyieldclose(stock,azioni[i]))
-        i=i+1
+        listyield.append(calcyield(stock,azioni[i],col))
+        i+=1
     #print(listyield)
     return listyield
 
-def genlistyieldadj(azioni):
-    listyieldadj=[]
-    i=0
+def genliststd(col):
+    liststd=[]
     for stock in os.listdir(PATHCSVFOLDER): #per ogni file nella cartella myFolder
-        path=addpath(PATHCSVFOLDER,str(stock))
+        path=os.path.join(PATHCSVFOLDER, stock)
         stock=pd.read_csv(path,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
-        listyieldadj.append(calcyieldadjclose(stock,azioni[i]))
-        i=i+1
-    #print(listyieldadj)
-    return listyieldadj
-
-def genlistdevclose():
-    listdevclose=[]
-    i=0
-    for stock in os.listdir(PATHCSVFOLDER): #per ogni file nella cartella myFolder
-        path=addpath(PATHCSVFOLDER,str(stock))
-        stock=pd.read_csv(path,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
-        listdevclose.append(calcdevstdclose(stock))
-        i=i+1
+        liststd.append(calcdevstd(stock,col))
     #print(listdevclose)
-    return listdevclose
+    return liststd
 
-def genlistdevadjclose():
-    listdevadjclose=[]
+def genlistpearson(col):
+    listpearson=[]
+    comb=combinator()
+    x=comb[0][0]
+    y=comb[0][1]
     i=0
-    for stock in os.listdir(PATHCSVFOLDER): #per ogni file nella cartella myFolder
-        path=addpath(PATHCSVFOLDER,str(stock))
-        stock=pd.read_csv(path,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
-        listdevadjclose.append(calcdevstdadjclose(stock))
-        i=i+1
-    #print(listdevadjclose)
-    return listdevadjclose
+    for x in range(len(comb)):
+        x=comb[x][y]
+        print(f"x:{x}, y:{y}")
+        """for x,y in comb:
+            print(f"x:{x}, y:{y}")
+            df1=getdfbyindex(x)
+            df2=getdfbyindex(y)
+            pearson=calcpearson(df1,df2,col)
+            listpearson.append(calcpearson(df1,df2,col))
+            print(pearson)
+            print(listpearson)"""
+
+
+
+def calcpearson(df1,df2,col):
+    list1=df1[col].values.tolist()
+    list2=df2[col].values.tolist()
+    pearson=np.corrcoef(list1,list2)
+    pearson=float(pearson[1][0])
+    #print(f"{col} pearson: {pearson}")
+    return pearson
+
+
+def getdfbyindex(index):
+    names=[]
+    for stock in os.listdir(PATHCSVFOLDER): 
+        names.append(stock[:-4])
+    for stock in os.listdir(PATHCSVFOLDER): 
+        if names[index]==stock[:-4]:
+            path=os.path.join(PATHCSVFOLDER, stock)
+            df=pd.read_csv(path,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
+            return df
+
+def getcolfromfile(portfolio,index,col):
+    list=[]
+    for stock in os.listdir(PATHCSVFOLDER):
+        if portfolio[index]==stock[:-4]:
+            path=os.path.join(PATHCSVFOLDER, stock)
+            df=pd.read_csv(path,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
+            list=df[col].values.tolist()
+            return list
+
+def calcdevstd(df,col):
+    list=df[col].values.tolist()
+    std=np.std(list)
+    #print(f"{col} DEV STD: {std}")
+    return std
+
+def calcyield(df,azioni,col):
+    i=df.last_valid_index()
+    yeld = azioni * np.log(df[col][i]/df[col][i-1])
+    #print(f"{col} YIELD: {yeld}")
+    return yeld
+
+def combinator():
+    comb=[]
+    i=0
+    for stock in os.listdir(PATHCSVFOLDER):
+        comb.append(i)
+        i+=1
+    comb=list(iter.combinations(comb, 2))
+    return comb
+
+def calcyieldold(ultimo,penultimo,azioni):
+    yeld = azioni * np.log(ultimo/penultimo)
+    return yeld
 
 def addpath(folder,file):
     path=folder+'\\'+file
     return path
+
+def path():
+    for filename in os.listdir(PATHCSVFOLDER):
+        f = os.path.join(PATHCSVFOLDER, filename)
+        if os.path.isfile(f):
+            print(f)
 
 def tofloat(str):
     str=str.replace(",", "." )
     str=str.strip(" $")
     str=float(str)
     return str
-
-def calcpearsonclose(df1,df2):
-    list1=df1["Close"].values.tolist()
-    list2=df2["Close"].values.tolist()
-    pearson=np.corrcoef(list1,list2)
-    print(f"Close pearson: {pearson}")
-    return pearson
-
-def calcpearsonadjclose(df1,df2):
-    list1=df1["Adj Close"].values.tolist()
-    list2=df2["Adj Close"].values.tolist()
-    pearson=np.corrcoef(list1,list2)
-    print(f"Adj Close pearson: {pearson}")
-    return pearson 
-
-def calcdevstdclose(df):
-    list=df["Close"].values.tolist()
-    std=np.std(list)
-    #print(f"Close DEV STD: {std}")
-    return std
-
-def calcdevstdadjclose(df):
-    list=df["Adj Close"].values.tolist()
-    std=np.std(list)
-    #print(f"Adj Close DEV STD: {std}")
-    return std
-
-def calcyield(ultimo,penultimo,azioni):
-    yeld = azioni * np.log(ultimo/penultimo)
-    return yeld
-
-def calcyieldclose(df,azioni,col="Close"):
-    i=df.last_valid_index()
-    ultimo = df[col][i]
-    penultimo = df[col][i-1]
-    #ultimo= tofloat(ultimo)
-    #penultimo= tofloat(penultimo)
-    yeld = azioni * np.log(ultimo/penultimo)
-    #print(f"Close YIELD: {yeld}")
-    return yeld
-
-def calcyieldadjclose(df,azioni,col="Adj Close"):
-    i=df.last_valid_index()
-    ultimo = df[col][i]
-    penultimo = df[col][i-1]
-    #ultimo= tofloat(ultimo)
-    #penultimo= tofloat(penultimo)
-    yeld = azioni * np.log(ultimo/penultimo)
-    #print(f"Adj Close YIELD: {yeld}")
-    return yeld
 
 def maxyield():
     return random.randint(0,100)
@@ -160,31 +168,37 @@ def main():
 
     PortfolioNames=[]
     #PortfolioValue=[]
-    PortfolioValue=[1,2,17,3,4,5,3,1,0,65]
+    PortfolioValue=[1,2,17,3,4,5,3,1,0,5]
     for stock in os.listdir(PATHCSVFOLDER): #per ogni file nella cartella myFolder
         PortfolioNames.append(stock[:-4]) # ci metto il nome del file senza i quattro caratteri finali cioè .csv
         #azioni = int(input(f'Quante azioni hai di {stock[:-4]} ? ')) #per mettere il numero di azioni da tastiera
         #PortfolioValue.append(azioni)
 
  
-    listyield=genlistyield(PortfolioValue)
-    listyieldadj=genlistyieldadj(PortfolioValue)
-    listdevclose= genlistdevclose()
-    listdevadjclose=genlistdevadjclose()
+    listyield=genlistyield("Close",PortfolioValue)
+    listyieldadj=genlistyield("Adj Close",PortfolioValue)
+
+    liststd=genliststd("Close")
+    liststdadj=genliststd("Adj Close")
 
     print(listyield)
     print(listyieldadj)
-    print(listdevclose)
-    print(listdevadjclose)
+    print(liststd)
+    print(liststdadj)
 
     azioni=PortfolioValue[0] #1
 
     print(PortfolioNames)
     print(PortfolioValue)
     #portfolio=[["Apple",1],["Amazon",2],["Tesla",17]]
-    df=pd.read_csv(PATHCSV1,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
+    df1=pd.read_csv(PATHCSV1,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
     df2=pd.read_csv(PATHCSV2,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
+    pearson=calcpearson(df1,df2,"Close")
+    print(pearson)
+    listpearson=genlistpearson("Close")
+    print(listpearson)
 
+    list1=getcolfromfile(PortfolioNames,azioni,"Close")
     #df = pd.read_csv(r'/Users/balbus/Documents/GitHub/evoport/stock/WEEK/ADBE.csv',sep = ',',usecols=["Open", "High", "Low"])
     #df = pd.read_csv(r'/Users/balbus/Documents/GitHub/evoport/stock/WEEK/ADBE.csv',sep = ',',usecols=[1,2,3,4,5])
    

@@ -1,5 +1,13 @@
 import itertools
 
-number = [0,1, 2, 3, 4, 5, 6, 7,8,9]
+number = [1,1,1,1,1,1,1]
+lista=[]
+x=len(number)
+i=0
+for i in range(x):
+    lista.append(i)
 
-print(list(itertools.combinations(number, 2)))
+print(lista)
+
+print(list(itertools.combinations(lista, 2)))
+print(x)
