@@ -5,9 +5,9 @@ import numpy as np
 from deap import creator, base, tools, algorithms
 import os
 
-PATHCSVFOLDER= os.path.abspath(__file__)+"\\stock\\WEEK"
+PATHCSVFOLDER="C:\\Users\\mario\\OneDrive\\Documenti\\GitHub\\evoport\\stock\\WEEK"
 PATHCSV1=PATHCSVFOLDER+"\\AAPL.csv"
-PATHCSV2=PATHCSVFOLDER+"\\AMZN.csv"
+PATHCSV2=PATHCSVFOLDER+"\\ADBE.csv"
 
 
 
@@ -35,20 +35,23 @@ def genliststd(col):
 def genlistpearson(col):
     listpearson=[]
     comb=combinator()
+    print(comb)
     x=comb[0][0]
     y=comb[0][1]
     i=0
-    for x in range(len(comb)):
-        x=comb[x][y]
-        print(f"x:{x}, y:{y}")
-        """for x,y in comb:
-            print(f"x:{x}, y:{y}")
-            df1=getdfbyindex(x)
-            df2=getdfbyindex(y)
-            pearson=calcpearson(df1,df2,col)
-            listpearson.append(calcpearson(df1,df2,col))
-            print(pearson)
-            print(listpearson)"""
+    for coppia in comb:
+        i+=1
+        x=coppia[0]
+        y=coppia[1]
+        df1=getdfbyindex(x)
+        df2=getdfbyindex(y)
+        pearson=calcpearson(df1,df2,col)
+        listpearson.append(pearson)
+        print(listpearson)
+        print(f"coppia: {coppia} x:{x}, y:{y}")
+        print(i)
+
+    return listpearson
 
 
 
@@ -69,6 +72,7 @@ def getdfbyindex(index):
         if names[index]==stock[:-4]:
             path=os.path.join(PATHCSVFOLDER, stock)
             df=pd.read_csv(path,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
+            print(path)
             return df
 
 def getcolfromfile(portfolio,index,col):
@@ -168,7 +172,7 @@ def main():
 
     PortfolioNames=[]
     #PortfolioValue=[]
-    PortfolioValue=[1,2,17,3,4,5,3,1,0,5]
+    PortfolioValue=[1,2,17,3,4,5,3,1]
     for stock in os.listdir(PATHCSVFOLDER): #per ogni file nella cartella myFolder
         PortfolioNames.append(stock[:-4]) # ci metto il nome del file senza i quattro caratteri finali cioè .csv
         #azioni = int(input(f'Quante azioni hai di {stock[:-4]} ? ')) #per mettere il numero di azioni da tastiera
