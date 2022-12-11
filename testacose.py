@@ -1,4 +1,5 @@
 import itertools
+import os
 
 number = [1,1,1,1,1,1,1]
 lista=[]
@@ -11,3 +12,7 @@ print(lista)
 
 print(list(itertools.combinations(lista, 2)))
 print(x)
+
+path=os.path.abspath(__file__)
+path=path[:5]
+print(path)

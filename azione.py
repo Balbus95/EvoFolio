@@ -5,7 +5,7 @@ import numpy as np
 from deap import creator, base, tools, algorithms
 import os
 
-PATHCSVFOLDER="C:\\Users\\mario\\OneDrive\\Documenti\\GitHub\\evoport\\stock\\WEEK"
+PATHCSVFOLDER= os.path.abspath(__file__)+"\\stock\\WEEK"
 PATHCSV1=PATHCSVFOLDER+"\\AAPL.csv"
 PATHCSV2=PATHCSVFOLDER+"\\AMZN.csv"
 
