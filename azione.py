@@ -1,14 +1,28 @@
-import itertools as iter
 import math
 import random
+import os
+import itertools as iter
 import pandas as pd
 import numpy as np
 from deap import creator, base, tools, algorithms
-import os
 
+if os.name == 'nt':
+    import win32api, win32con
 
 def isWindows():
     return os.name=="nt"
+
+def file_is_hidden(p):
+    if os.name== 'nt':
+        attribute = win32api.GetFileAttributes(p)
+        return attribute & (win32con.FILE_ATTRIBUTE_HIDDEN | win32con.FILE_ATTRIBUTE_SYSTEM)
+    else:
+        print(p)
+        print(p.startswith('.'))
+        return p.startswith('.') #linux-osx
+        file_list = [f for f in os.listdir('./stock/WEEK') if not file_is_hidden(f)]
+        print("----dd-d-d-d-d-")
+        print(file_list)
 
 ABSPATH=os.path.dirname(os.path.abspath(__file__))
 PATHCSVFOLDER=''
@@ -189,10 +203,14 @@ def main():
     PortfolioNames=[]
     #PortfolioValue=[]
     PortfolioValue=[1,2,17,3,4,5,3,1]
-    sortedList = os.listdir(PATHCSVFOLDER)
-    print(sortedList)
+    sortedList = os.listdir(PATHCSVFOLDER) 
+    print(sortedList,"not sort")
     sortedList.sort()
-    print(sortedList)
+    sortedList=[sortedList for sortedList in os.listdir('./stock/WEEK') if not file_is_hidden(sortedList)]
+    print(sortedList,"sort")
+    
+
+    
     for stock in sortedList: #per ogni file nella cartella myFolder
         PortfolioNames.append(stock[:-4]) # ci metto il nome del file senza i quattro caratteri finali cioè .csv
         #azioni = int(input(f'Quante azioni hai di {stock[:-4]} ? ')) #per mettere il numero di azioni da tastiera
