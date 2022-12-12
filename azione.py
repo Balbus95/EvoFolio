@@ -1,4 +1,5 @@
 import itertools as iter
+import math
 import random
 import pandas as pd
 import numpy as np
@@ -12,7 +13,7 @@ PATHCSV1=PATHCSVFOLDER+"\\AAPL.csv"
 PATHCSV2=PATHCSVFOLDER+"\\AAPL.csv"
 
 
-def genlistrisk(azioni,liststd,col):
+def genlistrisk(azioniposs,liststd,col): 
     listrisk=[]
     comb=combinator()
     x=comb[0][0]
@@ -22,29 +23,11 @@ def genlistrisk(azioni,liststd,col):
         y=coppia[1]
         df1=getdfbyindex(x)
         df2=getdfbyindex(y)
-        listrisk.append(calcpearson(df1,df2,col))
+        pearson=calcpearson(df1,df2,col)
+        risk=calcrisk(azioniposs[x],azioniposs[y],liststd[x],liststd[y],pearson)
+        listrisk.append(risk)
         #print(f"coppia: {coppia} x:{x}, y:{y}")
     return listrisk
-
-def genlistyield(col,azioni):
-    listyield=[]
-    i=0
-    for stock in os.listdir(PATHCSVFOLDER): #per ogni file nella cartella myFolder
-        path=os.path.join(PATHCSVFOLDER, stock)
-        stock=pd.read_csv(path,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
-        listyield.append(calcyield(stock,azioni[i],col))
-        i+=1
-    #print(listyield)
-    return listyield
-
-def genliststd(col):
-    liststd=[]
-    for stock in os.listdir(PATHCSVFOLDER): #per ogni file nella cartella myFolder
-        path=os.path.join(PATHCSVFOLDER, stock)
-        stock=pd.read_csv(path,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
-        liststd.append(calcdevstd(stock,col))
-    #print(listdevclose)
-    return liststd
 
 def genlistpearson(col):
     listpearson=[]
@@ -59,6 +42,26 @@ def genlistpearson(col):
         listpearson.append(calcpearson(df1,df2,col))
         #print(f"coppia: {coppia} x:{x}, y:{y}")
     return listpearson
+
+def genlistyield(col,azioniposs):
+    listyield=[]
+    i=0
+    for stock in os.listdir(PATHCSVFOLDER): #per ogni file nella cartella myFolder
+        path=os.path.join(PATHCSVFOLDER, stock)
+        stock=pd.read_csv(path,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
+        listyield.append(calcyield(stock,azioniposs[i],col))
+        i+=1
+    #print(listyield)
+    return listyield
+
+def genliststd(col):
+    liststd=[]
+    for stock in os.listdir(PATHCSVFOLDER): #per ogni file nella cartella myFolder
+        path=os.path.join(PATHCSVFOLDER, stock)
+        stock=pd.read_csv(path,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
+        liststd.append(calcdevstd(stock,col))
+    #print(listdevclose)
+    return liststd
 
 def getdfbyindex(index):
     names=[]
@@ -97,9 +100,9 @@ def calcdevstd(df,col):
     #print(f"{col} DEV STD: {std}")
     return std
 
-def calcyield(df,azioni,col):
+def calcyield(df,azioniposs,col):
     i=df.last_valid_index()
-    yeld = azioni * np.log(df[col][i]/df[col][i-1])
+    yeld = azioniposs * np.log(df[col][i]/df[col][i-1])
     #print(f"{col} YIELD: {yeld}")
     return yeld
 
@@ -112,8 +115,8 @@ def combinator():
     comb=list(iter.combinations(comb, 2))
     return comb
 
-def calcyieldold(ultimo,penultimo,azioni):
-    yeld = azioni * np.log(ultimo/penultimo)
+def calcyieldold(ultimo,penultimo,azioniposs):
+    yeld = azioniposs * np.log(ultimo/penultimo)
     return yeld
 
 def addpath(folder,file):
@@ -183,16 +186,17 @@ def main():
         PortfolioNames.append(stock[:-4]) # ci metto il nome del file senza i quattro caratteri finali cioè .csv
         #azioni = int(input(f'Quante azioni hai di {stock[:-4]} ? ')) #per mettere il numero di azioni da tastiera
         #PortfolioValue.append(azioni)
-    print(f"\nLISTA NOMI == DA AZIONI ({len(PortfolioNames)} != {len(PortfolioValue)})")
     print(PortfolioNames)
     print(PortfolioValue)
     
     if(len(PortfolioNames)==len(PortfolioValue)):
- 
+        print(f"\nLISTA NOMI == DA AZIONI ({len(PortfolioNames)} != {len(PortfolioValue)})")
+
         listyield=genlistyield("Close",PortfolioValue)
         liststd=genliststd("Close")
         listpearson=genlistpearson("Close")
         listrisk=genlistrisk(PortfolioValue,liststd,"Close")
+
 
         print("\n")
         print("LISTA YIELD:")
@@ -203,25 +207,38 @@ def main():
         print(listpearson)
         print("LISTA RISK:")
         print(listrisk)
+        
+        print("\n")
+        print(combinator())
+        print("\n")
+        
+        print(f"SOMMA YIELD: {len(listyield)}")
+        print(sum(listyield))
+        print(f"SOMMA STD: {len(liststd)}")
+        print(sum(liststd))
+        print(f"SOMMA PEARSON: {len(listpearson)}")
+        print(sum(listpearson))
+        print(f"SOMMA RISK: {len(listrisk)}")
+        print(sum(listrisk))
+        print(f"RADQ SOMMA RISK:\n{math.sqrt(sum(listrisk))}")
         print("\n")
 
         #risk=calcrisk(1,2,46.39180962,15.77973384,-0.248616759)
         #print(risk)
 
-        azioni=PortfolioValue[0] #1
+        #azioniposs=PortfolioValue[0] #1
         
 
         df1=pd.read_csv(PATHCSV1,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
         df2=pd.read_csv(PATHCSV2,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
 
-        list1=getcolfromfile(PortfolioNames,azioni,"Close")
         #df = pd.read_csv(r'/Users/balbus/Documents/GitHub/evoport/stock/WEEK/ADBE.csv',sep = ',',usecols=["Open", "High", "Low"])
         #df = pd.read_csv(r'/Users/balbus/Documents/GitHub/evoport/stock/WEEK/ADBE.csv',sep = ',',usecols=[1,2,3,4,5])
     
     
     
     else:
-        print(f"LISTA NOMI != DA AZIONI ({len(PortfolioNames)} != {len(PortfolioValue)})")
+        print(f"ERRORE: LISTA NOMI DIVERSA DA AZIONI ({len(PortfolioNames)} != {len(PortfolioValue)})")
     
  
 
