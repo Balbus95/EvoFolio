@@ -6,16 +6,25 @@ import numpy as np
 from deap import creator, base, tools, algorithms
 import os
 
+
+def isWindows():
+    return os.name=="nt"
+
 ABSPATH=os.path.dirname(os.path.abspath(__file__))
-PATHCSVFOLDER= ABSPATH+"\\stock\\WEEK"
+PATHCSVFOLDER=''
 
-PATHCSV1=PATHCSVFOLDER+"\\AAPL.csv"
-PATHCSV2=PATHCSVFOLDER+"\\AAPL.csv"
+if(isWindows()): 
+    PATHCSVFOLDER= ABSPATH+"\\stock\\WEEK"
+else: PATHCSVFOLDER= ABSPATH+"/stock/WEEK"
 
+PATHCSV1=PATHCSVFOLDER+"/AAPL.csv"
+PATHCSV2=PATHCSVFOLDER+"/AAPL.csv"
+        
+    
 
 def genlistrisk(azioniposs,liststd,col): 
     listrisk=[]
-    comb=combinator()
+    comb=combinator(len(azioniposs))
     x=comb[0][0]
     y=comb[0][1]
     for coppia in comb:
@@ -29,9 +38,9 @@ def genlistrisk(azioniposs,liststd,col):
         #print(f"coppia: {coppia} x:{x}, y:{y}")
     return listrisk
 
-def genlistpearson(col):
+def genlistpearson(col,len):
     listpearson=[]
-    comb=combinator()
+    comb=combinator(len)
     x=comb[0][0]
     y=comb[0][1]
     for coppia in comb:
@@ -106,12 +115,10 @@ def calcyield(df,azioniposs,col):
     #print(f"{col} YIELD: {yeld}")
     return yeld
 
-def combinator():
+def combinator(len):
     comb=[]
-    i=0
-    for stock in os.listdir(PATHCSVFOLDER):
+    for i in range(len):
         comb.append(i)
-        i+=1
     comb=list(iter.combinations(comb, 2))
     return comb
 
@@ -182,7 +189,11 @@ def main():
     PortfolioNames=[]
     #PortfolioValue=[]
     PortfolioValue=[1,2,17,3,4,5,3,1]
-    for stock in os.listdir(PATHCSVFOLDER): #per ogni file nella cartella myFolder
+    sortedList = os.listdir(PATHCSVFOLDER)
+    print(sortedList)
+    sortedList.sort()
+    print(sortedList)
+    for stock in sortedList: #per ogni file nella cartella myFolder
         PortfolioNames.append(stock[:-4]) # ci metto il nome del file senza i quattro caratteri finali cioè .csv
         #azioni = int(input(f'Quante azioni hai di {stock[:-4]} ? ')) #per mettere il numero di azioni da tastiera
         #PortfolioValue.append(azioni)
@@ -194,7 +205,7 @@ def main():
 
         listyield=genlistyield("Close",PortfolioValue)
         liststd=genliststd("Close")
-        listpearson=genlistpearson("Close")
+        listpearson=genlistpearson("Close",len(PortfolioValue))
         listrisk=genlistrisk(PortfolioValue,liststd,"Close")
 
 
@@ -209,7 +220,7 @@ def main():
         print(listrisk)
         
         print("\n")
-        print(combinator())
+        print(combinator(len(PortfolioValue)))
         print("\n")
         
         print(f"SOMMA YIELD: {len(listyield)}")

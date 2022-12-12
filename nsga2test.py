@@ -39,13 +39,16 @@ BOUND_LOW, BOUND_UP = 0.0, 10.0
 # BOUND_LOW, BOUND_UP = [0.0] + [-5.0]*9, [1.0] + [5.0]*9
 
 # Functions zdt1, zdt2, zdt3 have 30 dimensions, zdt4 and zdt6 have 10
-NDIM = 30 #dimensione singola tupla default 30
+NDIM = 2 #dimensione singola tupla default 30
 
 def uniform(low, up, size=None): #creazione popolazione (funzione base)
     try:
+        print("try ",[random.randint(a,b) for a, b in zip(low, up)])
         return [random.randint(a,b) for a, b in zip(low, up)] #viene ripetuto per MU volte
     except TypeError:  #non so perchè fa 4 giri nell'except, returna al try il numero per NDIM volte 
+        print("catch ",[random.randint(a,b) for a, b in zip([low] * size, [up] * size)])
         return [random.randint(a,b) for a, b in zip([low] * size, [up] * size)]
+
 
 toolbox.register("attr_float", uniform, BOUND_LOW, BOUND_UP, NDIM) #genera numeri
 toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float) #crea individui con attr_float
@@ -59,8 +62,8 @@ toolbox.register("select", tools.selNSGA2) # funzione di selection nsga2
 def main(seed=None):
     random.seed(seed)
     
-    NGEN = 250 #numero generazioni
-    MU = 100 #generazione tuple population, deve essere multiplo di 4 (Dimensione popolazione)
+    NGEN = 50 #numero generazioni
+    MU = 12 #generazione tuple population, deve essere multiplo di 4 (Dimensione popolazione)
     CXPB = 0.9
 
     stats = tools.Statistics(lambda ind: ind.fitness.values)
@@ -73,6 +76,7 @@ def main(seed=None):
     logbook.header = "gen", "evals", "std", "min", "avg", "max"
 
     pop = toolbox.population(n=MU)
+    print(pop)
     print('pop {}: {} '.format(len(pop), pop))
 
     #  Valutare gli individui con un'idoneità non valida
