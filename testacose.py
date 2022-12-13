@@ -1,6 +1,6 @@
 import itertools
 import os
-PATHCSVFOLDER="C:\\Users\\mario\\OneDrive\\Documenti\\GitHub\\evoport\\stock\\WEEK\\AAPL.csv"
+PATHCSVFOLDER="C:\\Users\\mario\\OneDrive\\Documenti\\GitHub\\evoport\\stock\\WEEK"
 
 path=os.path.dirname(PATHCSVFOLDER)
 #path=path[:5]
@@ -27,5 +27,6 @@ def file_is_hidden(p):
         return attribute & (win32con.FILE_ATTRIBUTE_HIDDEN | win32con.FILE_ATTRIBUTE_SYSTEM)
     else:
         return p.startswith('.') #linux-osx
-file_list = [f for f in os.listdir('./stock/WEEK/') if not file_is_hidden(f)]
+
+file_list = [f for f in os.listdir(path) if not file_is_hidden(f)]
 print(file_list)
