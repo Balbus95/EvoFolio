@@ -20,9 +20,7 @@ def file_is_hidden(p):
         print(p)
         print(p.startswith('.'))
         return p.startswith('.') #linux-osx
-        file_list = [f for f in os.listdir('./stock/WEEK') if not file_is_hidden(f)]
         print("----dd-d-d-d-d-")
-        print(file_list)
 
 ABSPATH=os.path.dirname(os.path.abspath(__file__))
 PATHCSVFOLDER=''
@@ -206,7 +204,7 @@ def main():
     sortedList = os.listdir(PATHCSVFOLDER) 
     print(sortedList,"not sort")
     sortedList.sort()
-    sortedList=[sortedList for sortedList in os.listdir('./stock/WEEK') if not file_is_hidden(sortedList)]
+    sortedList=[sortedList for sortedList in os.listdir('./stock/WEEK/') if not file_is_hidden(sortedList)]
     print(sortedList,"sort")
     
 
