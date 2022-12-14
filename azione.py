@@ -33,6 +33,74 @@ PATHCSV1=PATHCSVFOLDER+"\\AAPL.csv"
 PATHCSV2=PATHCSVFOLDER+"\\AAPL.csv"
         
     
+def main():
+    PortfolioNames=[]
+    #PortfolioValue=[]
+    PortfolioValue=[1,2,17,3,4,5,3,1]
+    sortedList = os.listdir(PATHCSVFOLDER) 
+    sortedList.sort()
+    # if not (isWindows()):
+    #     sortedList=[sortedList for sortedList in os.listdir('./stock/WEEK') if not file_is_hidden(sortedList)]
+    #     print(sortedList,"sort")
+    
+    for stock in sortedList: #per ogni file nella cartella myFolder
+        PortfolioNames.append(stock[:-4]) # ci metto il nome del file senza i quattro caratteri finali cioè .csv
+        #azioni = int(input(f'Quante azioni hai di {stock[:-4]} ? ')) #per mettere il numero di azioni da tastiera
+        #PortfolioValue.append(azioni)
+    print(PortfolioNames)
+    print(PortfolioValue)
+    
+    if(len(PortfolioNames)==len(PortfolioValue)):
+        print(f"\nLISTA NOMI == DA AZIONI ({len(PortfolioNames)} != {len(PortfolioValue)})")
+
+        listyield=genlistyield("Close",PortfolioValue)
+        liststd=genliststd("Close")
+        listpearson=genlistpearson("Close",len(PortfolioValue))
+        listrisk=genlistrisk(PortfolioValue,liststd,"Close")
+
+
+        print("\n")
+        print("LISTA YIELD:")
+        print(listyield)
+        print("LISTA STD:")
+        print(liststd)
+        print("LISTA PEARSON:")
+        print(listpearson)
+        print("LISTA RISK:")
+        print(listrisk)
+        
+        print("\n")
+        print(combinator(len(PortfolioValue)))
+        print("\n")
+        
+        print(f"SOMMA YIELD: {len(listyield)}")
+        print(sum(listyield))
+        print(f"SOMMA STD: {len(liststd)}")
+        print(sum(liststd))
+        print(f"SOMMA PEARSON: {len(listpearson)}")
+        print(sum(listpearson))
+        print(f"SOMMA RISK: {len(listrisk)}")
+        print(sum(listrisk))
+        print(f"RADQ SOMMA RISK:\n{math.sqrt(sum(listrisk))}")
+        print("\n")
+
+        #risk=calcrisk(1,2,46.39180962,15.77973384,-0.248616759)
+        #print(risk)
+
+        #azioniposs=PortfolioValue[0] #1
+        
+
+        df1=pd.read_csv(PATHCSV1,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
+        df2=pd.read_csv(PATHCSV2,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
+
+        #df = pd.read_csv(r'/Users/balbus/Documents/GitHub/evoport/stock/WEEK/ADBE.csv',sep = ',',usecols=["Open", "High", "Low"])
+        #df = pd.read_csv(r'/Users/balbus/Documents/GitHub/evoport/stock/WEEK/ADBE.csv',sep = ',',usecols=[1,2,3,4,5])
+    
+    
+    
+    else:
+        print(f"ERRORE: LISTA NOMI DIVERSA DA AZIONI ({len(PortfolioNames)} != {len(PortfolioValue)})")
+    
 
 def genlistrisk(azioniposs,liststd,col): 
     listrisk=[]
@@ -197,74 +265,6 @@ def genport2(lista):
         risk= topercento(minrisk())
         print("{:<12}| {:<12}| {:<12}| {:<12}| {:<12}|".format(name,value,cost,yeld,risk))
 
-def main():
-    PortfolioNames=[]
-    #PortfolioValue=[]
-    PortfolioValue=[1,2,17,3,4,5,3,1]
-    sortedList = os.listdir(PATHCSVFOLDER) 
-    sortedList.sort()
-    if not (isWindows()):
-        sortedList=[sortedList for sortedList in os.listdir('./stock/WEEK') if not file_is_hidden(sortedList)]
-        print(sortedList,"sort")
-    
-    for stock in sortedList: #per ogni file nella cartella myFolder
-        PortfolioNames.append(stock[:-4]) # ci metto il nome del file senza i quattro caratteri finali cioè .csv
-        #azioni = int(input(f'Quante azioni hai di {stock[:-4]} ? ')) #per mettere il numero di azioni da tastiera
-        #PortfolioValue.append(azioni)
-    print(PortfolioNames)
-    print(PortfolioValue)
-    
-    if(len(PortfolioNames)==len(PortfolioValue)):
-        print(f"\nLISTA NOMI == DA AZIONI ({len(PortfolioNames)} != {len(PortfolioValue)})")
-
-        listyield=genlistyield("Close",PortfolioValue)
-        liststd=genliststd("Close")
-        listpearson=genlistpearson("Close",len(PortfolioValue))
-        listrisk=genlistrisk(PortfolioValue,liststd,"Close")
-
-
-        print("\n")
-        print("LISTA YIELD:")
-        print(listyield)
-        print("LISTA STD:")
-        print(liststd)
-        print("LISTA PEARSON:")
-        print(listpearson)
-        print("LISTA RISK:")
-        print(listrisk)
-        
-        print("\n")
-        print(combinator(len(PortfolioValue)))
-        print("\n")
-        
-        print(f"SOMMA YIELD: {len(listyield)}")
-        print(sum(listyield))
-        print(f"SOMMA STD: {len(liststd)}")
-        print(sum(liststd))
-        print(f"SOMMA PEARSON: {len(listpearson)}")
-        print(sum(listpearson))
-        print(f"SOMMA RISK: {len(listrisk)}")
-        print(sum(listrisk))
-        print(f"RADQ SOMMA RISK:\n{math.sqrt(sum(listrisk))}")
-        print("\n")
-
-        #risk=calcrisk(1,2,46.39180962,15.77973384,-0.248616759)
-        #print(risk)
-
-        #azioniposs=PortfolioValue[0] #1
-        
-
-        df1=pd.read_csv(PATHCSV1,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
-        df2=pd.read_csv(PATHCSV2,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
-
-        #df = pd.read_csv(r'/Users/balbus/Documents/GitHub/evoport/stock/WEEK/ADBE.csv',sep = ',',usecols=["Open", "High", "Low"])
-        #df = pd.read_csv(r'/Users/balbus/Documents/GitHub/evoport/stock/WEEK/ADBE.csv',sep = ',',usecols=[1,2,3,4,5])
-    
-    
-    
-    else:
-        print(f"ERRORE: LISTA NOMI DIVERSA DA AZIONI ({len(PortfolioNames)} != {len(PortfolioValue)})")
-    
  
 
 if __name__ == "__main__":
