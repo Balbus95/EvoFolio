@@ -14,17 +14,32 @@
 #    License along with DEAP. If not, see <http://www.gnu.org/licenses/>.
 
 import array
+import itertools as iter
 import random
 import pandas as pd
 import json
-
-import numpy
+import os
+import numpy 
 
 from math import sqrt
 
 from deap import benchmarks
 from deap.benchmarks.tools import diversity, convergence, hypervolume
 from deap import creator, base, tools, algorithms
+
+ABSPATH=os.path.dirname(os.path.abspath(__file__))
+PATHCSVFOLDER=''
+
+
+def isWindows():
+    return os.name=="nt"
+
+if(isWindows()): 
+    PATHCSVFOLDER= ABSPATH+"\\stock\\WEEK" #path per windows
+else: PATHCSVFOLDER= ABSPATH+"/stock/WEEK" #path per unix
+
+PATHCSV1=PATHCSVFOLDER+"\\AAPL.csv"
+PATHCSV2=PATHCSVFOLDER+"\\AAPL.csv"
 
 creator.create("FitnessMulti", base.Fitness, weights=(-1.0, 1.0))
 creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMulti)
@@ -41,6 +56,29 @@ BOUND_LOW, BOUND_UP = 0.0, 10.0
 # Functions zdt1, zdt2, zdt3 have 30 dimensions, zdt4 and zdt6 have 10
 NDIM = 2 #dimensione singola tupla default 30
 
+def myfitness(individual,stocknames,time): #portfoliovalue
+    totayield=0
+    liststd=[]
+    listrisk=[]
+    comb=combinator(len(stocknames))
+    for i in range(len(stocknames)):
+        df=getdfbyindex(i,stocknames)
+        yeld=calcyield(df,individual[i],"Close",time)
+        liststd.append(calcdevstd(df,"Close",time))
+        totayield += yeld
+
+    for coppia in comb:
+        x=coppia[0]
+        y=coppia[1]
+        df1=getdfbyindex(x)
+        df2=getdfbyindex(y)
+        pearson=calcpearson(df1,df2,"Close",time)
+        risk=calcrisk(individual[x],individual[y],liststd[x],liststd[y],pearson)
+        listrisk.append(risk) 
+        
+    totrisk=sqrt(sum(listrisk))
+    return (totrisk,totayield)
+
 def uniform(low, up, size=None): #creazione popolazione (funzione base)
     try:
         print("try ",[random.randint(a,b) for a, b in zip(low, up)])
@@ -54,7 +92,7 @@ toolbox.register("attr_float", uniform, BOUND_LOW, BOUND_UP, NDIM) #genera numer
 toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float) #crea individui con attr_float
 toolbox.register("population", tools.initRepeat, list, toolbox.individual) #ripete funzione individual
 
-toolbox.register("evaluate", benchmarks.zdt1) #funzione zdt1
+toolbox.register("evaluate", myfitness) #funzione fitness
 toolbox.register("mate", tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0) #crossover function
 toolbox.register("mutate", tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0/NDIM) #mutation function
 toolbox.register("select", tools.selNSGA2) # funzione di selection nsga2
@@ -100,6 +138,7 @@ def main(seed=None):
     for gen in range(1, NGEN):
         # Vary the population
         #scartare individui che costano trobbo con costo>budget
+
         offspring = tools.selTournamentDCD(pop, len(pop)) 
         offspring = [toolbox.clone(ind) for ind in offspring]
 
@@ -128,24 +167,54 @@ def main(seed=None):
 
     return pop, logbook
 
+
+def getdfbyindex(index,stocknames):
+    #for stock in os.listdir(PATHCSVFOLDER): 
+    #    names.append(stock[:-4])
+    path=os.path.join(PATHCSVFOLDER, stocknames[index]+'.csv')
+    df=pd.read_csv(path,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
+    return df
+
+def calcrisk(az1,az2,std1,std2,pearson):
+    risk=az1*az2*std1*std2*pearson
+    return risk
+
+def calcpearson(df1,df2,col,time):
+    list1=df1[col].values.tolist()
+    list2=df2[col].values.tolist()
+    pearson=numpy.corrcoef(list1[:time-1],list2[:time-1])
+    pearson=float(pearson[1][0])
+    #print(f"{col} pearson: {pearson}")
+    return pearson
+
+
+def combinator(len):
+    comb=[]
+    for i in range(len):
+        comb.append(i)
+    comb=list(iter.combinations(comb, 2))
+    return comb
+
+def calcyield(df,azioneposs,col,time):
+    i=time
+    yeld = azioneposs * numpy.log(df[col][i]/df[col][i-1])
+    #print(f"{col} YIELD: {yeld}")
+    return yeld
+
+def calcdevstd(df,col,time): #time - indice dove finisce il conto
+    list=df[col].values.tolist()
+    std=numpy.std(list[:time-1])
+    #print(f"{col} DEV STD: {std}")
+    return std
+
 if __name__ == "__main__":
-    # with open("pareto_front/zdt1_front.json") as optimal_front_data:
-    #     optimal_front = json.load(optimal_front_data)
-    # Use 500 of the 1000 points in the json file
-    # optimal_front = sorted(optimal_front[i] for i in range(0, len(optimal_front), 2))
     pop, stats = main()
-    # pop.sort(key=lambda x: x.fitness.values)
-
-    # print(stats)
-    # print("Convergence: ", convergence(pop, optimal_front))
-    # print("Diversity: ", diversity(pop, optimal_front[0], optimal_front[-1]))
-
-    # import matplotlib.pyplot as plt
-    # import numpy
-
-    # front = numpy.array([ind.fitness.values for ind in pop])
-    # optimal_front = numpy.array(optimal_front)
-    # plt.scatter(optimal_front[:,0], optimal_front[:,1], c="r")
-    # plt.scatter(front[:,0], front[:,1], c="b")
-    # plt.axis("tight")
-    # plt.show()
+    budget=100000
+    stocknames=[]
+    for stock in os.listdir(PATHCSVFOLDER): #per ogni file nella cartella myFolder
+        stocknames.append(stock[:-4])
+    
+    #for time in range(2 ,150): #alla fine di ogni settimana il nostro portafogli da individui tutti uguali al migliore della settimana precedente
+    
+# 3 funzioni lucky
+# 
