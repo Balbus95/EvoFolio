@@ -1,4 +1,4 @@
-import math
+from math import sqrt
 import random
 import os
 import itertools as iter
@@ -36,7 +36,7 @@ PATHCSV2=PATHCSVFOLDER+"\\AAPL.csv"
 def main():
     stockdf,stocknames = genstockdf()
     individual=[1,2,17,3,4,5,3,1]
-    time=152
+    time=3
     #stocknames=[]
     #individual=[]
     #sortedList = os.listdir(PATHCSVFOLDER) 
@@ -50,15 +50,15 @@ def main():
         #individual.append(azioni)
     print(stocknames)
     print(individual)
-    print(stockdf)
+    #print(stockdf)
     
     if(len(stocknames)==len(individual)):
         print(f"\nLISTA NOMI == DA AZIONI ({len(stocknames)} != {len(individual)})")
 
-        listyield=genlistyield("Close",individual,time)
-        liststd=genliststd("Close",time)
-        listpearson=genlistpearson(stocknames,len(individual),"Close",time)
-        listrisk=genlistrisk(stocknames,individual,liststd,"Close",time)
+        listyield=genlistyield(stockdf,individual,"Close",time)
+        liststd=genliststd(stockdf,"Close",time)
+        listpearson=genlistpearson(stockdf,"Close",time)
+        risk=genrisk(stockdf,individual,liststd,"Close",time)
 
 
         print("\n\n")
@@ -68,8 +68,6 @@ def main():
         print(liststd)
         print("LISTA PEARSON:")
         print(listpearson)
-        print("LISTA RISK:")
-        print(listrisk)
         
         print("--------------------------------------\n")
         # print(combinator(len(individual)))
@@ -81,11 +79,14 @@ def main():
         print(sum(liststd))
         print(f"SOMMA PEARSON: {len(listpearson)}")
         print(sum(listpearson))
-        print(f"SOMMA RISK: {len(listrisk)}")
-        print(sum(listrisk))
-        print(f"RADQ SOMMA RISK:\n{math.sqrt(sum(listrisk))}")
+        print(f"% RISK: {risk}")
+        #print(f"RADQ SOMMA RISK:\n{math.sqrt(sum(listrisk))}")
         print("\n")
 
+        totrisk,totyield=myfitness(stockdf,stocknames,individual,time)
+        print("\n")
+        print(totyield)
+        print(totrisk)
         #risk=calcrisk(1,2,46.39180962,15.77973384,-0.248616759)
         #print(risk)
 
@@ -103,40 +104,27 @@ def main():
     else:
         print(f"ERRORE: LISTA NOMI DIVERSA DA AZIONI ({len(stocknames)} != {len(individual)})")
 
-def genstockdf():
-    stockdf=[]
-    stocknames=[]
-    i=0
-    for stock in os.listdir(PATHCSVFOLDER):
-        stocknames.append(stock[:-4])
-        path=os.path.join(PATHCSVFOLDER, stocknames[i]+'.csv')
-        df=pd.read_csv(path,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
-        stockdf.append(df)
-        i+=1
-    return stockdf,stocknames
 
-def myfitness(individual,stocknames,time): #individual
-    totayield=0
+def myfitness(stockdf,stocknames,individual,time): #individual
+    totyield=0
     liststd=[]
     listrisk=[]
     comb=combinator(len(stocknames))
     for i in range(len(stocknames)):
-        df=getdfbyindex(stocknames,i)
+        df=stockdf[i]
         yeld=calcyield(df,individual[i],"Close",time)
         liststd.append(calcdevstd(df,"Close",time))
-        totayield += yeld
-
+        totyield += yeld
     for coppia in comb:
         x=coppia[0]
         y=coppia[1]
-        df1=getdfbyindex(stocknames,x)
-        df2=getdfbyindex(stocknames,y)
+        df1=stockdf[x]
+        df2=stockdf[y]
         pearson=calcpearson(df1,df2,"Close",time)
         risk=calcrisk(individual[x],individual[y],liststd[x],liststd[y],pearson)
         listrisk.append(risk) 
-
-    totrisk=math.sqrt(sum(listrisk))
-    return (totrisk,totayield)
+    totrisk=sqrt(sum(listrisk))
+    return (totrisk,totyield)
 
 def calcrisk(az1,az2,std1,std2,pearson):
     risk=az1*az2*std1*std2*pearson
@@ -145,14 +133,14 @@ def calcrisk(az1,az2,std1,std2,pearson):
 def calcpearson(df1,df2,col,time):
     list1=df1[col].values.tolist()
     list2=df2[col].values.tolist()
-    pearson=np.corrcoef(list1[:time-1],list2[:time-1])
+    pearson=np.corrcoef(list1[:time],list2[:time])
     pearson=float(pearson[1][0])
     #print(f"{col} pearson: {pearson}")
     return pearson
 
 def calcdevstd(df,col,time): #time - indice dove finisce il conto
     list=df[col].values.tolist()
-    std=np.std(list[:time-1])
+    std=np.std(list[:time])
     #print(f"{col} DEV STD: {std}")
     return std
 
@@ -168,67 +156,60 @@ def combinator(len):
     comb=list(iter.combinations(comb, 2))
     return comb
 
-def getdfbyindex(stocknames,index,col=None):
-    #for stock in os.listdir(PATHCSVFOLDER): 
-    #    names.append(stock[:-4])
-    path=os.path.join(PATHCSVFOLDER, stocknames[index]+'.csv')
-    df=pd.read_csv(path,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
-    if col!=None:
-        list=[]
-        list=df[col].values.tolist()
-        return list
-    return df
+def genstockdf():
+    stockdf=[]
+    stocknames=[]
+    i=0
+    for stock in os.listdir(PATHCSVFOLDER):
+        stocknames.append(stock[:-4])
+        path=os.path.join(PATHCSVFOLDER, stocknames[i]+'.csv')
+        df=pd.read_csv(path,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
+        stockdf.append(df)
+        i+=1
+    return (stockdf,stocknames)
 
-def genlistrisk(stocknames,individual,liststd,col,time): #non serve
+def genrisk(stockdf,individual,liststd,col,time): #non serve
     listrisk=[]
-    comb=combinator(len(individual))
-    x=comb[0][0]
-    y=comb[0][1]
+    comb=combinator(len(stockdf))
     for coppia in comb:
         x=coppia[0]
         y=coppia[1]
-        df1=getdfbyindex(stocknames,x)
-        df2=getdfbyindex(stocknames,y)
+        df1=stockdf[x]
+        df2=stockdf[y]
         pearson=calcpearson(df1,df2,col,time)
         risk=calcrisk(individual[x],individual[y],liststd[x],liststd[y],pearson)
         listrisk.append(risk)
         #print(f"coppia: {coppia} x:{x}, y:{y}")
-    return listrisk
+    totrisk=sqrt(sum(listrisk))
+    return totrisk
 
-def genlistpearson(stocknames,len,col,time):  #non serve
+def genlistpearson(stockdf,col,time):  #non serve
     listpearson=[]
-    comb=combinator(len)
-    x=comb[0][0]
-    y=comb[0][1]
+    comb=combinator(len(stockdf))
     for coppia in comb:
         x=coppia[0]
         y=coppia[1]
-        df1=getdfbyindex(stocknames,x)
-        df2=getdfbyindex(stocknames,y)
+        df1=stockdf[x]
+        df2=stockdf[y]
         listpearson.append(calcpearson(df1,df2,col,time))
         #print(f"coppia: {coppia} x:{x}, y:{y}")
     return listpearson
 
-def genlistyield(col,individual,time):  #non serve
-    listyield=[]
-    i=0
-    for stock in os.listdir(PATHCSVFOLDER): #per ogni file nella cartella myFolder
-        path=os.path.join(PATHCSVFOLDER, stock)
-        stock=pd.read_csv(path,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
-        listyield.append(calcyield(stock,individual[i],col,time))
-        i+=1
-    #print(listyield)
-    return listyield
-
-def genliststd(col,time):  #non serve
+def genliststd(stockdf,col,time):  #non serve
     liststd=[]
-    for stock in os.listdir(PATHCSVFOLDER): #per ogni file nella cartella myFolder
-        path=os.path.join(PATHCSVFOLDER, stock)
-        stock=pd.read_csv(path,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
-        liststd.append(calcdevstd(stock,col,time))
+    for df in stockdf: #per ogni file nella cartella myFolder
+       liststd.append(calcdevstd(df,col,time))
     #print(listdevclose)
     return liststd
 
+def genlistyield(stockdf,individual,col,time):  #non serve
+    listyield=[]
+    i=0
+    for df in stockdf: #per ogni file nella cartella myFolder
+        listyield.append(calcyield(df,individual[i],col,time))
+        i+=1
+    #print(listyield)
+    return listyield
 
 def getcolfromfile(portfolio,index,col):  #non serve
     list=[]
@@ -239,6 +220,16 @@ def getcolfromfile(portfolio,index,col):  #non serve
             list=df[col].values.tolist()
             return list
 
+def getdfbyindex(stocknames,index,col=None): #non serve
+    #for stock in os.listdir(PATHCSVFOLDER): 
+    #    names.append(stock[:-4])
+    path=os.path.join(PATHCSVFOLDER, stocknames[index]+'.csv')
+    df=pd.read_csv(path,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
+    if col!=None:
+        list=[]
+        list=df[col].values.tolist()
+        return list
+    return df
 
 def calcyieldold(ultimo,penultimo,azioniposs):  #non usato
     yeld = azioniposs * np.log(ultimo/penultimo)
