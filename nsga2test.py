@@ -74,17 +74,16 @@ def myfitness(individual,stocknames,time): #portfoliovalue
         df2=getdfbyindex(y)
         pearson=calcpearson(df1,df2,"Close",time)
         risk=calcrisk(individual[x],individual[y],liststd[x],liststd[y],pearson)
-        listrisk.append(risk) 
-        
+        listrisk.append(risk)    
     totrisk=sqrt(sum(listrisk))
     return (totrisk,totayield)
 
 def uniform(low, up, size=None): #creazione popolazione (funzione base)
     try:
-        print("try ",[random.randint(a,b) for a, b in zip(low, up)])
+        #print("try ",[random.randint(a,b) for a, b in zip(low, up)])
         return [random.randint(a,b) for a, b in zip(low, up)] #viene ripetuto per MU volte
     except TypeError:  #non so perchè fa 4 giri nell'except, returna al try il numero per NDIM volte 
-        print("catch ",[random.randint(a,b) for a, b in zip([low] * size, [up] * size)])
+        #print("catch ",[random.randint(a,b) for a, b in zip([low] * size, [up] * size)])
         return [random.randint(a,b) for a, b in zip([low] * size, [up] * size)]
 
 
@@ -195,9 +194,9 @@ def combinator(len):
     comb=list(iter.combinations(comb, 2))
     return comb
 
-def calcyield(df,azioneposs,col,time):
+def calcyield(df,stockposs,col,time):
     i=time
-    yeld = azioneposs * numpy.log(df[col][i]/df[col][i-1])
+    yeld = stockposs * numpy.log(df[col][i]/df[col][i-1])
     #print(f"{col} YIELD: {yeld}")
     return yeld
 
@@ -215,6 +214,3 @@ if __name__ == "__main__":
         stocknames.append(stock[:-4])
     
     #for time in range(2 ,150): #alla fine di ogni settimana il nostro portafogli da individui tutti uguali al migliore della settimana precedente
-    
-# 3 funzioni lucky
-# 
