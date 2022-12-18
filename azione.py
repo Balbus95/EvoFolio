@@ -68,7 +68,7 @@ def main():
         print(sum(listpearson))
         print(f"% RISK: {risk}")
         #print(f"RADQ SOMMA RISK:\n{math.sqrt(sum(listrisk))}")
-        print("\n")
+        print("--------------------------------------\n")
 
         totrisk,totyield=myfitness(stockdf,stocknames,individual,time)
         print("\n")
