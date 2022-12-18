@@ -23,7 +23,7 @@ PATHCSV2=PATHCSVFOLDER+"\\AAPL.csv"
 def main():
     stockdf,stocknames = genstockdf()
     individual=[1,1,1,1,1,1,1,1]
-    time=153 #arriva alla riga del csv time+1 min=2 max 153 per WEEK
+    time=153 #arriva alla riga del csv time+1 min=2 max 153 per WEEK (NUMERO DI RIGHE DA PRENDERE)
     #stocknames=[]
     #individual=[]
     #sortedList = os.listdir(PATHCSVFOLDER) 
@@ -127,8 +127,8 @@ def calcpearson(df1,df2,col,time):
 
 def calcdevstd(df,col,time): #time - indice dove finisce il conto
     list=df[col].values.tolist()
-    std=np.std(list[:time-1])
-    print(f'{list[time-1]} "+" {std}')
+    std=np.std(list[:time])
+    #print(f'{list[time-1]} "+" {std}')
     #print(f"{col} DEV STD: {std}")
     return std
 
