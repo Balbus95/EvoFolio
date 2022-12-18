@@ -57,7 +57,7 @@ BOUND_LOW, BOUND_UP = 0.0, 10.0
 NDIM = 2 #dimensione singola tupla default 30
 
 def myfitness(individual,stocknames,time): #portfoliovalue
-    totayield=0
+    totyield=0
     liststd=[]
     listrisk=[]
     comb=combinator(len(stocknames))
@@ -65,7 +65,7 @@ def myfitness(individual,stocknames,time): #portfoliovalue
         df=getdfbyindex(i,stocknames)
         yeld=calcyield(df,individual[i],"Close",time)
         liststd.append(calcdevstd(df,"Close",time))
-        totayield += yeld
+        totyield += yeld
 
     for coppia in comb:
         x=coppia[0]
@@ -76,7 +76,7 @@ def myfitness(individual,stocknames,time): #portfoliovalue
         risk=calcrisk(individual[x],individual[y],liststd[x],liststd[y],pearson)
         listrisk.append(risk)    
     totrisk=sqrt(sum(listrisk))
-    return (totrisk,totayield)
+    return (totrisk,totyield)
 
 def uniform(low, up, size=None): #creazione popolazione (funzione base)
     try:
@@ -91,7 +91,8 @@ toolbox.register("attr_float", uniform, BOUND_LOW, BOUND_UP, NDIM) #genera numer
 toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float) #crea individui con attr_float
 toolbox.register("population", tools.initRepeat, list, toolbox.individual) #ripete funzione individual
 
-toolbox.register("evaluate", myfitness) #funzione fitness
+#toolbox.register("evaluate", myfitness) #funzione fitness
+toolbox.register("evaluate", benchmarks.zdt1) #funzione fitness
 toolbox.register("mate", tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0) #crossover function
 toolbox.register("mutate", tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0/NDIM) #mutation function
 toolbox.register("select", tools.selNSGA2) # funzione di selection nsga2

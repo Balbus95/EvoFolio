@@ -9,19 +9,6 @@ from deap import creator, base, tools, algorithms
 def isWindows():
     return os.name=="nt"
 
-def file_is_hidden(p):
-    if isWindows():
-        import win32api, win32con
-        attribute = win32api.GetFileAttributes(p)
-        print(attribute & (win32con.FILE_ATTRIBUTE_HIDDEN | win32con.FILE_ATTRIBUTE_SYSTEM))
-        return attribute & (win32con.FILE_ATTRIBUTE_HIDDEN | win32con.FILE_ATTRIBUTE_SYSTEM)
-    else:
-        #print(p)
-        #print(p.startswith('.'))
-        return p.startswith('.') #linux-osx
-        #print("----dd-d-d-d-d-")
-        #print(file_list)
-
 ABSPATH=os.path.dirname(os.path.abspath(__file__))
 PATHCSVFOLDER=''
 
@@ -35,8 +22,8 @@ PATHCSV2=PATHCSVFOLDER+"\\AAPL.csv"
     
 def main():
     stockdf,stocknames = genstockdf()
-    individual=[1,2,17,3,4,5,3,1]
-    time=3
+    individual=[1,1,1,1,1,1,1,1]
+    time=153 #arriva alla riga del csv time+1 min=2 max 153 per WEEK
     #stocknames=[]
     #individual=[]
     #sortedList = os.listdir(PATHCSVFOLDER) 
@@ -140,12 +127,14 @@ def calcpearson(df1,df2,col,time):
 
 def calcdevstd(df,col,time): #time - indice dove finisce il conto
     list=df[col].values.tolist()
-    std=np.std(list[:time])
+    std=np.std(list[:time-1])
+    print(f'{list[time-1]} "+" {std}')
     #print(f"{col} DEV STD: {std}")
     return std
 
 def calcyield(df,individual,col,time): #individual è il numero di azioni possedute di quella azione è un indice di individual[]
-    yeld = individual * np.log(df[col][time]/df[col][time-1])
+    yeld = individual * np.log(df[col][time-1]/df[col][time-2])
+    #print(f'{df[col][time-1]} "+" {df[col][time-2]}')
     #print(f"{col} YIELD: {yeld}")
     return yeld
     
@@ -294,6 +283,19 @@ def genport2(lista): #non usato
         risk= topercento(minrisk())
         print("{:<12}| {:<12}| {:<12}| {:<12}| {:<12}|".format(name,value,cost,yeld,risk))
 
+
+def file_is_hidden(p): #non usato
+    if isWindows():
+        import win32api, win32con
+        attribute = win32api.GetFileAttributes(p)
+        print(attribute & (win32con.FILE_ATTRIBUTE_HIDDEN | win32con.FILE_ATTRIBUTE_SYSTEM))
+        return attribute & (win32con.FILE_ATTRIBUTE_HIDDEN | win32con.FILE_ATTRIBUTE_SYSTEM)
+    else:
+        #print(p)
+        #print(p.startswith('.'))
+        return p.startswith('.') #linux-osx
+        #print("----dd-d-d-d-d-")
+        #print(file_list)
  
 
 if __name__ == "__main__":
