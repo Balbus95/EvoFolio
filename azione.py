@@ -22,8 +22,9 @@ PATHCSV2=PATHCSVFOLDER+"\\AAPL.csv"
     
 def main():
     stockdf,stocknames = genstockdf()
-    individual=[1,1,1,1,1,1,1,1]
-    time=153 #arriva alla riga del csv time+1 min=2 max 153 per WEEK (NUMERO DI RIGHE DA PRENDERE)
+    individual=[1,1,1,1,1,1,1,1,1,1]
+    individual=[2,2,2,2,2,2,2,2,2,2]
+    time=2 #arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY (NUMERO DI RIGHE DA PRENDERE)
     #stocknames=[]
     #individual=[]
     #sortedList = os.listdir(PATHCSVFOLDER) 
@@ -39,22 +40,22 @@ def main():
     print(individual)
     #print(stockdf)
     
-    if(len(stocknames)==len(individual)):
+    if(len(stocknames)==len(individual)==len(stockdf) and time>=1):
         print(f"\nLISTA NOMI == DA AZIONI ({len(stocknames)} != {len(individual)})")
 
         listyield=genlistyield(stockdf,individual,"Close",time)
         liststd=genliststd(stockdf,"Close",time)
         listpearson=genlistpearson(stockdf,"Close",time)
-        risk=genrisk(stockdf,individual,liststd,"Close",time)
 
 
-        print("\n\n")
+        print("\n")
         print("LISTA STD:")
         print(liststd)
         print("LISTA YIELD:")
         print(listyield)
         print("LISTA PEARSON:")
         print(listpearson)
+        risk=genrisk(stockdf,individual,liststd,"Close",time)
         
         print("--------------------------------------\n")
         # print(combinator(len(individual)))
@@ -66,16 +67,24 @@ def main():
         print(sum(liststd))
         print(f"SOMMA PEARSON: {len(listpearson)}")
         print(sum(listpearson))
-        print(f"% RISK: {risk}")
+        print(f"% RISK: \n{risk}")
         #print(f"RADQ SOMMA RISK:\n{math.sqrt(sum(listrisk))}")
         print("--------------------------------------\n")
 
         totrisk,totyield=myfitness(stockdf,stocknames,individual,time)
         print("RETURN MYFITNESS:")
         print(f'tot yield: {totyield}')
-        print(f'tot risk: {totrisk}')
+        print(f'tot risk: {totrisk}\n')
         #risk=calcrisk(1,2,46.39180962,15.77973384,-0.248616759)
         #print(risk)
+
+        print("\nBudget speso:")
+        luckycost=lucky(stockdf,individual,time)
+        middlecost=middle(stockdf,individual,time)
+        murphycost=murphy(stockdf,individual,time)
+        print(f'min: {luckycost}')
+        print(f'avg: {middlecost}')
+        print(f'max: {murphycost}')
 
         #azioniposs=individual[0] #1
         
@@ -89,7 +98,7 @@ def main():
     
     
     else:
-        print(f"ERRORE: LISTA NOMI DIVERSA DA AZIONI ({len(stocknames)} != {len(individual)})")
+        print(f"ERRORE: Lunghezza stocknames,individual,stockdf ({len(stocknames)}!={len(individual)}!={len(stockdf)}) o Time {time} < 1")
 
 
 def myfitness(stockdf,stocknames,individual,time): #individual
@@ -109,34 +118,83 @@ def myfitness(stockdf,stocknames,individual,time): #individual
         df2=stockdf[y]
         pearson=calcpearson(df1,df2,"Close",time)
         risk=calcrisk(individual[x],individual[y],liststd[x],liststd[y],pearson)
-        listrisk.append(risk) 
+        listrisk.append(risk)
+    #print(listrisk) 
     totrisk=sqrt(sum(listrisk))
     return (totrisk,totyield)
+
+def middle(stockdf,individual,time):
+    avgtotal=0
+    for i in range(len(stockdf)):
+            low = (stockdf[i]["Low"][time-1])*individual[i]
+            high = (stockdf[i]["High"][time-1])*individual[i]
+            avg=(low+high)/2
+            print(f"avg {high} + {low} /2 = {avg}")
+            avgtotal+=avg
+    #print(f"avgtotal: {avgtotal}")
+    return avgtotal
+
+def lucky(stockdf,individual,time):
+    lowtotal=0
+    for i in range(len(stockdf)):
+            low = (stockdf[i]["Low"][time-1])*individual[i]
+            #print(f"Low {cost}")
+            lowtotal+=low
+    #print(f"lowtotal: {lowtotal}")
+    return lowtotal
+
+def murphy(stockdf,individual,time):
+    hightotal=0
+    for i in range(len(stockdf)):
+            high = (stockdf[i]["High"][time-1])*individual[i]
+            #print(f"High {cost}")
+            hightotal+=high
+    #print(f"hightotal: {hightotal}")
+    return hightotal
+
+def totbycol(stockdf,individual,time,col): #non usato
+    totalcost=0
+    for i in range(len(stockdf)):
+            cost = (stockdf[i][col][time-1])*individual[i]
+            totalcost+=cost
+    return totalcost
 
 def calcrisk(az1,az2,std1,std2,pearson):
     risk=az1*az2*std1*std2*pearson
     return risk
 
 def calcpearson(df1,df2,col,time):
-    list1=df1[col].values.tolist()
-    list2=df2[col].values.tolist()
-    pearson=np.corrcoef(list1[:time],list2[:time])
-    pearson=float(pearson[1][0])
-    #print(f"{col} pearson: {pearson}")
-    return pearson
+    if time>=2:
+        list1=df1[col].values.tolist()
+        list2=df2[col].values.tolist()
+        pearson=np.corrcoef(list1[:time],list2[:time])
+        pearson=float(pearson[1][0])
+        #print(f"{col} pearson: {pearson}")
+        return pearson
+    else: 
+        #print(f"calcpearson: time è minore di 2")
+        return 0
 
 def calcdevstd(df,col,time): #time - indice dove finisce il conto
-    list=df[col].values.tolist()
-    std=np.std(list[:time])
-    #print(f'{list[time-1]} "+" {std}')
-    #print(f"{col} DEV STD: {std}")
-    return std
+    if time>=2:
+        list=df[col].values.tolist()
+        std=np.std(list[:time])
+        #print(f'{list[time-1]} "+" {std}')
+        #print(f"{col} DEV STD: {std}")
+        return std
+    else: 
+        #print(f"calcdevstd: time è minore di 2")
+        return 0
 
 def calcyield(df,individual,col,time): #individual è il numero di azioni possedute di quella azione è un indice di individual[]
-    yeld = individual * np.log(df[col][time-1]/df[col][time-2])
-    #print(f'{df[col][time-1]} "+" {df[col][time-2]}')
-    #print(f"{col} YIELD: {yeld}")
-    return yeld
+    if time>=2:
+        yeld = individual * np.log(df[col][time-1]/df[col][time-2])
+        #print(f'{df[col][time-1]} "+" {df[col][time-2]}')
+        #print(f"{col} YIELD: {yeld}")
+        return yeld
+    else: 
+        #print("calcyield: time è minore di 2")
+        return 0
     
 def combinator(len):
     comb=[]
@@ -169,7 +227,7 @@ def genrisk(stockdf,individual,liststd,col,time): #non serve
         risk=calcrisk(individual[x],individual[y],liststd[x],liststd[y],pearson)
         listrisk.append(risk)
         #print(f"coppia: {coppia} x:{x}, y:{y}")
-    #print(listrisk)
+    print(f"LISTA RISK:\n{listrisk}")
     totrisk=sqrt(sum(listrisk))
     return totrisk
 
