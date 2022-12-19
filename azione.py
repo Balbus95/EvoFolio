@@ -49,10 +49,10 @@ def main():
 
 
         print("\n\n")
-        print("LISTA YIELD:")
-        print(listyield)
         print("LISTA STD:")
         print(liststd)
+        print("LISTA YIELD:")
+        print(listyield)
         print("LISTA PEARSON:")
         print(listpearson)
         
@@ -71,9 +71,9 @@ def main():
         print("--------------------------------------\n")
 
         totrisk,totyield=myfitness(stockdf,stocknames,individual,time)
-        print("\n")
-        print(totyield)
-        print(totrisk)
+        print("RETURN MYFITNESS:")
+        print(f'tot yield: {totyield}')
+        print(f'tot risk: {totrisk}')
         #risk=calcrisk(1,2,46.39180962,15.77973384,-0.248616759)
         #print(risk)
 
@@ -169,6 +169,7 @@ def genrisk(stockdf,individual,liststd,col,time): #non serve
         risk=calcrisk(individual[x],individual[y],liststd[x],liststd[y],pearson)
         listrisk.append(risk)
         #print(f"coppia: {coppia} x:{x}, y:{y}")
+    #print(listrisk)
     totrisk=sqrt(sum(listrisk))
     return totrisk
 
