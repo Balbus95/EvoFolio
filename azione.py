@@ -10,7 +10,6 @@ def isWindows():
     return os.name=="nt"
 
 ABSPATH=os.path.dirname(os.path.abspath(__file__))
-#PATHCSVFOLDER=''
 
 if(isWindows()): 
     PATHCSVFOLDER= ABSPATH+"\\stock\\WEEK" #path per windows
@@ -22,7 +21,7 @@ else: PATHCSVFOLDER= ABSPATH+"/stock/WEEK" #path per unix
     
 def main():
     stockdf,stocknames = genstockdf()
-    individual=[1,1,1,1,1,1,1,1]
+    individual=[1,1,1,1,1,1,1,1,1,1]
     #individual=[14,11,133,421,611,21,14,1]
     #individual=[2,2,2,2,2,2,2,2]
     maxtime=len(stockdf[0]) 
@@ -41,13 +40,33 @@ def main():
     #print(stockdf)
     if(len(stocknames)==len(individual)==len(stockdf)):
         for time in range(1,maxtime+1): #arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY (NUMERO DI RIGHE DA PRENDERE)
-            print(f"\n################################################ TIME {time} #############################################################\n")
-            print(stocknames)
-            print(individual)
+            print(f"\n################################################ TIME {time} #############################################################")
+            print(f"STOCK NAMES: {stocknames}")
+            print(f"AZIONI POSSEDUTE: {individual}")
             print(f"LISTA NOMI == DA AZIONI == STOCK AZIONI ({len(stocknames)} == {len(individual)} == {len(stockdf)})")
+            
+            liststd=genliststd(stockdf,"Close",time)
+            listpearson=genlistpearson(stockdf,"Close",time)
+            totrisk,totyield=myfitness(stockdf,stocknames,individual,time)
+
+            print("--------------------------------------")
+            print(f"SOMMA STD ({len(liststd)}): {sum(liststd)}")
+            #print(f"SOMMA PEARSON ({len(listpearson)}): {sum(listpearson)}")
+            print("--------------------------------------")
+            print(f'MYFITNESS: \nTOT YIELD: {totyield} \n% RISK: {totrisk}')
+            print("--------------------------------------")
+
+            print("Budget speso:")
+            luckycost=lucky(stockdf,individual,time)
+            middlecost=middle(stockdf,individual,time)
+            murphycost=murphy(stockdf,individual,time)
+            print(f'min: {luckycost}')
+            print(f'avg: {middlecost}')
+            print(f'max: {murphycost}')
+            closecost=totbycol(stockdf,individual,time,"Close")
+            print(f'tot close: {closecost}')
 
             #listyield=genlistyield(stockdf,individual,"Close",time)
-
 
             # print("\n")
             # print("LISTA STD:")
@@ -58,35 +77,17 @@ def main():
             
             # print("--------------------------------------\n")
             # print(combinator(len(individual)))
-            print("\n")
+            # print("\n")
             
             # print(f"SOMMA YIELD: {len(listyield)}")
             # print(sum(listyield))
-            liststd=genliststd(stockdf,"Close",time)
-            listpearson=genlistpearson(stockdf,"Close",time)
-            print(f"SOMMA STD ({len(liststd)}): {sum(liststd)}")
             #print(liststd)
-            print(f"SOMMA PEARSON ({len(listpearson)}): {sum(listpearson)}")
             #print(listpearson)
             #print(f"% RISK: \n{risk}")
-            print("--------------------------------------\n")
 
-            print("MYFITNESS:")
-            totrisk,totyield=myfitness(stockdf,stocknames,individual,time)
-            print(f'tot resa: {totyield}')
-            print(f'% risk: {totrisk}\n')
             #risk=calcrisk(1,2,46.39180962,15.77973384,-0.248616759)
             #print(risk)
 
-            print("Budget speso:")
-            luckycost=lucky(stockdf,individual,time)
-            middlecost=middle(stockdf,individual,time)
-            murphycost=murphy(stockdf,individual,time)
-            print(f'min: {luckycost}')
-            print(f'avg: {middlecost}')
-            print(f'max: {murphycost}')
-            # closecost=totbycol(stockdf,individual,time,"Close")
-            # print(f'close: {closecost}')
             #azioniposs=individual[0] #1
             
 
@@ -95,6 +96,7 @@ def main():
 
             #df = pd.read_csv(r'/Users/balbus/Documents/GitHub/evoport/stock/WEEK/ADBE.csv',sep = ',',usecols=["Open", "High", "Low"])
             #df = pd.read_csv(r'/Users/balbus/Documents/GitHub/evoport/stock/WEEK/ADBE.csv',sep = ',',usecols=[1,2,3,4,5])
+    
     else:
         print(f"ERRORE: Lunghezza stocknames,individual,stockdf ({len(stocknames)}!={len(individual)}!={len(stockdf)})")
 
