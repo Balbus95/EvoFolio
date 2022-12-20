@@ -22,7 +22,9 @@ else: PATHCSVFOLDER= ABSPATH+"/stock/WEEK" #path per unix
 def main():
     stockdf,stocknames = genstockdf()
     individual=[1,1,1,1,1,1,1,1,1,1]
-    #individual=[14,11,133,421,611,21,14,1]
+    #individual=[0,0,0,0,0,0,0,0,0,0]
+    #individual=[1,1,9,1,1,1,1,1,1,1]
+    #individual=[14,11,133,21,11,21,14,1,14,14]
     #individual=[2,2,2,2,2,2,2,2]
     maxtime=len(stockdf[0]) 
     #maxtime=2
@@ -38,6 +40,7 @@ def main():
         #azioni = int(input(f'Quante azioni hai di {stock[:-4]} ? ')) #per mettere il numero di azioni da tastiera
         #individual.append(azioni)
     #print(stockdf)
+    spesatot=0
     if(len(stocknames)==len(individual)==len(stockdf)):
         for time in range(1,maxtime+1): #arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY (NUMERO DI RIGHE DA PRENDERE)
             print(f"\n################################################ TIME {time} #############################################################")
@@ -46,7 +49,7 @@ def main():
             print(f"LISTA NOMI == DA AZIONI == STOCK AZIONI ({len(stocknames)} == {len(individual)} == {len(stockdf)})")
             
             liststd=genliststd(stockdf,"Close",time)
-            listpearson=genlistpearson(stockdf,"Close",time)
+            #listpearson=genlistpearson(stockdf,"Close",time)
             totrisk,totyield=myfitness(stockdf,stocknames,individual,time)
 
             print("--------------------------------------")
@@ -96,7 +99,8 @@ def main():
 
             #df = pd.read_csv(r'/Users/balbus/Documents/GitHub/evoport/stock/WEEK/ADBE.csv',sep = ',',usecols=["Open", "High", "Low"])
             #df = pd.read_csv(r'/Users/balbus/Documents/GitHub/evoport/stock/WEEK/ADBE.csv',sep = ',',usecols=[1,2,3,4,5])
-    
+            spesatot+=closecost
+        #print(spesatot)
     else:
         print(f"ERRORE: Lunghezza stocknames,individual,stockdf ({len(stocknames)}!={len(individual)}!={len(stockdf)})")
 
@@ -119,8 +123,9 @@ def myfitness(stockdf,stocknames,individual,time): #individual
         pearson=calcpearson(df1,df2,"Close",time)
         risk=calcrisk(individual[x],individual[y],liststd[x],liststd[y],pearson)
         listrisk.append(risk)
-    #print(listrisk) 
-    totrisk=sqrt(sum(listrisk))
+    # print(listrisk) 
+    # print(sum(listrisk)) 
+    totrisk=sqrt(sum(listrisk)) #SE ESCE UN NUMERO NEGATIVO DALLA SOMMA DÀ ERRORE
     return (totrisk,totyield)
 
 def middle(stockdf,individual,time):
