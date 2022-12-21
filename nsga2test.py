@@ -101,7 +101,7 @@ def main(seed=None):
     random.seed(seed)
     
     NGEN = 50 #numero generazioni
-    MU = 12 #generazione tuple population, deve essere multiplo di 4 (Dimensione popolazione)
+    MU = 200 #generazione tuple population, deve essere multiplo di 4 (Dimensione popolazione)
     CXPB = 0.9
 
     stats = tools.Statistics(lambda ind: ind.fitness.values)

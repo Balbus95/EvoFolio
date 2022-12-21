@@ -1,3 +1,7 @@
+### 1) prima di entrare nel tournmantet verifico budget >100000 e scarto tutti quelli che l'hanno superato
+### 2) lanciare nsga2 senza partire con random al secondo giro
+### 3) tenere conto di quanto valgono le nostre azioni al giorno quindi salvare lista di avg e data giorno
+
 from math import sqrt
 import random
 import os
