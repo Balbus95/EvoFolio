@@ -9,6 +9,7 @@ import itertools as iter
 import pandas as pd
 import numpy as np
 from deap import creator, base, tools, algorithms
+import matplotlib.pyplot as plt
 
 def isWindows():
     return os.name=="nt"
@@ -25,12 +26,16 @@ else: PATHCSVFOLDER= ABSPATH+"/stock/WEEK" #path per unix
     
 def main():
     stockdf,stocknames = genstockdf()
-    individual=[1,1,1,1,1,1,1,1,1,1]
+    valorimid=[]
+    valorimin=[]
+    valorimax=[]
+    date=[]
+    individual=[1,1,1,1,1,1,1,1]
     #individual=[0,0,0,0,0,0,0,0,0,0]
     #individual=[1,1,9,1,1,1,1,1,1,1]
     #individual=[14,11,133,21,11,21,14,1,14,14]
     #individual=[2,2,2,2,2,2,2,2]
-    maxtime=len(stockdf[0]) 
+    maxtime=len(stockdf[0])
     #maxtime=2
     #stocknames=[]
     #individual=[]
@@ -44,7 +49,6 @@ def main():
         #azioni = int(input(f'Quante azioni hai di {stock[:-4]} ? ')) #per mettere il numero di azioni da tastiera
         #individual.append(azioni)
     #print(stockdf)
-    spesatot=0
     if(len(stocknames)==len(individual)==len(stockdf)):
         for time in range(1,maxtime+1): #arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY (NUMERO DI RIGHE DA PRENDERE)
             print(f"\n################################################ TIME {time} #############################################################")
@@ -70,8 +74,8 @@ def main():
             print(f'min: {luckycost}')
             print(f'avg: {middlecost}')
             print(f'max: {murphycost}')
-            closecost=totbycol(stockdf,individual,time,"Close")
-            print(f'tot close: {closecost}')
+            #closecost=totbycol(stockdf,individual,time,"Close")
+            #print(f'tot close: {closecost}')
 
             #listyield=genlistyield(stockdf,individual,"Close",time)
 
@@ -103,8 +107,24 @@ def main():
 
             #df = pd.read_csv(r'/Users/balbus/Documents/GitHub/evoport/stock/WEEK/ADBE.csv',sep = ',',usecols=["Open", "High", "Low"])
             #df = pd.read_csv(r'/Users/balbus/Documents/GitHub/evoport/stock/WEEK/ADBE.csv',sep = ',',usecols=[1,2,3,4,5])
-            spesatot+=closecost
-        #print(spesatot)
+            date.append(stockdf[0]["Date"][time-1])
+            valorimin.append(luckycost)
+            valorimid.append(middlecost)
+            valorimax.append(murphycost)
+
+
+        
+        plt.plot(date,valorimax,label="max",color="red")
+        plt.plot(date,valorimid,label="mid",color="blue")
+        plt.plot(date,valorimin,label="min",color="green")
+        plt.title(f"Portfolio {individual}")
+        plt.xlabel("Data")
+        plt.ylabel("Valore")
+        plt.legend()
+        # plt.grid()
+        plt.show()   
+
+
     else:
         print(f"ERRORE: Lunghezza stocknames,individual,stockdf ({len(stocknames)}!={len(individual)}!={len(stockdf)})")
 
@@ -160,7 +180,6 @@ def murphy(stockdf,individual,time):
             hightotal+=high
     #print(f"hightotal: {hightotal}")
     return hightotal
-
 
 def calcrisk(az1,az2,std1,std2,pearson):
     risk=az1*az2*std1*std2*pearson
@@ -364,8 +383,6 @@ def file_is_hidden(p): #non usato
         #print(p)
         #print(p.startswith('.'))
         return p.startswith('.') #linux-osx
-        #print("----dd-d-d-d-d-")
-        #print(file_list)
  
 
 if __name__ == "__main__":
