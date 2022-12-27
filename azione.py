@@ -52,7 +52,7 @@ def main():
     if(len(stocknames)==len(individual)==len(stockdf)):
         for time in range(1,maxtime+1): #arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY (NUMERO DI RIGHE DA PRENDERE)
             x=stockdf[0]["Date"][time-1]
-            print(f"\n################################################ {x} #############################################################")
+            print(f"\n################################################ {x} ### {time} #############################################################")
             print(f"STOCK NAMES: {stocknames}")
             print(f"AZIONI POSSEDUTE: {individual}")
             print(f"LISTA NOMI == DA AZIONI == STOCK AZIONI ({len(stocknames)} == {len(individual)} == {len(stockdf)})")
