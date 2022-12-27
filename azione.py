@@ -51,7 +51,8 @@ def main():
     #print(stockdf)
     if(len(stocknames)==len(individual)==len(stockdf)):
         for time in range(1,maxtime+1): #arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY (NUMERO DI RIGHE DA PRENDERE)
-            print(f"\n################################################ TIME {time} #############################################################")
+            x=stockdf[0]["Date"][time-1]
+            print(f"\n################################################ {x} #############################################################")
             print(f"STOCK NAMES: {stocknames}")
             print(f"AZIONI POSSEDUTE: {individual}")
             print(f"LISTA NOMI == DA AZIONI == STOCK AZIONI ({len(stocknames)} == {len(individual)} == {len(stockdf)})")
@@ -371,7 +372,6 @@ def genport2(lista): #non usato
         yeld= topercento(maxyield())
         risk= topercento(minrisk())
         print("{:<12}| {:<12}| {:<12}| {:<12}| {:<12}|".format(name,value,cost,yeld,risk))
-
 
 def file_is_hidden(p): #non usato
     if isWindows():
