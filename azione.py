@@ -132,25 +132,26 @@ def main():
 
 def myfitness(stockdf,stocknames,individual,time): #individual
     totyield=0
-    liststd=[]
+    listvar=[]
     listrisk=[]
     comb=combinator(len(stocknames))
     for i in range(len(stocknames)):
         df=stockdf[i]
-        yeld=calcyield(df,individual[i],"Close",time)
-        liststd.append(calcdevstd(df,"Close",time))
-        totyield += yeld
+        listyeld=calcyield(df,"Close",time)
+        listvar.append(np.var(listyeld))
+        totyield += individual[i]*np.average(listyeld)
     for coppia in comb:
         x=coppia[0]
         y=coppia[1]
         df1=stockdf[x]
         df2=stockdf[y]
-        pearson=calcpearson(df1,df2,"Close",time)
-        risk=calcrisk(individual[x],individual[y],liststd[x],liststd[y],pearson)
+        cov=calccov(df1,df2,"Close",time)
+        #print(f'{coppia},{individual[x]/sum(individual)}, {sum(individual)}')
+        risk=calcrisk(individual[x]/sum(individual),individual[y]/sum(individual),listvar[x],listvar[y],cov)
         listrisk.append(risk)
     # print(listrisk) 
     # print(sum(listrisk)) 
-    totrisk=sqrt(sum(listrisk)) #SE ESCE UN NUMERO NEGATIVO DALLA SOMMA DÀ ERRORE
+    totrisk=sum(listrisk)
     return (totrisk,totyield)
 
 def middle(stockdf,individual,time):
@@ -182,23 +183,23 @@ def murphy(stockdf,individual,time):
     #print(f"hightotal: {hightotal}")
     return hightotal
 
-def calcrisk(az1,az2,std1,std2,pearson):
-    risk=az1*az2*std1*std2*pearson
+def calcrisk(az1,az2,var1,var2,cov):
+    risk=(az1*var1)+(az2*var2)+(2*(az1*az2*cov))
     return risk
 
-def calcpearson(df1,df2,col,time):
+def calccov(df1,df2,col,time):
     if time>=2:
         list1=df1[col].values.tolist()
         list2=df2[col].values.tolist()
-        pearson=np.corrcoef(list1[:time],list2[:time])
-        pearson=float(pearson[1][0])
-        #print(f"{col} pearson: {pearson}")
-        return pearson
+        cov=np.cov(list1[:time],list2[:time])
+        cov=float(cov[1][0])
+        #print(f"{col} cov: {cov}")
+        return cov
     else: 
-        #print(f"calcpearson: time è minore di 2")
+        #print(f"calccov: time è minore di 2")
         return 0
 
-def calcdevstd(df,col,time): #time - indice dove finisce il conto
+def calcdevstd(df,col,time): #non serve
     if time>=2:
         list=df[col].values.tolist()
         std=np.std(list[:time])
@@ -209,15 +210,18 @@ def calcdevstd(df,col,time): #time - indice dove finisce il conto
         #print(f"calcdevstd: time è minore di 2")
         return 0
 
-def calcyield(df,individual,col,time): #individual è il numero di azioni possedute di quella azione è un indice di individual[]
+def calcyield(df,col,time): #individual è il numero di azioni possedute di quella azione è un indice di individual[]
+    yeld=[]
     if time>=2:
-        yeld = individual * np.log(df[col][time-1]/df[col][time-2])
-        #print(f'{df[col][time-1]} "+" {df[col][time-2]}')
-        #print(f"{col} YIELD: {yeld}")
+        for i in reversed(range(1,len(df[col][:time]))):
+            yeld.append(np.log(df[col][time-i]/df[col][time-i-1]))
+            #print(i)
+            #print(f'{df[col][time-i]} "+" {df[col][time-i-1]}')
+            #print(f"{col} YIELD: {yeld}")
         return yeld
     else: 
         #print("calcyield: time è minore di 2")
-        return 0
+        return yeld
     
 def combinator(len):
     comb=[]
