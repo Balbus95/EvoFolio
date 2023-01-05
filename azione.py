@@ -2,14 +2,15 @@
 ### 2) lanciare nsga2 senza partire con random al secondo giro
 ### 3) tenere conto di quanto valgono le nostre azioni al giorno quindi salvare lista di avg e data giorno
 
-from math import sqrt
 import random
+import time as tm
 import os
 import itertools as iter
 import pandas as pd
 import numpy as np
-from deap import creator, base, tools, algorithms
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+from deap import creator, base, tools, algorithms
 
 def isWindows():
     return os.name=="nt"
@@ -26,103 +27,74 @@ else: PATHCSVFOLDER= ABSPATH+"/stock/WEEK" #path per unix
     
 def main():
     stockdf,stocknames = genstockdf()
+    individual=[1,1,1,1,1,1,1,1]
+    maxtime=len(stockdf[0])
     valorimid=[]
     valorimin=[]
     valorimax=[]
-    date=[]
-    individual=[1,1,1,1,1,1,1,1]
-    #individual=[0,0,0,0,0,0,0,0,0,0]
-    #individual=[1,1,9,1,1,1,1,1,1,1]
-    #individual=[14,11,133,21,11,21,14,1,14,14]
-    #individual=[2,2,2,2,2,2,2,2]
-    maxtime=len(stockdf[0])
-    #maxtime=2
-    #stocknames=[]
-    #individual=[]
-    #sortedList = os.listdir(PATHCSVFOLDER) 
-    #sortedList.sort()
-    # if not (isWindows()):
-    #     sortedList=[sortedList for sortedList in os.listdir('./stock/WEEK') if not file_is_hidden(sortedList)]
-    #     print(sortedList,"sort")
-    #for stock in sortedList: #per ogni file nella cartella myFolder
-    #    stocknames.append(stock[:-4]) # ci metto il nome del file senza i quattro caratteri finali cioè .csv
-        #azioni = int(input(f'Quante azioni hai di {stock[:-4]} ? ')) #per mettere il numero di azioni da tastiera
-        #individual.append(azioni)
-    #print(stockdf)
+    # individual=[14,11,5,21,11,21,14,1]
+    # individual=[2,2,2,2,2,2,2,2]
+    # sortedList = os.listdir(PATHCSVFOLDER) 
+    # sortedList.sort()
+    # for stock in sortedList: #per ogni file nella cartella myFolder
+    #     stocknames.append(stock[:-4]) # ci metto il nome del file senza i quattro caratteri finali cioè .csv
+    #     azioni = int(input(f'Quante azioni hai di {stock[:-4]} ? ')) #per mettere il numero di azioni da tastiera
+    #     individual.append(azioni)
+    # maxtime=3
     if(len(stocknames)==len(individual)==len(stockdf)):
         for time in range(1,maxtime+1): #arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY (NUMERO DI RIGHE DA PRENDERE)
-            x=stockdf[0]["Date"][time-1]
-            print(f"\n################################################ {x} ### {time} #############################################################")
+            data=str(pd.to_datetime(stockdf[0]["Date"][time-1]))[:-9] # -9 taglia i caratteri dei hh:mm:ss dalla stringa
+            print(f"\n################################################ {data} ### {time} #############################################################")
             print(f"STOCK NAMES: {stocknames}")
             print(f"AZIONI POSSEDUTE: {individual}")
             print(f"LISTA NOMI == DA AZIONI == STOCK AZIONI ({len(stocknames)} == {len(individual)} == {len(stockdf)})")
             
-            liststd=genliststd(stockdf,"Close",time)
-            #listpearson=genlistpearson(stockdf,"Close",time)
             totrisk,totyield=myfitness(stockdf,stocknames,individual,time)
 
-            print("--------------------------------------")
-            print(f"SOMMA STD ({len(liststd)}): {sum(liststd)}")
-            #print(f"SOMMA PEARSON ({len(listpearson)}): {sum(listpearson)}")
             print("--------------------------------------")
             print(f'MYFITNESS: \nTOT YIELD: {totyield} \n% RISK: {totrisk}')
             print("--------------------------------------")
 
-            print("Budget speso:")
             luckycost=lucky(stockdf,individual,time)
             middlecost=middle(stockdf,individual,time)
             murphycost=murphy(stockdf,individual,time)
-            print(f'min: {luckycost}')
-            print(f'avg: {middlecost}')
-            print(f'max: {murphycost}')
-            #closecost=totbycol(stockdf,individual,time,"Close")
-            #print(f'tot close: {closecost}')
-
-            #listyield=genlistyield(stockdf,individual,"Close",time)
-
-            # print("\n")
-            # print("LISTA STD:")
-            # print("LISTA YIELD:")
-            # print(listyield)
-            # print("LISTA PEARSON:")
-            #risk=genrisk(stockdf,individual,liststd,"Close",time)
-            
-            # print("--------------------------------------\n")
-            # print(combinator(len(individual)))
-            # print("\n")
-            
-            # print(f"SOMMA YIELD: {len(listyield)}")
-            # print(sum(listyield))
-            #print(liststd)
-            #print(listpearson)
-            #print(f"% RISK: \n{risk}")
-
-            #risk=calcrisk(1,2,46.39180962,15.77973384,-0.248616759)
-            #print(risk)
-
-            #azioniposs=individual[0] #1
-            
-
-            #df1=pd.read_csv(PATHCSV1,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
-            #df2=pd.read_csv(PATHCSV2,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
-
-            #df = pd.read_csv(r'/Users/balbus/Documents/GitHub/evoport/stock/WEEK/ADBE.csv',sep = ',',usecols=["Open", "High", "Low"])
-            #df = pd.read_csv(r'/Users/balbus/Documents/GitHub/evoport/stock/WEEK/ADBE.csv',sep = ',',usecols=[1,2,3,4,5])
-            date.append(stockdf[0]["Date"][time-1])
             valorimin.append(luckycost)
             valorimid.append(middlecost)
             valorimax.append(murphycost)
+            print("Budget speso:")
+            print(f'min: {luckycost}')
+            print(f'avg: {middlecost}')
+            print(f'max: {murphycost}')
+            print("--------------------------------------")
+            # tm.sleep(2)
+
+            # closecost=totbycol(stockdf,individual,time,"Close")
+            # print(f'tot close: {closecost}')
+
+            # df1=pd.read_csv(PATHCSV1,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
+            # df2=pd.read_csv(PATHCSV2,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
+
+            # df = pd.read_csv(r'/Users/balbus/Documents/GitHub/evoport/stock/WEEK/ADBE.csv',sep = ',',usecols=["Open", "High", "Low"])
+            # df = pd.read_csv(r'/Users/balbus/Documents/GitHub/evoport/stock/WEEK/ADBE.csv',sep = ',',usecols=[1,2,3,4,5])
+            
+            # date.append(stockdf[0]["Date"][time-1])
 
 
         
+        
+        date=pd.to_datetime(stockdf[0]["Date"]) 
+        # plt.gca().xaxis.set_major_locator(mdates.DayLocator(interval=6))
+        plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%b %Y')) # '%d-%m-%Y' ----- gca() get current axis, gcf() get current figure 
         plt.plot(date,valorimax,label="max",color="red")
         plt.plot(date,valorimid,label="mid",color="blue")
         plt.plot(date,valorimin,label="min",color="green")
         plt.title(f"Portfolio {individual}")
         plt.xlabel("Data")
+        plt.xticks(rotation=20)
         plt.ylabel("Valore")
         plt.legend()
         # plt.grid()
+        # plt.gcf().autofmt_xdate()
         plt.show()   
 
 
@@ -146,7 +118,7 @@ def myfitness(stockdf,stocknames,individual,time): #individual
         df1=stockdf[x]
         df2=stockdf[y]
         cov=calccov(df1,df2,"Close",time)
-        #print(f'{coppia},{individual[x]/sum(individual)}, {sum(individual)}')
+        # print(f'{coppia},{individual[x]/sum(individual)}, {sum(individual)}')
         risk=calcrisk(individual[x]/sum(individual),individual[y]/sum(individual),listvar[x],listvar[y],cov)
         listrisk.append(risk)
     # print(listrisk) 
@@ -160,27 +132,27 @@ def middle(stockdf,individual,time):
             low = (stockdf[i]["Low"][time-1])*individual[i]
             high = (stockdf[i]["High"][time-1])*individual[i]
             avg=(low+high)/2
-            #print(f"avg {high} + {low} /2 = {avg}")
+            # print(f"avg {high} + {low} /2 = {avg}")
             avgtotal+=avg
-    #print(f"avgtotal: {avgtotal}")
+    # print(f"avgtotal: {avgtotal}")
     return avgtotal
 
 def lucky(stockdf,individual,time):
     lowtotal=0
     for i in range(len(stockdf)):
             low = (stockdf[i]["Low"][time-1])*individual[i]
-            #print(f"Low {low}")
+            # print(f"Low {low}")
             lowtotal+=low
-    #print(f"lowtotal: {lowtotal}")
+    # print(f"lowtotal: {lowtotal}")
     return lowtotal
 
 def murphy(stockdf,individual,time):
     hightotal=0
     for i in range(len(stockdf)):
             high = (stockdf[i]["High"][time-1])*individual[i]
-            #print(f"High {high}")
+            # print(f"High {high}")
             hightotal+=high
-    #print(f"hightotal: {hightotal}")
+    # print(f"hightotal: {hightotal}")
     return hightotal
 
 def calcrisk(az1,az2,var1,var2,cov):
@@ -193,34 +165,25 @@ def calccov(df1,df2,col,time):
         list2=df2[col].values.tolist()
         cov=np.cov(list1[:time],list2[:time])
         cov=float(cov[1][0])
-        #print(f"{col} cov: {cov}")
+        # print(f"{col} cov: {cov}")
         return cov
     else: 
-        #print(f"calccov: time è minore di 2")
+        # print(f"calccov: time è minore di 2")
         return 0
 
-def calcdevstd(df,col,time): #non serve
-    if time>=2:
-        list=df[col].values.tolist()
-        std=np.std(list[:time])
-        #print(f'{list[time-1]} "+" {std}')
-        #print(f"{col} DEV STD: {std}")
-        return std
-    else: 
-        #print(f"calcdevstd: time è minore di 2")
-        return 0
 
 def calcyield(df,col,time): #individual è il numero di azioni possedute di quella azione è un indice di individual[]
     yeld=[]
     if time>=2:
         for i in reversed(range(1,len(df[col][:time]))):
             yeld.append(np.log(df[col][time-i]/df[col][time-i-1]))
-            #print(i)
-            #print(f'{df[col][time-i]} "+" {df[col][time-i-1]}')
-            #print(f"{col} YIELD: {yeld}")
+            # print(i)
+            # print(f'{df[col][time-i]} "+" {df[col][time-i-1]}')
+            # print(f"{col} YIELD: {yeld}")
         return yeld
     else: 
-        #print("calcyield: time è minore di 2")
+        # print("calcyield: time è minore di 2")
+        yeld=[0]
         return yeld
     
 def combinator(len):
@@ -242,6 +205,19 @@ def genstockdf():
         i+=1
     return (stockdf,stocknames)
 
+#-------------------------------------------------------------------------------------------------------------------------#
+
+def calcdevstd(df,col,time): #non serve
+    if time>=2:
+        list=df[col].values.tolist()
+        std=np.std(list[:time])
+        #print(f'{list[time-1]} "+" {std}')
+        #print(f"{col} DEV STD: {std}")
+        return std
+    else: 
+        #print(f"calcdevstd: time è minore di 2")
+        return 0
+
 def totbycol(stockdf,individual,time,col): #non usato
     totalcost=0
     for i in range(len(stockdf)):
@@ -250,7 +226,7 @@ def totbycol(stockdf,individual,time,col): #non usato
             totalcost+=cost
     return totalcost
 
-def genrisk(stockdf,individual,liststd,col,time): #non serve
+def genrisk(stockdf,individual,listvar,col,time): #non serve
     listrisk=[]
     comb=combinator(len(stockdf))
     for coppia in comb:
@@ -258,25 +234,25 @@ def genrisk(stockdf,individual,liststd,col,time): #non serve
         y=coppia[1]
         df1=stockdf[x]
         df2=stockdf[y]
-        pearson=calcpearson(df1,df2,col,time)
-        risk=calcrisk(individual[x],individual[y],liststd[x],liststd[y],pearson)
+        cov=calccov(df1,df2,col,time)
+        risk=calcrisk(individual[x]/sum(individual),individual[y]/sum(individual),listvar[x],listvar[y],cov)
         listrisk.append(risk)
         #print(f"coppia: {coppia} x:{x}, y:{y}")
     #print(f"LISTA RISK:\n{listrisk}")
-    totrisk=sqrt(sum(listrisk))
+    totrisk=sum(listrisk)
     return totrisk
 
-def genlistpearson(stockdf,col,time):  #non serve
-    listpearson=[]
+def genlistcov(stockdf,col,time):  #non serve
+    listcov=[]
     comb=combinator(len(stockdf))
     for coppia in comb:
         x=coppia[0]
         y=coppia[1]
         df1=stockdf[x]
         df2=stockdf[y]
-        listpearson.append(calcpearson(df1,df2,col,time))
+        listcov.append(calccov(df1,df2,col,time))
         #print(f"coppia: {coppia} x:{x}, y:{y}")
-    return listpearson
+    return listcov
 
 def genliststd(stockdf,col,time):  #non serve
     liststd=[]
@@ -285,7 +261,7 @@ def genliststd(stockdf,col,time):  #non serve
     #print(listdevclose)
     return liststd
 
-def genlistyield(stockdf,individual,col,time):  #non serve
+def genlistyield(stockdf,individual,col,time):  #non serve e non funziona
     listyield=[]
     i=0
     for df in stockdf: #per ogni file nella cartella myFolder
