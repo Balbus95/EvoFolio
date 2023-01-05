@@ -1,4 +1,4 @@
-### 1) prima di entrare nel tournmantet verifico budget >100000 e scarto tutti quelli che l'hanno superato
+### 1) prima di entrare nel tournmantet verifico budget >1000000 e scarto tutti quelli che l'hanno superato
 ### 2) lanciare nsga2 senza partire con random al secondo giro
 
 import random
@@ -119,8 +119,8 @@ def myfitness(stockdf,stocknames,individual,time): #individual
         df2=stockdf[y]
         listyeld1=calcyield(df1,"Close",time)
         listyeld2=calcyield(df2,"Close",time)
-        # cov=calccov(df1,df2,"Close",time) #VEDERE SE È GIUSTO
-        cov=calccov(listyeld1,listyeld2,time)
+        # cov=calccov(df1,df2,"Close",time) 
+        cov=calccov(listyeld1,listyeld2,time) #VEDERE SE È GIUSTO
         # print(f'{coppia},{individual[x]/sum(individual)}, {sum(individual)}')
         risk=calcrisk(individual[x]/sum(individual),individual[y]/sum(individual),listvar[x],listvar[y],cov)
         listrisk.append(risk)

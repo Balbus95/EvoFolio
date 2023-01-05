@@ -17,9 +17,8 @@ import array
 import itertools as iter
 import random
 import pandas as pd
-import json
 import os
-import numpy 
+import numpy as np
 
 from math import sqrt
 
@@ -54,28 +53,35 @@ BOUND_LOW, BOUND_UP = 0.0, 10.0
 # BOUND_LOW, BOUND_UP = [0.0] + [-5.0]*9, [1.0] + [5.0]*9
 
 # Functions zdt1, zdt2, zdt3 have 30 dimensions, zdt4 and zdt6 have 10
-NDIM = 2 #dimensione singola tupla default 30
+NDIM = 8 #dimensione singola tupla default 30
 
-def myfitness(individual,stocknames,time): #portfoliovalue
+def myfitness(stockdf,stocknames,individual,time): #individual
     totyield=0
-    liststd=[]
+    listvar=[]
     listrisk=[]
     comb=combinator(len(stocknames))
     for i in range(len(stocknames)):
-        df=getdfbyindex(i,stocknames)
-        yeld=calcyield(df,individual[i],"Close",time)
-        liststd.append(calcdevstd(df,"Close",time))
-        totyield += yeld
-
+        df=stockdf[i]
+        listyeld=calcyield(df,"Close",time)
+        listvar.append(np.var(listyeld))
+        totyield += individual[i]*np.average(listyeld)
+        # print(f"AVG: {np.average(listyeld)} totalyeld {totyield}")
     for coppia in comb:
         x=coppia[0]
         y=coppia[1]
-        df1=getdfbyindex(x)
-        df2=getdfbyindex(y)
-        pearson=calcpearson(df1,df2,"Close",time)
-        risk=calcrisk(individual[x],individual[y],liststd[x],liststd[y],pearson)
-        listrisk.append(risk)    
-    totrisk=sqrt(sum(listrisk))
+        df1=stockdf[x]
+        df2=stockdf[y]
+        listyeld1=calcyield(df1,"Close",time)
+        listyeld2=calcyield(df2,"Close",time)
+        # cov=calccov(df1,df2,"Close",time) 
+        cov=calccov(listyeld1,listyeld2,time) #VEDERE SE È GIUSTO
+        # print(f'{coppia},{individual[x]/sum(individual)}, {sum(individual)}')
+        risk=calcrisk(individual[x]/sum(individual),individual[y]/sum(individual),listvar[x],listvar[y],cov)
+        listrisk.append(risk)
+    # print(f"listvar {listvar}")
+    # print(listrisk) 
+    # print(sum(listrisk)) 
+    totrisk=sum(listrisk)
     return (totrisk,totyield)
 
 def uniform(low, up, size=None): #creazione popolazione (funzione base)
@@ -91,7 +97,7 @@ toolbox.register("attr_float", uniform, BOUND_LOW, BOUND_UP, NDIM) #genera numer
 toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float) #crea individui con attr_float
 toolbox.register("population", tools.initRepeat, list, toolbox.individual) #ripete funzione individual
 
-#toolbox.register("evaluate", myfitness) #funzione fitness
+# toolbox.register("evaluate", myfitness) #funzione fitness
 toolbox.register("evaluate", benchmarks.zdt1) #funzione fitness
 toolbox.register("mate", tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0) #crossover function
 toolbox.register("mutate", tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0/NDIM) #mutation function
@@ -105,16 +111,15 @@ def main(seed=None):
     CXPB = 0.9
 
     stats = tools.Statistics(lambda ind: ind.fitness.values)
-    stats.register("avg", numpy.mean, axis=0)
-    stats.register("std", numpy.std, axis=0)
-    stats.register("min", numpy.min, axis=0)
-    stats.register("max", numpy.max, axis=0)
+    stats.register("avg", np.mean, axis=0)
+    stats.register("std", np.std, axis=0)
+    stats.register("min", np.min, axis=0)
+    stats.register("max", np.max, axis=0)
 
     logbook = tools.Logbook()
     logbook.header = "gen", "evals", "std", "min", "avg", "max"
 
     pop = toolbox.population(n=MU)
-    print(pop)
     print('pop {}: {} '.format(len(pop), pop))
 
     #  Valutare gli individui con un'idoneità non valida
@@ -167,26 +172,61 @@ def main(seed=None):
 
     return pop, logbook
 
+def middle(stockdf,individual,time):
+    avgtotal=0
+    for i in range(len(stockdf)):
+            low = (stockdf[i]["Low"][time-1])*individual[i]
+            high = (stockdf[i]["High"][time-1])*individual[i]
+            avg=(low+high)/2
+            # print(f"avg {high} + {low} /2 = {avg}")
+            avgtotal+=avg
+    # print(f"avgtotal: {avgtotal}")
+    return avgtotal
 
-def getdfbyindex(index,stocknames):
-    #for stock in os.listdir(PATHCSVFOLDER): 
-    #    names.append(stock[:-4])
-    path=os.path.join(PATHCSVFOLDER, stocknames[index]+'.csv')
-    df=pd.read_csv(path,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
-    return df
+def lucky(stockdf,individual,time):
+    lowtotal=0
+    for i in range(len(stockdf)):
+            low = (stockdf[i]["Low"][time-1])*individual[i]
+            # print(f"Low {low}")
+            lowtotal+=low
+    # print(f"lowtotal: {lowtotal}")
+    return lowtotal
 
-def calcrisk(az1,az2,std1,std2,pearson):
-    risk=az1*az2*std1*std2*pearson
+def murphy(stockdf,individual,time):
+    hightotal=0
+    for i in range(len(stockdf)):
+            high = (stockdf[i]["High"][time-1])*individual[i]
+            # print(f"High {high}")
+            hightotal+=high
+    # print(f"hightotal: {hightotal}")
+    return hightotal
+
+def calcyield(df,col,time): #individual è il numero di azioni possedute di quella azione è un indice di individual[]
+    yeld=[]
+    if time>=2:
+        for i in reversed(range(1,len(df[col][:time]))):
+            yeld.append(np.log(df[col][time-i]/df[col][time-i-1]))
+            # print(i)
+            # print(f'{df[col][time-i]} "+" {df[col][time-i-1]}')
+            # print(f"{col} YIELD: {yeld}")
+        return yeld
+    else: 
+        # print("calcyield: time è minore di 2")
+        yeld=[0]
+        return yeld
+
+def calccov(list1,list2,time):
+    if time>=3:
+        cov=np.cov(list1,list2)
+        cov=float(cov[1][0])
+        # print(f"l1 {list1} l2 {list2} cov {cov}")
+        return cov
+    else:
+        return 0 
+
+def calcrisk(az1,az2,var1,var2,cov):
+    risk=(az1*var1)+(az2*var2)+(2*(az1*az2*cov))
     return risk
-
-def calcpearson(df1,df2,col,time):
-    list1=df1[col].values.tolist()
-    list2=df2[col].values.tolist()
-    pearson=numpy.corrcoef(list1[:time-1],list2[:time-1])
-    pearson=float(pearson[1][0])
-    #print(f"{col} pearson: {pearson}")
-    return pearson
-
 
 def combinator(len):
     comb=[]
@@ -195,17 +235,17 @@ def combinator(len):
     comb=list(iter.combinations(comb, 2))
     return comb
 
-def calcyield(df,stockposs,col,time):
-    i=time
-    yeld = stockposs * numpy.log(df[col][i]/df[col][i-1])
-    #print(f"{col} YIELD: {yeld}")
-    return yeld
-
-def calcdevstd(df,col,time): #time - indice dove finisce il conto
-    list=df[col].values.tolist()
-    std=numpy.std(list[:time-1])
-    #print(f"{col} DEV STD: {std}")
-    return std
+def genstockdf():
+    stockdf=[]
+    stocknames=[]
+    i=0
+    for stock in os.listdir(PATHCSVFOLDER):
+        stocknames.append(stock[:-4])
+        path=os.path.join(PATHCSVFOLDER, stocknames[i]+'.csv')
+        df=pd.read_csv(path,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
+        stockdf.append(df)
+        i+=1
+    return (stockdf,stocknames)
 
 if __name__ == "__main__":
     pop, stats = main()
