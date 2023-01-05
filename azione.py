@@ -1,6 +1,5 @@
 ### 1) prima di entrare nel tournmantet verifico budget >100000 e scarto tutti quelli che l'hanno superato
 ### 2) lanciare nsga2 senza partire con random al secondo giro
-### 3) tenere conto di quanto valgono le nostre azioni al giorno quindi salvare lista di avg e data giorno
 
 import random
 import time as tm
@@ -52,21 +51,21 @@ def main():
             totrisk,totyield=myfitness(stockdf,stocknames,individual,time)
 
             print("--------------------------------------")
-            print(f'MYFITNESS: \nTOT YIELD: {totyield} \n% RISK: {totrisk}')
+            print(f'MYFITNESS: \nYIELD: {totyield} \nRISK: {totrisk}')
             print("--------------------------------------")
 
-            luckycost=lucky(stockdf,individual,time)
-            middlecost=middle(stockdf,individual,time)
-            murphycost=murphy(stockdf,individual,time)
-            valorimin.append(luckycost)
-            valorimid.append(middlecost)
-            valorimax.append(murphycost)
+            mincost=lucky(stockdf,individual,time)
+            avgcost=middle(stockdf,individual,time)
+            maxcost=murphy(stockdf,individual,time)
+            valorimin.append(mincost)
+            valorimid.append(avgcost)
+            valorimax.append(maxcost)
             print("Budget speso:")
-            print(f'min: {luckycost}')
-            print(f'avg: {middlecost}')
-            print(f'max: {murphycost}')
+            print(f'min: {mincost}')
+            print(f'avg: {avgcost}')
+            print(f'max: {maxcost}')
             print("--------------------------------------")
-            # tm.sleep(2)
+            # tm.sleep(5)
 
             # closecost=totbycol(stockdf,individual,time,"Close")
             # print(f'tot close: {closecost}')
@@ -112,15 +111,20 @@ def myfitness(stockdf,stocknames,individual,time): #individual
         listyeld=calcyield(df,"Close",time)
         listvar.append(np.var(listyeld))
         totyield += individual[i]*np.average(listyeld)
+        # print(f"AVG: {np.average(listyeld)} totalyeld {totyield}")
     for coppia in comb:
         x=coppia[0]
         y=coppia[1]
         df1=stockdf[x]
         df2=stockdf[y]
-        cov=calccov(df1,df2,"Close",time)
+        listyeld1=calcyield(df1,"Close",time)
+        listyeld2=calcyield(df2,"Close",time)
+        # cov=calccov(df1,df2,"Close",time) #VEDERE SE È GIUSTO
+        cov=calccov(listyeld1,listyeld2,time)
         # print(f'{coppia},{individual[x]/sum(individual)}, {sum(individual)}')
         risk=calcrisk(individual[x]/sum(individual),individual[y]/sum(individual),listvar[x],listvar[y],cov)
         listrisk.append(risk)
+    # print(f"listvar {listvar}")
     # print(listrisk) 
     # print(sum(listrisk)) 
     totrisk=sum(listrisk)
@@ -159,7 +163,16 @@ def calcrisk(az1,az2,var1,var2,cov):
     risk=(az1*var1)+(az2*var2)+(2*(az1*az2*cov))
     return risk
 
-def calccov(df1,df2,col,time):
+def calccov(list1,list2,time):
+    if time>=3:
+        cov=np.cov(list1,list2)
+        cov=float(cov[1][0])
+        # print(f"l1 {list1} l2 {list2} cov {cov}")
+        return cov
+    else:
+        return 0 #controllare se è giusto!!!!!!!!!!!
+
+def calccovdf(df1,df2,col,time): #non usato
     if time>=2:
         list1=df1[col].values.tolist()
         list2=df2[col].values.tolist()

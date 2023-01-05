@@ -28,5 +28,6 @@ def file_is_hidden(p):
     else:
         return p.startswith('.') #linux-osx
 
-file_list = [f for f in os.listdir(path) if not file_is_hidden(f)]
-print(file_list)
+
+sss=0.00487252686151365+0.011508394195790098
+print(sss)
