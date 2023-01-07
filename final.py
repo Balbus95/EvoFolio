@@ -1,4 +1,4 @@
-with open('log.txt', 'w') as log:
+with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
     
     import random
     import time
@@ -23,7 +23,7 @@ with open('log.txt', 'w') as log:
     else: PATHCSVFOLDER= ABSPATH+"/stock/WEEK" #path per unix
 
     BOUND_LOW, BOUND_UP = 1.0, 10.0
-    NDIM = 2 #dimensione singola tupla default 30
+    NDIM = 2 #dimensione singola tupla default 30 # lunghezza portafoglio (numero di azioni disponibili)
 
     NGEN = 5 #numero generazioni
     MU = 4 #generazione tuple population, deve essere multiplo di 4 (Dimensione popolazione)
@@ -42,9 +42,9 @@ with open('log.txt', 'w') as log:
         return (stockdf,stocknames)
 
     def printpop(pop):
-        print(f"{len(pop)} - ",file=log, end='')
+        print(f"{len(pop)} - ", end='',file=term)
         for i in range(len(pop)):
-            print(f"{str(pop[i])[16:-1]}",file=log, end=',')
+            print(f"{str(pop[i])[16:-1]}", end=',',file=term)
 
     def combinator(len):
             comb=[]
@@ -74,9 +74,9 @@ with open('log.txt', 'w') as log:
     comb=combinator(len(stockdf))
     maxtime=len(stockdf[0])
 
-    print(f"STOCK NAMES: {stocknames}",file=log)
-    print(f"LISTA NOMI == DA AZIONI == STOCK AZIONI ({len(stocknames)} == {len(pop[0])} == {len(stockdf)})",file=log)
-    print(f'\nPOP INIZIALE: ',file=log,end='')
+    print(f"STOCK NAMES: {stocknames}",file=term)
+    print(f"LISTA NOMI == DA AZIONI == STOCK AZIONI ({len(stocknames)} == {len(pop[0])} == {len(stockdf)})",file=term)
+    print(f'\nPOP INIZIALE: ', end='',file=term)
     printpop(pop)
     
     valorimid=[]
@@ -84,6 +84,8 @@ with open('log.txt', 'w') as log:
     valorimax=[]
 
     for tempo in range(1,maxtime+1): #arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY (NUMERO DI RIGHE DA PRENDERE)
+        
+        time.sleep(1/4)
 
         def myfitness(individual):
             listvar=[]
@@ -115,39 +117,41 @@ with open('log.txt', 'w') as log:
         toolbox.register("select", tools.selNSGA2) # funzione di selection nsga2
 
         def main():
+
             global pop
             
             if(len(stocknames)==len(pop[0])==len(stockdf)):
+
                 data=str(pd.to_datetime(stockdf[0]["Date"][tempo-1]))[:-9] # -9 taglia i caratteri dei hh:mm:ss dalla stringa
-                print(f"\n\n\n\n-------------- {tempo} ---- {data} -------------------",file=log)
-                print(f"\n{tempo} ---- {data}")
+                print(f"\n\n\n\n{tempo} ---- {data} ------------------------------------------------",file=term)
+                print(f"\n\n\n\n{tempo} ---- {data} ------------------------------------------------",file=logb)
+                print(f"{tempo} ---- {data}")
 
-                # time.sleep(1/4)
 
-                print(f'\n%%%%%%%%PRIMA NSGA2:',file=log,end='')
+                print(f'\n%%%%%%%%PRIMA NSGA2:',end='',file=term)
                 printpop(pop)
 
                 pop=nsga2(pop)
                 
-                print(f'\n\n%%%%%%%%%DOPO NSGA2:',file=log,end='')
+                print(f'\n\n%%%%%%%%%DOPO NSGA2:',end='',file=term)
                 printpop(pop)
 
-                # mincost=lucky(stockdf,inditest)
-                # avgcost=middle(stockdf,inditest)
-                # maxcost=murphy(stockdf,inditest)
-                # valorimin.append(mincost)
-                # valorimid.append(avgcost)
-                # valorimax.append(maxcost)
-                # print("Budget speso:")
-                # print(f'min: {mincost}')
-                # print(f'avg: {avgcost}')
-                # print(f'max: {maxcost}')
-                # print("--------------------------------------")
+                mincost=lucky(stockdf,pop[0])
+                avgcost=middle(stockdf,pop[0])
+                maxcost=murphy(stockdf,pop[0])
+                valorimin.append(mincost)
+                valorimid.append(avgcost)
+                valorimax.append(maxcost)
+                print("Budget speso:")
+                print(f'min: {mincost}')
+                print(f'avg: {avgcost}')
+                print(f'max: {maxcost}')
+                print("--------------------------------------")
                 # print(f"{valorimax},{valorimid},{valorimin}")
-                # return (mincost,avgcost,maxcost)
+                return (mincost,avgcost,maxcost)
 
             else:
-                print(f"ERRORE: Lunghezza stocknames,pop,stockdf ({len(stocknames)}!={len(pop[0])}!={len(stockdf)})",file=log)
+                print(f"ERRORE: Lunghezza stocknames,pop,stockdf ({len(stocknames)}!={len(pop[0])}!={len(stockdf)})",file=term)
 
         def nsga2(pop):
             stats = tools.Statistics(lambda ind: ind.fitness.values)
@@ -161,7 +165,7 @@ with open('log.txt', 'w') as log:
 
             #  Valutare gli individui con un'idoneità non valida
             # invalid_ind = [ind for ind in pop]
-            invalid_ind = [ind for ind in pop if not ind.fitness.valid]
+            invalid_ind = [ind for ind in pop if not ind.fitness.valid] #entra se valid = !False
             fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
             for ind, fit in zip(invalid_ind, fitnesses): #viene eseguito solo al primo for
                 ind.fitness.values = fit
@@ -172,9 +176,9 @@ with open('log.txt', 'w') as log:
 
             record = stats.compile(pop) #compile() Applica ai dati della sequenza di input ogni funzione registrata e restituisce i risultati come dizionario. 
             logbook.record(gen=0, evals=len(invalid_ind), **record)
-            print(logbook.stream)
+            print(logbook.stream,file=logb)
 
-            print('\n\n\t$$$ Prima di gen',file=log,end='')
+            print('\n\n\t$$$ Prima di gen',end='',file=term)
             printpop(pop)
 
             # Iniziare il processo generazionale
@@ -182,7 +186,7 @@ with open('log.txt', 'w') as log:
                 # Vary the population
                 #scartare individui che costano trobbo con costo>budget
                 
-                print(f'\n\t\tiniz gen {gen}: ',file=log,end='')
+                print(f'\n\t\tiniz gen {gen}: ',end='',file=term)
                 printpop(pop)
 
                 offspring = tools.selTournamentDCD(pop, len(pop)) 
@@ -207,15 +211,15 @@ with open('log.txt', 'w') as log:
                 pop = toolbox.select(pop + offspring, MU)
                 record = stats.compile(pop) #compile()Applica ai dati della sequenza di input ogni funzione registrata e restituisce i risultati come dizionario. 
                 logbook.record(gen=gen, evals=len(invalid_ind), **record)
-                print(logbook.stream)
+                print(logbook.stream,file=logb)
                 
-                print(f'\n\t\tfine gen {gen}: ',file=log,end='')
+                print(f'\n\t\tfine gen {gen}: ',end='',file=term)
                 printpop(pop)
-                print('\n',file=log)
+                print('\n',file=term)
 
-            print("Final population hypervolume is %f" % hypervolume(pop, [11.0, 11.0]))
+            print("Final population hypervolume is %f" % hypervolume(pop, [11.0, 11.0]),file=logb)
 
-            print('\n\t$$$$ Fine di gen',file=log,end='')
+            print('\n\t$$$$ Fine di gen',end='',file=term)
             printpop(pop)
 
             return pop
@@ -280,9 +284,9 @@ with open('log.txt', 'w') as log:
             date=pd.to_datetime(stockdf[0]["Date"]) 
             # plt.gca().xaxis.set_major_locator(mdates.DayLocator(interval=6))
             plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%b %Y')) # '%d-%m-%Y' ----- gca() get current axis, gcf() get current figure 
-            plt.plot(date,valorimax,label="max",color="red")
+            # plt.plot(date,valorimax,label="max",color="red")
             plt.plot(date,valorimid,label="mid",color="blue")
-            plt.plot(date,valorimin,label="min",color="green")
+            # plt.plot(date,valorimin,label="min",color="green")
             plt.title(f"Portfolio")
             plt.xlabel("Data")
             plt.xticks(rotation=20)
@@ -296,4 +300,4 @@ with open('log.txt', 'w') as log:
             main()
 
     # fine for di tempo
-    #grafico(valorimin,valorimid,valorimax)
+    # grafico(valorimin,valorimid,valorimax)
