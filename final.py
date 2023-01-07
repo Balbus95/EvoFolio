@@ -10,10 +10,8 @@ with open('log.txt', 'w') as log:
     import matplotlib.dates as mdates
     import array
 
-    from deap import benchmarks
     from deap.benchmarks.tools import diversity, convergence, hypervolume
-    from deap import creator, base, tools, algorithms
-
+    from deap import creator, base, tools
 
     def isWindows():
         return os.name=="nt"
@@ -24,7 +22,7 @@ with open('log.txt', 'w') as log:
         PATHCSVFOLDER= ABSPATH+"\\stock\\WEEK" #path per windows
     else: PATHCSVFOLDER= ABSPATH+"/stock/WEEK" #path per unix
 
-    BOUND_LOW, BOUND_UP = 0.0, 10.0
+    BOUND_LOW, BOUND_UP = 1.0, 10.0
     NDIM = 2 #dimensione singola tupla default 30
 
     NGEN = 5 #numero generazioni
@@ -43,6 +41,11 @@ with open('log.txt', 'w') as log:
             i+=1
         return (stockdf,stocknames)
 
+    def printpop(pop):
+        print(f"{len(pop)} - ",file=log, end='')
+        for i in range(len(pop)):
+            print(f"{str(pop[i])[16:-1]}",file=log, end=',')
+
     def combinator(len):
             comb=[]
             for i in range(len):
@@ -52,17 +55,15 @@ with open('log.txt', 'w') as log:
 
     def uniform(low, up, size=None): #creazione popolazione (funzione base)
         try:
-            #print("try ",[random.randint(a,b) for a, b in zip(low, up)])
             return [random.randint(a,b) for a, b in zip(low, up)] #viene ripetuto per MU volte
         except TypeError:  #non so perchè fa 4 giri nell'except, returna al try il numero per NDIM volte 
-            #print("catch ",[random.randint(a,b) for a, b in zip([low] * size, [up] * size)])
             return [random.randint(a,b) for a, b in zip([low] * size, [up] * size)]
 
     creator.create("FitnessMulti", base.Fitness, weights=(-1.0, 1.0))
     creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMulti)
 
 
-    random.seed(3)
+    random.seed()
     toolbox = base.Toolbox()
     toolbox.register("attr_float", uniform, BOUND_LOW, BOUND_UP, NDIM) #genera numeri
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float) #crea individui con attr_float
@@ -75,7 +76,8 @@ with open('log.txt', 'w') as log:
 
     print(f"STOCK NAMES: {stocknames}",file=log)
     print(f"LISTA NOMI == DA AZIONI == STOCK AZIONI ({len(stocknames)} == {len(pop[0])} == {len(stockdf)})",file=log)
-    print('POP {}: {} '.format(len(pop), pop),file=log)
+    print(f'\nPOP INIZIALE: ',file=log,end='')
+    printpop(pop)
     
     valorimid=[]
     valorimin=[]
@@ -83,7 +85,7 @@ with open('log.txt', 'w') as log:
 
     for tempo in range(1,maxtime+1): #arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY (NUMERO DI RIGHE DA PRENDERE)
 
-        def myfitness(individual): #individual
+        def myfitness(individual):
             listvar=[]
             listrisk=[]
             for i in range(len(stocknames)):
@@ -100,14 +102,10 @@ with open('log.txt', 'w') as log:
                 df2=stockdf[y]
                 listyeld1=calcyield(df1,"Close",tempo)
                 listyeld2=calcyield(df2,"Close",tempo)
-                # cov=calccov(df1,df2,"Close",tempo) 
-                cov=calccov(listyeld1,listyeld2,tempo) #VEDERE SE È GIUSTO!!!!!!!!!!!!!!!!!!
-                # print(f'{coppia},{individual[x]/sum(individual)}, {sum(individual)}')
-                risk=calcrisk(individual[x]/sum(individual),individual[y]/sum(individual),listvar[x],listvar[y],cov)
+                cov=calccov(listyeld1,listyeld2,tempo)
+                # print(f'{coppia},({individual[x]}{individual[y]}), {sum(individual)}')
+                risk=calcrisk(individual[x]/sum(individual),individual[y]/sum(individual),listvar[x],listvar[y],cov) # crasha se sum(individual)=0
                 listrisk.append(risk)
-            # print(f"listvar {listvar}")
-            # print(listrisk) 
-            # print(sum(listrisk)) 
             totrisk=sum(listrisk)
             return (totrisk,totyield)
 
@@ -117,29 +115,23 @@ with open('log.txt', 'w') as log:
         toolbox.register("select", tools.selNSGA2) # funzione di selection nsga2
 
         def main():
-            # inditest=[1,1]
-            inditest0=[3,9]
-            inditest1=[8,2]
-            inditest2=[5,9]
-            inditest3=[7,10]
+            global pop
+            
             if(len(stocknames)==len(pop[0])==len(stockdf)):
                 data=str(pd.to_datetime(stockdf[0]["Date"][tempo-1]))[:-9] # -9 taglia i caratteri dei hh:mm:ss dalla stringa
-                print(f"\n################################################ {data} ### {tempo} #############################################################")
-                print(f"\n################################################ {data} ### {tempo} #############################################################",file=log)
-                # print(f"AZIONI POSSEDUTE: {inditest}")
-                
-                # totrisk,totyield=myfitness(inditest)
-                # totrisk,totyield=myfitness(inditest2)
-                # totrisk,totyield=myfitness(inditest3)
-                # totrisk,totyield=myfitness(inditest4)
-                print(f'IND: \tIND0: {inditest0} \tIND1: {inditest1}\tIND2: {inditest2}\tIND3: {inditest3}',file=log)
-                print(f'MYFIT: \tF0: {myfitness(inditest0)} \tF1: {myfitness(inditest1)}\tF2: {myfitness(inditest2)}\tF3: {myfitness(inditest3)}',file=log)
-                print("--------------------------------------",file=log)
-                # print(f'MYFITNESS: \nYIELD: {totyield} \nRISK: {totrisk}')
-                # print("--------------------------------------")
+                print(f"\n\n\n\n-------------- {tempo} ---- {data} -------------------",file=log)
+                print(f"\n{tempo} ---- {data}")
 
-                # time.sleep(1/2)
-                nsga2(pop)
+                # time.sleep(1/4)
+
+                print(f'\n%%%%%%%%PRIMA NSGA2:',file=log,end='')
+                printpop(pop)
+
+                pop=nsga2(pop)
+                
+                print(f'\n\n%%%%%%%%%DOPO NSGA2:',file=log,end='')
+                printpop(pop)
+
                 # mincost=lucky(stockdf,inditest)
                 # avgcost=middle(stockdf,inditest)
                 # maxcost=murphy(stockdf,inditest)
@@ -155,10 +147,9 @@ with open('log.txt', 'w') as log:
                 # return (mincost,avgcost,maxcost)
 
             else:
-                print(f"ERRORE: Lunghezza stocknames,individual,stockdf ({len(stocknames)}!={len(pop[0])}!={len(stockdf)})")
+                print(f"ERRORE: Lunghezza stocknames,pop,stockdf ({len(stocknames)}!={len(pop[0])}!={len(stockdf)})",file=log)
 
         def nsga2(pop):
-            
             stats = tools.Statistics(lambda ind: ind.fitness.values)
             stats.register("avg", np.mean, axis=0)
             stats.register("std", np.std, axis=0)
@@ -169,33 +160,30 @@ with open('log.txt', 'w') as log:
             logbook.header = "gen", "evals", "std", "min", "avg", "max"
 
             #  Valutare gli individui con un'idoneità non valida
+            # invalid_ind = [ind for ind in pop]
             invalid_ind = [ind for ind in pop if not ind.fitness.valid]
-            # print('invalid {}: {} '.format(len(invalid_ind), invalid_ind))
             fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
-            fit0=myfitness(pop[0])
-            fit1=myfitness(pop[1])
-            fit2=myfitness(pop[2])
-            fit3=myfitness(pop[3])
-            print(f"fit0 {fit0},fit1 {fit1},fit2 {fit2},fit3 {fit3}",file=log)
-            print(f"pop0 {str(pop[0])[16:-1]},pop1 {str(pop[1])[16:-1]},pop2 {str(pop[2])[16:-1]},pop3 {str(pop[3])[16:-1]}",file=log)
-            print("--------------------------------------",file=log)
-            for ind, fit in zip(invalid_ind, fitnesses):
+            for ind, fit in zip(invalid_ind, fitnesses): #viene eseguito solo al primo for
                 ind.fitness.values = fit
 
             # Questo serve solo ad assegnare la distanza di affollamento agli individui
             # non viene effettuata una vera e propria selezione
             pop = toolbox.select(pop, len(pop))
-            print('nsga2 {}: {} \n'.format(len(pop), pop),file=log)
 
-
-            record = stats.compile(pop) #compile()Applica ai dati della sequenza di input ogni funzione registrata e restituisce i risultati come dizionario. 
+            record = stats.compile(pop) #compile() Applica ai dati della sequenza di input ogni funzione registrata e restituisce i risultati come dizionario. 
             logbook.record(gen=0, evals=len(invalid_ind), **record)
             print(logbook.stream)
+
+            print('\n\n\t$$$ Prima di gen',file=log,end='')
+            printpop(pop)
 
             # Iniziare il processo generazionale
             for gen in range(1, NGEN):
                 # Vary the population
                 #scartare individui che costano trobbo con costo>budget
+                
+                print(f'\n\t\tiniz gen {gen}: ',file=log,end='')
+                printpop(pop)
 
                 offspring = tools.selTournamentDCD(pop, len(pop)) 
                 offspring = [toolbox.clone(ind) for ind in offspring]
@@ -220,11 +208,17 @@ with open('log.txt', 'w') as log:
                 record = stats.compile(pop) #compile()Applica ai dati della sequenza di input ogni funzione registrata e restituisce i risultati come dizionario. 
                 logbook.record(gen=gen, evals=len(invalid_ind), **record)
                 print(logbook.stream)
-                # print('nsga2gen {}: {} '.format(gen, pop),file=log)
+                
+                print(f'\n\t\tfine gen {gen}: ',file=log,end='')
+                printpop(pop)
+                print('\n',file=log)
 
             print("Final population hypervolume is %f" % hypervolume(pop, [11.0, 11.0]))
 
-            return (pop,logbook)
+            print('\n\t$$$$ Fine di gen',file=log,end='')
+            printpop(pop)
+
+            return pop
 
         def middle(stockdf,individual):
             avgtotal=0
@@ -278,7 +272,7 @@ with open('log.txt', 'w') as log:
             else:
                 return 0 
 
-        def calcrisk(az1,az2,var1,var2,cov): #chiedere covarianza!!!!!!!!!!!!
+        def calcrisk(az1,az2,var1,var2,cov): 
             risk=(az1*var1)+(az2*var2)+(2*(az1*az2*cov)) 
             return risk
 

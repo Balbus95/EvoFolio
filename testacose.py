@@ -1,7 +1,22 @@
-with open('filename.txt', 'w') as f:    
-    print("ggg",file=f)
-    
-    
+# with open('filename.txt', 'w') as f:    
+#     print("ggg",file=f)
+def calculateSquare(n):
+    return n*n
+
+
+numbers = (1, 2, 3, 4)
+r = map(calculateSquare, numbers)
+a=r
+print(list(a))
+print(list(r))
+# result.add(5)
+print(r)
+
+# converting map object to set
+# numbersSquare = set(result)
+# print(numbersSquare)
+
+
     # for i in range(10):
     #     def f1():
     #         print(f"f1 {i}")
