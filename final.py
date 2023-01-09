@@ -9,6 +9,7 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
     import matplotlib.pyplot as plt
     import matplotlib.dates as mdates
     import array
+    import pickle
 
     from deap.benchmarks.tools import diversity, convergence, hypervolume
     from deap import creator, base, tools
@@ -23,12 +24,15 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
     else: PATHCSVFOLDER= ABSPATH+"/stock/WEEK" #path per unix
 
     BOUND_LOW, BOUND_UP = 1, 10
-    NDIM = 2 #dimensione singola tupla default 30 # lunghezza portafoglio (numero di azioni disponibili)
+    NDIM = 4 #dimensione singola tupla default 30 # lunghezza portafoglio (numero di azioni disponibili)
 
     NGEN = 5 #numero generazioni
-    MU = 4 #generazione tuple population, deve essere multiplo di 4 (Dimensione popolazione)
+    MU = 100#generazione tuple population, deve essere multiplo di 4 (Dimensione popolazione)
     CXPB = 0.9
     BUDG = 3000
+    SELPARAM= 0.8
+    TOURNPARAM= 0.9
+    MINZERI= 2
 
     def genstockdf():
         stockdf=[]
@@ -65,6 +69,13 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
         # print(f"avgtotal: {avgtotal}")
         return avgtotal
 
+    def contazeri(ind):
+        count=0
+        for num in ind:
+            if(num==0):
+                count+=1
+        return len(ind)-count
+
     def uniform(low, up, size=None): #creazione popolazione (funzione base)
         try:
             return [random.randint(a,b) for a, b in zip(low, up)] #viene ripetuto per MU volte
@@ -93,11 +104,12 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
     valorimid=[]
     valorimin=[]
     valorimax=[]
-    budget_pop=[]
+    statslist=[]
+    listguadagno=[]
 
-    for tempo in range(1,maxtime+1): #arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY (NUMERO DI RIGHE DA PRENDERE)
+    for tempo in range(1,5): #arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY (NUMERO DI RIGHE DA PRENDERE)
         
-        time.sleep(1)
+        # time.sleep(1)
 
         def myfitness(ind):
             listvar=[]
@@ -144,12 +156,15 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
                 print(f'\n%%%%%%%%PRIMA NSGA2:',end='',file=term)
                 printpop(pop)
 
-                ind=[4,1]
-                mid=middle(stockdf,ind)
-                print(mid)      
+                # ind=[4,1]
+                # mid=middle(stockdf,ind)
+                # print(mid)      
 
-                pop=nsga2(pop)
+                pop,logbook =nsga2(pop)
                 
+
+                statslist.append(logbook)
+
                 print(f'\n\n%%%%%%%%%DOPO NSGA2:',end='',file=term)
                 printpop(pop)
 
@@ -182,7 +197,9 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
 
             #  Valutare gli individui con un'idoneità non valida
             # invalid_ind = [ind for ind in pop]
-
+            if tempo>1:
+                bestmid=middle(stockdf,pop[0])
+                listguadagno.append([tempo,bestmid,[i for i in pop[0]]])
             
             # for ind in pop:
             #     invalid_ind=ind
@@ -197,7 +214,8 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
             for ind, fit in zip(invalid_ind, fitnesses): #viene eseguito solo al primo for
                 ind.fitness.values = fit
 
-            # pop = [ind for ind in pop if middle(stockdf,ind)<BUDG] 
+            pop = [ind for ind in pop if contazeri(ind)>=MINZERI] #cancella individua che hanno speso più di BUDG
+            pop = [ind for ind in pop if middle(stockdf,ind)<=BUDG] #cancella individua che hanno speso più di BUDG
             # budgetfunc = toolbox.map(toolbox.budget, pop)
             # for ind, soldi in zip(pop, budgetfunc):
             #     budget_pop.append(BUDG-soldi)
@@ -207,11 +225,13 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
 
 
             # non viene effettuata una vera e propria selezione
-            pop = toolbox.select(pop, len(pop))
+            pop = toolbox.select(pop, int(len(pop)*SELPARAM))
 
             record = stats.compile(pop) #compile() Applica ai dati della sequenza di input ogni funzione registrata e restituisce i risultati come dizionario. 
             logbook.record(gen=0, evals=len(invalid_ind), **record)
             print(logbook.stream,file=logb) #print header e gen0
+
+            print(statslist)
 
             print('\n\n\t$$$ Prima di gen',end='',file=term)
             printpop(pop)
@@ -221,13 +241,11 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
                 # Vary the population
                 #scartare individui che costano trobbo con costo>budget
                 
-                # print(f'\n\t\tturn gen {gen}: ',end='',file=term)
-                # printpop(pop)
                 # pop = [ind for ind in pop if middle(stockdf,ind)<BUDG] 
-                # print(f'\n\t\tdop gen {gen}: ',end='',file=term)
-                # printpop(pop)
+                print(f'\n\t\tdop gen {gen}: ',end='',file=term)
+                printpop(pop)
 
-                offspring = tools.selTournamentDCD(pop, len(pop)) 
+                offspring = tools.selTournamentDCD(pop, int(len(pop)*TOURNPARAM)) 
                 offspring = [toolbox.clone(ind) for ind in offspring]
 
                 for ind1, ind2 in zip(offspring[::2], offspring[1::2]):
@@ -239,6 +257,10 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
                     toolbox.mutate(ind2)
                     del ind1.fitness.values, ind2.fitness.values
 
+                offspring = [ind for ind in offspring if contazeri(ind)>=MINZERI] #cancella individui che hanno minazioni a 0
+                offspring = [ind for ind in offspring if middle(stockdf,ind)<=BUDG] #cancella individua che hanno speso più di BUDG
+            
+
                 # Valutare gli individual con un fitness non valido
                 invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
                 fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
@@ -247,7 +269,8 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
 
                 # Seleziona la popolazione di nuova generazione
                 pop = toolbox.select(pop + offspring, MU)
-                record = stats.compile(pop) #compile()Applica ai dati della sequenza di input ogni funzione registrata e restituisce i risultati come dizionario. 
+                record = stats.compile(pop) #compile() Applica ai dati della sequenza di input ogni funzione registrata e restituisce i risultati come dizionario. 
+                print(record)
                 logbook.record(gen=gen, evals=len(invalid_ind), **record)
                 print(logbook.stream,file=logb) #print riga gen
                 
@@ -258,10 +281,15 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
 
             print("Final population hypervolume is %f" % hypervolume(pop, [11.0, 11.0]),file=logb)
 
-            print('\n\t$$$$ Fine di gen',end='',file=term)
+            print('\n\t$$$$ Fine di nsgaII',end='',file=term)
             printpop(pop)
 
-            return pop
+            if tempo==1:
+                print(pop[0])
+                bestmid=middle(stockdf,pop[0])
+                listguadagno.append([tempo,bestmid,[i for i in pop[0]]])
+
+            return pop ,logbook
 
 
         def lucky(stockdf,ind):
@@ -325,12 +353,11 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
             # plt.gcf().autofmt_xdate()
             plt.show()   
 
-        # def calcbudget(ind,soldi):
-        #     budget= BUDG-soldi
-        #     return 
-
         if __name__ == "__main__":
             main()
 
     # fine for di tempo
     # grafico(valorimin,valorimid,valorimax)
+    pickle.dump(listguadagno,open("guadagni.pickle","wb"))
+    pickle.dump(statslist,open("stats.pickle","wb"))
+    grafico(valorimin,[i[1] for i in listguadagno],valorimax)
