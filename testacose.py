@@ -1,17 +1,25 @@
 # with open('filename.txt', 'w') as f:    
 #     print("ggg",file=f)
-def calculateSquare(n):
-    return n*n
+# def calculateSquare(n):
+#     return n*n
 
+import final as f
 
-numbers = (1, 2, 3, 4)
-r = map(calculateSquare, numbers)
-a=r
-print(list(a))
-print(list(r))
-# result.add(5)
-print(r)
+# numbers = (1, 2, 3, 4)
+# r = map(calculateSquare, numbers)
+# a=r
+# print(list(a))
+# print(list(r))
+# # result.add(5)
+# print(r)
 
+stockdf,stocknames = f.genstockdf()
+ind=[10,8]
+# for i in range(2,10):
+mid=f.middle(stockdf,ind)
+print(mid)
+
+print("aaaaaaaaaaa")
 # converting map object to set
 # numbersSquare = set(result)
 # print(numbersSquare)

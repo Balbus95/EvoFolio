@@ -22,12 +22,13 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
         PATHCSVFOLDER= ABSPATH+"\\stock\\WEEK" #path per windows
     else: PATHCSVFOLDER= ABSPATH+"/stock/WEEK" #path per unix
 
-    BOUND_LOW, BOUND_UP = 1.0, 10.0
+    BOUND_LOW, BOUND_UP = 1, 10
     NDIM = 2 #dimensione singola tupla default 30 # lunghezza portafoglio (numero di azioni disponibili)
 
     NGEN = 5 #numero generazioni
     MU = 4 #generazione tuple population, deve essere multiplo di 4 (Dimensione popolazione)
     CXPB = 0.9
+    BUDG = 3000
 
     def genstockdf():
         stockdf=[]
@@ -53,6 +54,17 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
             comb=list(iter.combinations(comb, 2))
             return comb
 
+    def middle(stockdf,ind):
+        avgtotal=0
+        for i in range(len(stockdf)):
+                low = (stockdf[i]["Low"][tempo-1])*ind[i]
+                high = (stockdf[i]["High"][tempo-1])*ind[i]
+                avg=(low+high)/2
+                # print(f"avg {high} + {low} /2 = {avg}")
+                avgtotal+=avg
+        # print(f"avgtotal: {avgtotal}")
+        return avgtotal
+
     def uniform(low, up, size=None): #creazione popolazione (funzione base)
         try:
             return [random.randint(a,b) for a, b in zip(low, up)] #viene ripetuto per MU volte
@@ -61,7 +73,6 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
 
     creator.create("FitnessMulti", base.Fitness, weights=(-1.0, 1.0))
     creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMulti)
-
 
     random.seed()
     toolbox = base.Toolbox()
@@ -82,12 +93,13 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
     valorimid=[]
     valorimin=[]
     valorimax=[]
+    budget_pop=[]
 
     for tempo in range(1,maxtime+1): #arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY (NUMERO DI RIGHE DA PRENDERE)
         
-        time.sleep(1/4)
+        time.sleep(1)
 
-        def myfitness(individual):
+        def myfitness(ind):
             listvar=[]
             listrisk=[]
             for i in range(len(stocknames)):
@@ -95,7 +107,7 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
                 df=stockdf[i]
                 listyeld=calcyield(df,"Close",tempo)
                 listvar.append(np.var(listyeld))
-                totyield += individual[i]*np.average(listyeld) #chiedere se usare np.mean()!!!!!!!!!!!
+                totyield += ind[i]*np.average(listyeld) #chiedere se usare np.mean()!!!!!!!!!!!
                 # print(f"AVG: {np.average(listyeld)} totalyeld {totyield}")
             for coppia in comb:
                 x=coppia[0]
@@ -106,12 +118,13 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
                 listyeld2=calcyield(df2,"Close",tempo)
                 cov=calccov(listyeld1,listyeld2,tempo)
                 # print(f'{coppia},({individual[x]}{individual[y]}), {sum(individual)}')
-                risk=calcrisk(individual[x]/sum(individual),individual[y]/sum(individual),listvar[x],listvar[y],cov) # crasha se sum(individual)=0
+                risk=calcrisk(ind[x]/sum(ind),ind[y]/sum(ind),listvar[x],listvar[y],cov) # crasha se sum(individual)=0
                 listrisk.append(risk)
             totrisk=sum(listrisk)
             return (totrisk,totyield)
 
         toolbox.register("evaluate", myfitness) #funzione fitness
+        toolbox.register("budget", middle, stockdf) #funzione fitness
         toolbox.register("mate", tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0) #crossover function
         toolbox.register("mutate", tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0/NDIM) #mutation function
         toolbox.register("select", tools.selNSGA2) # funzione di selection nsga2
@@ -131,6 +144,10 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
                 print(f'\n%%%%%%%%PRIMA NSGA2:',end='',file=term)
                 printpop(pop)
 
+                ind=[4,1]
+                mid=middle(stockdf,ind)
+                print(mid)      
+
                 pop=nsga2(pop)
                 
                 print(f'\n\n%%%%%%%%%DOPO NSGA2:',end='',file=term)
@@ -143,9 +160,9 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
                 valorimid.append(avgcost)
                 valorimax.append(maxcost)
                 print("Budget speso:")
-                print(f'min: {mincost}')
+                # print(f'min: {mincost}')
                 print(f'avg: {avgcost}')
-                print(f'max: {maxcost}')
+                # print(f'max: {maxcost}')
                 print("--------------------------------------")
                 # print(f"{valorimax},{valorimid},{valorimin}")
                 return (mincost,avgcost,maxcost)
@@ -165,18 +182,36 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
 
             #  Valutare gli individui con un'idoneità non valida
             # invalid_ind = [ind for ind in pop]
+
+            
+            # for ind in pop:
+            #     invalid_ind=ind
+            #     print(invalid_ind)
+            #     if not ind.fitness.valid:
+            #         print(ind.fitness.valid)
+
             invalid_ind = [ind for ind in pop if not ind.fitness.valid] #entra se valid = !False
             fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
+
+            # Questo serve solo ad assegnare la distanza di affollamento agli individui
             for ind, fit in zip(invalid_ind, fitnesses): #viene eseguito solo al primo for
                 ind.fitness.values = fit
 
-            # Questo serve solo ad assegnare la distanza di affollamento agli individui
+            # pop = [ind for ind in pop if middle(stockdf,ind)<BUDG] 
+            # budgetfunc = toolbox.map(toolbox.budget, pop)
+            # for ind, soldi in zip(pop, budgetfunc):
+            #     budget_pop.append(BUDG-soldi)
+            #     print(budget_pop)
+            #     print("soldi")
+            #     print(ind)
+
+
             # non viene effettuata una vera e propria selezione
             pop = toolbox.select(pop, len(pop))
 
             record = stats.compile(pop) #compile() Applica ai dati della sequenza di input ogni funzione registrata e restituisce i risultati come dizionario. 
             logbook.record(gen=0, evals=len(invalid_ind), **record)
-            print(logbook.stream,file=logb)
+            print(logbook.stream,file=logb) #print header e gen0
 
             print('\n\n\t$$$ Prima di gen',end='',file=term)
             printpop(pop)
@@ -186,8 +221,11 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
                 # Vary the population
                 #scartare individui che costano trobbo con costo>budget
                 
-                print(f'\n\t\tiniz gen {gen}: ',end='',file=term)
-                printpop(pop)
+                # print(f'\n\t\tturn gen {gen}: ',end='',file=term)
+                # printpop(pop)
+                # pop = [ind for ind in pop if middle(stockdf,ind)<BUDG] 
+                # print(f'\n\t\tdop gen {gen}: ',end='',file=term)
+                # printpop(pop)
 
                 offspring = tools.selTournamentDCD(pop, len(pop)) 
                 offspring = [toolbox.clone(ind) for ind in offspring]
@@ -211,11 +249,12 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
                 pop = toolbox.select(pop + offspring, MU)
                 record = stats.compile(pop) #compile()Applica ai dati della sequenza di input ogni funzione registrata e restituisce i risultati come dizionario. 
                 logbook.record(gen=gen, evals=len(invalid_ind), **record)
-                print(logbook.stream,file=logb)
+                print(logbook.stream,file=logb) #print riga gen
                 
                 print(f'\n\t\tfine gen {gen}: ',end='',file=term)
                 printpop(pop)
                 print('\n',file=term)
+
 
             print("Final population hypervolume is %f" % hypervolume(pop, [11.0, 11.0]),file=logb)
 
@@ -224,30 +263,20 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
 
             return pop
 
-        def middle(stockdf,individual):
-            avgtotal=0
-            for i in range(len(stockdf)):
-                    low = (stockdf[i]["Low"][tempo-1])*individual[i]
-                    high = (stockdf[i]["High"][tempo-1])*individual[i]
-                    avg=(low+high)/2
-                    # print(f"avg {high} + {low} /2 = {avg}")
-                    avgtotal+=avg
-            # print(f"avgtotal: {avgtotal}")
-            return avgtotal
 
-        def lucky(stockdf,individual):
+        def lucky(stockdf,ind):
             lowtotal=0
             for i in range(len(stockdf)):
-                    low = (stockdf[i]["Low"][tempo-1])*individual[i]
+                    low = (stockdf[i]["Low"][tempo-1])*ind[i]
                     # print(f"Low {low}")
                     lowtotal+=low
             # print(f"lowtotal: {lowtotal}")
             return lowtotal
 
-        def murphy(stockdf,individual):
+        def murphy(stockdf,ind):
             hightotal=0
             for i in range(len(stockdf)):
-                    high = (stockdf[i]["High"][tempo-1])*individual[i]
+                    high = (stockdf[i]["High"][tempo-1])*ind[i]
                     # print(f"High {high}")
                     hightotal+=high
             # print(f"hightotal: {hightotal}")
@@ -295,6 +324,10 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
             # plt.grid()
             # plt.gcf().autofmt_xdate()
             plt.show()   
+
+        # def calcbudget(ind,soldi):
+        #     budget= BUDG-soldi
+        #     return 
 
         if __name__ == "__main__":
             main()
