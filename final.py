@@ -23,20 +23,15 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
         PATHCSVFOLDER= ABSPATH+"\\stock\\WEEK" #path per windows
     else: PATHCSVFOLDER= ABSPATH+"/stock/WEEK" #path per unix
 
-    BOUND_LOW, BOUND_UP = 1, 10
+    BOUND_LOW, BOUND_UP = 1, 10 # 0,10
     NDIM = 4 #dimensione singola tupla default 30 # lunghezza portafoglio (numero di azioni disponibili)
 
-    NGEN = 5 #numero generazioni
-    MU = 100#generazione tuple population, deve essere multiplo di 4 (Dimensione popolazione)
-    CXPB = 0.9
-    BUDG = 3000
-    SELPARAM= 0.8
-    TOURNPARAM= 0.9
-    MINZERI= 2
+    MU = 24 #generazione tuple population, deve essere multiplo di 4 (Dimensione popolazione)
+
 
     def genstockdf():
         stockdf=[]
-        stocknames=[]
+        stocknames=[] 
         i=0
         for stock in os.listdir(PATHCSVFOLDER):
             stocknames.append(stock[:-4])
@@ -74,7 +69,7 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
         for num in ind:
             if(num==0):
                 count+=1
-        return len(ind)-count
+        return count
 
     def uniform(low, up, size=None): #creazione popolazione (funzione base)
         try:
@@ -107,7 +102,7 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
     statslist=[]
     listguadagno=[]
 
-    for tempo in range(1,5): #arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY (NUMERO DI RIGHE DA PRENDERE)
+    for tempo in range(1,maxtime+1): #arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY (NUMERO DI RIGHE DA PRENDERE)
         
         # time.sleep(1)
 
@@ -136,10 +131,9 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
             return (totrisk,totyield)
 
         toolbox.register("evaluate", myfitness) #funzione fitness
-        toolbox.register("budget", middle, stockdf) #funzione fitness
-        toolbox.register("mate", tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0) #crossover function
-        toolbox.register("mutate", tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0/NDIM) #mutation function
-        toolbox.register("select", tools.selNSGA2) # funzione di selection nsga2
+        toolbox.register("mate", tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0) #crossover func MODIFICATA CON INT
+        toolbox.register("mutate", tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0/NDIM) #mutation func MODIFICATA CON INT
+        toolbox.register("select", tools.selNSGA2) # funzione di selection
 
         def main():
 
@@ -160,6 +154,9 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
                 # mid=middle(stockdf,ind)
                 # print(mid)      
 
+                maxcost=maxazione(stockdf)
+                print(maxcost)
+
                 pop,logbook =nsga2(pop)
                 
 
@@ -168,24 +165,26 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
                 print(f'\n\n%%%%%%%%%DOPO NSGA2:',end='',file=term)
                 printpop(pop)
 
-                mincost=lucky(stockdf,pop[0])
                 avgcost=middle(stockdf,pop[0])
-                maxcost=murphy(stockdf,pop[0])
-                valorimin.append(mincost)
                 valorimid.append(avgcost)
-                valorimax.append(maxcost)
-                print("Budget speso:")
-                # print(f'min: {mincost}')
-                print(f'avg: {avgcost}')
-                # print(f'max: {maxcost}')
+                print(f"Budget speso: avg: {avgcost}")
                 print("--------------------------------------")
                 # print(f"{valorimax},{valorimid},{valorimin}")
-                return (mincost,avgcost,maxcost)
+                return (avgcost)
 
             else:
                 print(f"ERRORE: Lunghezza stocknames,pop,stockdf ({len(stocknames)}!={len(pop[0])}!={len(stockdf)})",file=term)
 
         def nsga2(pop):
+
+            NGEN = 5 #numero generazioni
+            CXPB = 0.9 # probability of mating each individual at each generation 
+            MAXZERI= 4 
+            SELPARAM= 1.0 # 0.8
+            TOURNPARAM= 1.0 # 0.9
+            BUDG = 10000
+
+
             stats = tools.Statistics(lambda ind: ind.fitness.values)
             stats.register("avg", np.mean, axis=0)
             stats.register("std", np.std, axis=0)
@@ -196,26 +195,27 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
             logbook.header = "gen", "evals", "std", "min", "avg", "max"
 
             #  Valutare gli individui con un'idoneità non valida
-            # invalid_ind = [ind for ind in pop]
             if tempo>1:
-                bestmid=middle(stockdf,pop[0])
-                listguadagno.append([tempo,bestmid,[i for i in pop[0]]])
-            
-            # for ind in pop:
-            #     invalid_ind=ind
-            #     print(invalid_ind)
-            #     if not ind.fitness.valid:
-            #         print(ind.fitness.valid)
+                listguadagno.append([tempo,middle(stockdf,pop[0]),[i for i in pop[0]]])
+
 
             invalid_ind = [ind for ind in pop if not ind.fitness.valid] #entra se valid = !False
             fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
-
-            # Questo serve solo ad assegnare la distanza di affollamento agli individui
             for ind, fit in zip(invalid_ind, fitnesses): #viene eseguito solo al primo for
                 ind.fitness.values = fit
 
-            pop = [ind for ind in pop if contazeri(ind)>=MINZERI] #cancella individua che hanno speso più di BUDG
-            pop = [ind for ind in pop if middle(stockdf,ind)<=BUDG] #cancella individua che hanno speso più di BUDG
+            print('\n\n\t$$$ Prima di contazero e middle ',end='',file=term)
+            printpop(pop)
+            pop = [ind for ind in pop if contazeri(ind)<=MAXZERI] #cancella individui che hanno più di MAXZERI azioni a 0
+            pop = [ind for ind in pop if middle(stockdf,ind)<=BUDG] #cancella individui che hanno speso più di BUDG
+            
+            if (len(pop)/4)==int(len(pop)/4):
+                print(f"{len(pop)} è multiplo di 4")
+            else: print(f"{len(pop)} NON è multiplo di 4")
+            
+            print('\n\n\t$$$ dopo contazero e middle ',end='',file=term)
+            printpop(pop)
+
             # budgetfunc = toolbox.map(toolbox.budget, pop)
             # for ind, soldi in zip(pop, budgetfunc):
             #     budget_pop.append(BUDG-soldi)
@@ -224,30 +224,28 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
             #     print(ind)
 
 
-            # non viene effettuata una vera e propria selezione
+            # Questo serve solo ad assegnare la distanza di affollamento agli individui non viene effettuata una vera e propria selezione
             pop = toolbox.select(pop, int(len(pop)*SELPARAM))
 
-            record = stats.compile(pop) #compile() Applica ai dati della sequenza di input ogni funzione registrata e restituisce i risultati come dizionario. 
+            record = stats.compile(pop) #compile() Applica ai dati della sequenza di input ogni funzione registrata e restituisce un dizionario. 
             logbook.record(gen=0, evals=len(invalid_ind), **record)
             print(logbook.stream,file=logb) #print header e gen0
 
-            print(statslist)
+            # print(statslist)
 
-            print('\n\n\t$$$ Prima di gen',end='',file=term)
+            print('\n\n\t$$$ Prima di gen ',end='',file=term)
             printpop(pop)
 
             # Iniziare il processo generazionale
             for gen in range(1, NGEN):
-                # Vary the population
-                #scartare individui che costano trobbo con costo>budget
                 
-                # pop = [ind for ind in pop if middle(stockdf,ind)<BUDG] 
                 print(f'\n\t\tdop gen {gen}: ',end='',file=term)
                 printpop(pop)
 
-                offspring = tools.selTournamentDCD(pop, int(len(pop)*TOURNPARAM)) 
+                # Vary the population            
+                offspring = tools.selTournamentDCD(pop, int(len(pop)*TOURNPARAM))
                 offspring = [toolbox.clone(ind) for ind in offspring]
-
+                
                 for ind1, ind2 in zip(offspring[::2], offspring[1::2]):
 
                     if random.random() <= CXPB:
@@ -257,7 +255,7 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
                     toolbox.mutate(ind2)
                     del ind1.fitness.values, ind2.fitness.values
 
-                offspring = [ind for ind in offspring if contazeri(ind)>=MINZERI] #cancella individui che hanno minazioni a 0
+                offspring = [ind for ind in offspring if contazeri(ind)<=MAXZERI] #cancella individui che hanno maxzeri azioni a 0
                 offspring = [ind for ind in offspring if middle(stockdf,ind)<=BUDG] #cancella individua che hanno speso più di BUDG
             
 
@@ -269,8 +267,7 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
 
                 # Seleziona la popolazione di nuova generazione
                 pop = toolbox.select(pop + offspring, MU)
-                record = stats.compile(pop) #compile() Applica ai dati della sequenza di input ogni funzione registrata e restituisce i risultati come dizionario. 
-                print(record)
+                record = stats.compile(pop) #compile() Applica ai dati della sequenza di input ogni funzione registrata e restituisce un dizionario. 
                 logbook.record(gen=gen, evals=len(invalid_ind), **record)
                 print(logbook.stream,file=logb) #print riga gen
                 
@@ -285,9 +282,7 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
             printpop(pop)
 
             if tempo==1:
-                print(pop[0])
-                bestmid=middle(stockdf,pop[0])
-                listguadagno.append([tempo,bestmid,[i for i in pop[0]]])
+                listguadagno.append([tempo,middle(stockdf,pop[0]),[i for i in pop[0]]])
 
             return pop ,logbook
 
@@ -353,11 +348,20 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
             # plt.gcf().autofmt_xdate()
             plt.show()   
 
+        def maxazione(stockdf):
+            maxcost=0
+            for i in range(len(stockdf)):
+                for row in range(1,len(stockdf[0])+1):
+                    cost = stockdf[i]["Close"][row-1]
+                    if cost > maxcost:
+                        maxcost=cost
+            return maxcost
+
         if __name__ == "__main__":
             main()
 
     # fine for di tempo
     # grafico(valorimin,valorimid,valorimax)
-    pickle.dump(listguadagno,open("guadagni.pickle","wb"))
-    pickle.dump(statslist,open("stats.pickle","wb"))
-    grafico(valorimin,[i[1] for i in listguadagno],valorimax)
+    pickle.dump(listguadagno,open("guadagni.dump","wb"))
+    pickle.dump(statslist,open("stats.dump","wb"))
+    # grafico(valorimin,[i[1] for i in listguadagno],valorimax)

@@ -2,11 +2,11 @@ import pickle
 import os
 from deap import creator, base, tools
 
-# stats=pickle.load(open("stats.pickle","rb"))
-# print(stats)
+stats=pickle.load(open("stats.dump","rb"))
+print(stats)
 
-guadagni=pickle.load(open("guadagni.pickle","rb"))
+guadagni=pickle.load(open("guadagni.dump","rb"))
 # print(guadagni[0])
-for i in guadagni:
+for i in stats:
     print(i[1])
     
