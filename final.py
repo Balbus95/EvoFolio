@@ -10,6 +10,8 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
     import matplotlib.dates as mdates
     import array
     import pickle
+    from tkinter import *
+
 
     from deap.benchmarks.tools import diversity, convergence, hypervolume
     from deap import creator, base, tools
@@ -20,10 +22,11 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
     MAXAZIONI= 14
     MINAZIONI= 10
 
+
     ABSPATH=os.path.dirname(os.path.abspath(__file__))
 
     if(isWindows()): 
-        PATHCSVFOLDER= ABSPATH+"\\stock\\WEEK" #path per windows
+        PATHCSVFOLDER= ABSPATH+"\\stock\\full" #path per windows
     else: PATHCSVFOLDER= ABSPATH+"/stock/full" #path per unix
   
     # pass: msmtis_pwd
@@ -33,17 +36,18 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
         stocknames=[] 
         i=0
         for stock in os.listdir(PATHCSVFOLDER):
-            stocknames.append(stock[:-4])
-            path=os.path.join(PATHCSVFOLDER, stocknames[i]+'.csv')
-            df=pd.read_csv(path,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
-            stockdf.append(df)
-            i+=1
+            if(stock!='.DS_Store'):
+                stocknames.append(stock[:-4])
+                path=os.path.join(PATHCSVFOLDER, stocknames[i]+'.csv')
+                df=pd.read_csv(path,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
+                stockdf.append(df)
+                i+=1
         return (stockdf,stocknames)
 
     def maxazione(stockdf):
         maxcost=0
         for i in range(len(stockdf)):
-            for row in range(1,len(stockdf[0])+1):
+            for row in range(1,len(stockdf[i])+1):
                 cost = stockdf[i]["Close"][row-1]
                 if cost > maxcost:
                     maxcost=cost
@@ -72,18 +76,12 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
         # print(f"avgtotal: {avgtotal}")
         return avgtotal
 
-    def contanonzeri(ind):
+    def conta_azioni_possedute(ind):
         count=0
         for num in ind:
             if(num==0):
                 count+=1
         return len(ind)-count
-
-    def uniform(low, up, size=None): #creazione popolazione (funzione base)
-        try:
-            return [random.randint(a,b) for a, b in zip(low, up)] #viene ripetuto per MU volte
-        except TypeError:  #non so perchè fa 4 giri nell'except, returna al try il numero per NDIM volte 
-            return [random.randint(a,b) for a, b in zip([low] * size, [up] * size)]
 
     def genind(low,up,size):
         ind=[0 for i in range(size)]
@@ -97,6 +95,73 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
             ind[stock]=random.randint(low+1,up)
         return ind
 
+    def set_tkPREF():
+        
+        root = Tk()
+        root.title("Stock Azioni")
+        # root.geometry("700x250")
+        checkboxes = {}
+
+        def genPREF():
+            global PREF
+            if (len(PREF)==0):
+                for box in checkboxes:
+                    PREF.append(box.var.get())
+                print('button',PREF)
+                root.destroy()
+            elif (len(PREF)==len(checkboxes)):
+                PREF=[]
+                for box in checkboxes:
+                    PREF.append(box.var.get())
+                print('button',PREF)
+                root.destroy()
+            else: print("impossibile")
+
+
+        def ShowCheckBoxes(stocknames):
+            Cbcolumn = 0
+            Cbrow = 4
+            Chkcount = 0
+
+            for Checkbox in range(len(stocknames)):
+                name = stocknames[Checkbox]
+                indpref = Checkbox
+                current_var = IntVar()
+                current_box = Checkbutton(root, text=name, variable=current_var)
+                current_box.var = current_var
+                current_box.grid(row=Cbrow, column=Cbcolumn)
+                checkboxes[current_box] = indpref  # so checkbutton object is the key and value is string
+                if Cbcolumn == 4:
+                    Cbcolumn = 0
+                    Cbrow += 1
+                else:
+                    Cbcolumn += 1
+                Chkcount += 1
+
+        Button(root, text='CONFERMA AZIONI PREFERITE', command=genPREF).grid(row=100, column=1, columnspan=3)
+        ShowCheckBoxes(stocknames)# nessuna pref
+        root.mainloop()
+
+    def getTitlePREF(listpref):
+        listpreftitle=[]
+        for i,stock in enumerate(stocknames):
+            if(listpref[i]==1):
+                listpreftitle.append(stock)
+        return listpreftitle
+
+    def closestMultiple(n, x=4):
+        if x>n:
+            return x
+        z=int(x / 2)
+        n=n+z
+        n=n-(n%x)
+        return n
+
+    def uniform(low, up, size=None): #non usata
+        try:
+            return [random.randint(a,b) for a, b in zip(low, up)] #viene ripetuto per MU volte
+        except TypeError:  #non so perchè fa 4 giri nell'except, returna al try il numero per NDIM volte 
+            return [random.randint(a,b) for a, b in zip([low] * size, [up] * size)]
 
     creator.create("FitnessMulti", base.Fitness, weights=(-1.0, 1.0))
     creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMulti)
@@ -105,7 +170,13 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
     comb=combinator(len(stockdf))
     maxtime=len(stockdf[0])
     maxtime=11
-   
+
+
+    PREF=[]
+    set_tkPREF()
+    preftitle=getTitlePREF(PREF)
+    # PREF=[0 for i in range(len(stockdf))] # nessuna pref
+
     BUDG = 100000
     BOUND_LOW, BOUND_UP = 0, int(BUDG/maxazione(stockdf)) # 0,10
     NDIM = len(stockdf) #dimensione singola tupla default 30 # lunghezza portafoglio (numero di azioni disponibili)
@@ -116,8 +187,7 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
     SELPARAM= 0.8 # 0.8
     TOURNPARAM= 0.9 # 0.9
     ELITEPARAM=0.3
-    PREF=[0 for i in range(len(stockdf))] # nessuna pref
-    
+
     random.seed()
     toolbox = base.Toolbox()
     toolbox.register("attr_float", genind, BOUND_LOW, BOUND_UP, NDIM) #genera numeri
@@ -127,7 +197,8 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
 
     print(f"STOCK NAMES: {stocknames}",file=term)
     print(f"LISTA NOMI == DA AZIONI == STOCK AZIONI ({len(stocknames)} == {len(pop[0])} == {len(stockdf)})",file=term)
-    print(f'\nPOP INIZIALE: {len(pop)}', end='',file=term)
+    print(f'LISTA AZIONI PREFERITE: {len(preftitle)} - {preftitle}',file=term)
+    print(f'POP INIZIALE: {len(pop)}', end='',file=term)
     
     for MU in [48,100,200,500]:
         print(f'MU:{MU}', end=', ')
@@ -192,7 +263,7 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
                                     
                                     statslist.append(logbook)
 
-                                    pickle.dump(listguadagno,open("guadagni_NGEN={NGEN}_CXPB={CXPB}_SELPARAM={SELPARAM}_TOURNPARAM={TOURNPARAM}_MU={MU}.dump","wb"))
+                                    pickle.dump(listguadagno,open(f"guadagni_NGEN={NGEN}_CXPB={CXPB}_SELPARAM={SELPARAM}_TOURNPARAM={TOURNPARAM}_MU={MU}.dump","wb"))
                                     pickle.dump(statslist,open(f"stats_NGEN={NGEN}_CXPB={CXPB}_SELPARAM={SELPARAM}_TOURNPARAM={TOURNPARAM}_MU={MU}.dump","wb"))
 
                                     print(f'\n\n%%%%%%%%%DOPO NSGA2: {len(pop)}',end='',file=term)
@@ -223,7 +294,7 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
                                     ind.fitness.values = fit
 
                                 print(f'\n\n\t$$$ Prima di contazero e middle {len(pop)}',end='',file=term)
-                                pop = [ind for ind in pop if (contanonzeri(ind)<=MAXAZIONI and contanonzeri(ind)>=MINAZIONI)] #cancella individui che hanno più di MAXZERI azioni a 0
+                                pop = [ind for ind in pop if (conta_azioni_possedute(ind)>=MINAZIONI and conta_azioni_possedute(ind)<=MAXAZIONI)] #cancella individui che hanno più di MAXZERI azioni a 0
                                 pop = [ind for ind in pop if middle(stockdf,ind)<=BUDG] #cancella individui che hanno speso più di BUDG
 
                                 print(f'\n\n\t$$$ dopo contazero e middle {len(pop)}',end='',file=term)
@@ -240,13 +311,13 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
                                 # Iniziare il processo generazionale
                                 for gen in range(1, NGEN):
                                     
-                                    print(f'\n\t\tdop gen {gen} {len(pop)} ',file=term)
+                                    print(f'\n\t\tiniz gen{gen} {len(pop)} ',file=term)
 
                                     elite=genelite(pop,PREF)
                                     elite = [toolbox.clone(ind) for ind in elite]
 
                                     # Vary the population            
-                                    offspring = tools.selTournamentDCD(pop, int(len(pop)*TOURNPARAM))
+                                    offspring = tools.selTournamentDCD(pop, closestMultiple(int(len(pop)*TOURNPARAM)))
                                     offspring = [toolbox.clone(ind) for ind in offspring]
 
                                     
@@ -270,7 +341,7 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
                                             toolbox.mutate(ind2)
                                             del ind1.fitness.values, ind2.fitness.values
                                     
-                                    offspring = [ind for ind in offspring if (contanonzeri(ind)<=MAXAZIONI and contanonzeri(ind)>=MINAZIONI)] #cancella individui che hanno maxzeri azioni a 0
+                                    offspring = [ind for ind in offspring if (conta_azioni_possedute(ind)>=MINAZIONI and conta_azioni_possedute(ind)<=MAXAZIONI)] #cancella individui che hanno maxzeri azioni a 0
                                     offspring = [ind for ind in offspring if middle(stockdf,ind)<=BUDG] #cancella individua che hanno speso più di BUDG
                                 
 
@@ -343,6 +414,18 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
                                 risk=(az1*var1)+(az2*var2)+(2*(az1*az2*cov)) 
                                 return risk
 
+                            def genelite(pop,pref):
+                                indliked=[]
+                                for i in range(len(pref)):
+                                    if(pref[i]==1):
+                                        indmaxazioni=0
+                                        for ind in pop:
+                                            if(ind[i]>=indmaxazioni):
+                                                indmaxazioni=ind[i]
+                                                maxind=ind
+                                        indliked.append(maxind)
+                                return indliked
+
                             def grafico(min,max):
                                 fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(18, 5))
                                 # date=pd.to_datetime(stockdf[0]["Date"]) 
@@ -363,17 +446,6 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
                                 # plt.gcf().autofmt_xdate()
                                 plt.show()   
 
-                            def genelite(pop,pref):
-                                indliked=[]
-                                for i in range(len(pref)):
-                                    if(pref[i]==1):
-                                        indmaxazioni=0
-                                        for ind in pop:
-                                            if(ind[i]>=indmaxazioni):
-                                                indmaxazioni=ind[i]
-                                                maxind=ind
-                                        indliked.append(maxind)
-                                return indliked
 
                             if __name__ == "__main__":
                                 main()
