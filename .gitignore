@@ -154,6 +154,7 @@ cython_debug/
 
 # Folder view configuration files
 .DS_Store
+*.txt
 Desktop.ini
-output/
 stock/
+output/
