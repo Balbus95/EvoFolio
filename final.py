@@ -1,4 +1,4 @@
-with open('terminal.txt', 'w') as term, open('log.txt', 'w') as logb:
+with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
     
     import time
     import random
@@ -190,6 +190,7 @@ with open('terminal.txt', 'w') as term, open('log.txt', 'w') as logb:
 
     MAXTIME=len(stockdf[0])   
     MAXTIME=12
+    i=0
 
     for MU in [48,100,200,500]:
         pop = toolbox.population(n=MU)
@@ -204,7 +205,7 @@ with open('terminal.txt', 'w') as term, open('log.txt', 'w') as logb:
                     print(f'CXPB:{CXPB}', end=', ')
                     for NGEN in [10,25,50,100]:
                         print(f'NGEN:{NGEN}')
-                        print(f"MU={MU}_TOURNPARAM={TOURNPARAM}_SELPARAM={SELPARAM}_CXPB={CXPB}_NGEN={NGEN} INIZIO")
+                        print(f"{i})MU={MU}_TOURNPARAM={TOURNPARAM}_SELPARAM={SELPARAM}_CXPB={CXPB}_NGEN={NGEN}_MAXTIME={MAXTIME}_INIZIO")
                         statslist=[]
                         listguadagno=[]
                         for tempo in range(1,MAXTIME+1): #arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY (NUMERO DI RIGHE DA PRENDERE)
@@ -249,7 +250,6 @@ with open('terminal.txt', 'w') as term, open('log.txt', 'w') as logb:
                                 print(f"\n\n\n\n{tempo} ---- {data} ------------------------------------------------",file=logb)
                                 print(f"{tempo} ---- {data}")
 
-
                                 print(f'\n%%%%%%%%PRIMA NSGA2: {len(pop)}',end='',file=term)
 
                                 pop,logbook =nsga2(pop)
@@ -278,25 +278,18 @@ with open('terminal.txt', 'w') as term, open('log.txt', 'w') as logb:
                                 for ind, fit in zip(invalid_ind, fitnesses): #viene eseguito solo al primo for
                                     ind.fitness.values = fit
 
-                                print(f'\n\n\t$$$ Prima di contazero e middle {len(pop)}',end='',file=term)
-                                # printpop(pop)
-                                
                                 pop = [ind for ind in pop if (conta_azioni_possedute(ind)>=MINAZIONI and conta_azioni_possedute(ind)<=MAXAZIONI)]
                                 pop = [ind for ind in pop if middle(stockdf,ind)<=BUDG] #cancella individui che hanno speso più di BUDG
 
                                 print(f'\n\n\t$$$ dopo contazero e middle {len(pop)} ',end='',file=term)
                                 # printpop(pop)
-
            
-
                                 # Questo serve solo ad assegnare la distanza di affollamento agli individui non viene effettuata una vera e propria selezione
                                 pop = toolbox.select(pop, int(len(pop)*SELPARAM))
 
                                 record = stats.compile(pop) #compile() Applica ai dati della sequenza di input ogni funzione registrata e restituisce un dizionario. 
                                 logbook.record(gen=0, evals=len(invalid_ind), **record)
                                 print(logbook.stream,file=logb) #print header e gen0
-
-                                print(f'\n\n\t$$$ Prima di gen {len(pop)}',file=term)
 
                                 # Iniziare il processo generazionale
                                 for gen in range(1, NGEN):
@@ -358,8 +351,6 @@ with open('terminal.txt', 'w') as term, open('log.txt', 'w') as logb:
 
 
                                 print("Final population hypervolume is %f" % hypervolume(pop, [11.0, 11.0]),file=logb)
-
-                                print(f'\n\t$$$$ Fine di nsgaII {len(pop)}',end='',file=term)
 
                                 if tempo==1:
                                     listguadagno.append([tempo,middle(stockdf,pop[0]),[i for i in pop[0]]])
@@ -438,10 +429,10 @@ with open('terminal.txt', 'w') as term, open('log.txt', 'w') as logb:
 
                             if __name__ == "__main__":
                                 main()
-                      
-                        pickle.dump(listguadagno,open(f"MU={MU}_TOURNPARAM={TOURNPARAM}_SELPARAM={SELPARAM}_CXPB={CXPB}_NGEN={NGEN}_NDIM={NDIM}_guadagni.pkl","wb"))
-                        pickle.dump(statslist,open(f"MU={MU}_TOURNPARAM={TOURNPARAM}_SELPARAM={SELPARAM}_CXPB={CXPB}_NGEN={NGEN}__NDIM={NDIM}_stats.plk","wb"))
-                        print(f"MU={MU}_TOURNPARAM={TOURNPARAM}_SELPARAM={SELPARAM}_CXPB={CXPB}_NGEN={NGEN} FINE\n")
+                        i+=1
+                        pickle.dump(listguadagno,open(f"output/guadagni/Guadagni_{i}_MU={MU}_TOURNPARAM={TOURNPARAM}_SELPARAM={SELPARAM}_CXPB={CXPB}_NGEN={NGEN}_NDIM={NDIM}.pkl","wb"))
+                        pickle.dump(statslist,open(f"output/stats/Stats_{i}_MU={MU}_TOURNPARAM={TOURNPARAM}_SELPARAM={SELPARAM}_CXPB={CXPB}_NGEN={NGEN}_NDIM={NDIM}.pkl","wb"))
+                        print(f"{i})MU={MU}_TOURNPARAM={TOURNPARAM}_SELPARAM={SELPARAM}_CXPB={CXPB}_NGEN={NGEN} FINE\n")
 
 
     # grafico(valorimin,[i[1] for i in listguadagno],valorimax)
