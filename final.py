@@ -1,7 +1,7 @@
-with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
+with open('terminal.txt', 'w') as term, open('log.txt', 'w') as logb:
     
-    import random
     import time
+    import random
     import os
     import itertools as iter
     import pandas as pd
@@ -12,24 +12,22 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
     import pickle
     from tkinter import *
 
-
     from deap.benchmarks.tools import diversity, convergence, hypervolume
     from deap import creator, base, tools
 
     def isWindows():
         return os.name=="nt"
 
-    MAXAZIONI= 14
-    MINAZIONI= 10
+    MINAZIONI, MAXAZIONI= 10, 14
+    # MINAZIONI, MAXAZIONI= 1, 5
 
 
     ABSPATH=os.path.dirname(os.path.abspath(__file__))
 
     if(isWindows()): 
-        PATHCSVFOLDER= ABSPATH+"\\stock\\full" #path per windows
-    else: PATHCSVFOLDER= ABSPATH+"/stock/full" #path per unix
+        PATHCSVFOLDER= ABSPATH+"\\stock\\WEEK" #path per windows
+    else: PATHCSVFOLDER= ABSPATH+"/stock/WEEK" #path per unix
   
-    # pass: msmtis_pwd
 
     def genstockdf():
         stockdf=[]
@@ -39,7 +37,7 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
             if(stock!='.DS_Store'):
                 stocknames.append(stock[:-4])
                 path=os.path.join(PATHCSVFOLDER, stocknames[i]+'.csv')
-                df=pd.read_csv(path,usecols=["Date","Open", "High", "Low","Close","Adj Close","Volume"])
+                df=pd.read_csv(path,usecols=["Date","Open","High","Low","Close","Adj Close","Volume"])
                 stockdf.append(df)
                 i+=1
         return (stockdf,stocknames)
@@ -67,13 +65,12 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
 
     def middle(stockdf,ind):
         avgtotal=0
-        for i in range(len(stockdf)):
+        for i in range(len(ind)):
+            if(ind[i]!=0):
                 low = (stockdf[i]["Low"][tempo-1])*ind[i]
                 high = (stockdf[i]["High"][tempo-1])*ind[i]
                 avg=(low+high)/2
-                # print(f"avg {high} + {low} /2 = {avg}")
                 avgtotal+=avg
-        # print(f"avgtotal: {avgtotal}")
         return avgtotal
 
     def conta_azioni_possedute(ind):
@@ -144,63 +141,60 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
 
     def getTitlePREF(listpref):
         listpreftitle=[]
-        for i,stock in enumerate(stocknames):
-            if(listpref[i]==1):
-                listpreftitle.append(stock)
+        if listpref:
+            for i,stock in enumerate(stocknames):
+                if(listpref[i]==1):
+                    listpreftitle.append(stock)
+        else: return listpreftitle
         return listpreftitle
 
-    def closestMultiple(n, x=4):
-        if x>n:
-            return x
-        z=int(x / 2)
+    def closestMultiple(n,mult=4):
+        if mult>n:
+            return mult
+        z=int(mult / 2)
         n=n+z
-        n=n-(n%x)
+        n=n-(n%mult)
         return n
-
-    def uniform(low, up, size=None): #non usata
-        try:
-            return [random.randint(a,b) for a, b in zip(low, up)] #viene ripetuto per MU volte
-        except TypeError:  #non so perchè fa 4 giri nell'except, returna al try il numero per NDIM volte 
-            return [random.randint(a,b) for a, b in zip([low] * size, [up] * size)]
 
     creator.create("FitnessMulti", base.Fitness, weights=(-1.0, 1.0))
     creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMulti)
 
     stockdf,stocknames = genstockdf()
     comb=combinator(len(stockdf))
-    maxtime=len(stockdf[0])
-    maxtime=11
 
-
+    # PREF=[0 for i in range(len(stockdf))] # nessuna pref
     PREF=[]
     set_tkPREF()
     preftitle=getTitlePREF(PREF)
-    # PREF=[0 for i in range(len(stockdf))] # nessuna pref
+
+    print(f"STOCK NAMES {len(stocknames)} : {stocknames}",file=term)
+    print(f'AZIONI PREFERITE {len(preftitle)} : {preftitle}',file=term)
 
     BUDG = 100000
-    BOUND_LOW, BOUND_UP = 0, int(BUDG/maxazione(stockdf)) # 0,10
+    BOUND_LOW, BOUND_UP = 0, int((BUDG/maxazione(stockdf))/10)
     NDIM = len(stockdf) #dimensione singola tupla default 30 # lunghezza portafoglio (numero di azioni disponibili)
 
-    MU = 100 #generazione tuple population, deve essere multiplo di 4 (Dimensione popolazione)
-    NGEN = 250 #numero generazioni
-    CXPB = 0.9 # probability of mating each individual at each generation 
-    SELPARAM= 0.8 # 0.8
-    TOURNPARAM= 0.9 # 0.9
-    ELITEPARAM=0.3
 
+    MU = 100 #generazione tuple population, deve essere multiplo di 4 (Dimensione popolazione)
+    TOURNPARAM= 0.9 # 0.9
+    SELPARAM= 0.8 # 0.8
+    CXPB = 0.9 # probability of mating each individual at each generation 
+    NGEN = 250 #numero generazioni
+    ELITEPARAM=0.3
+    
     random.seed()
     toolbox = base.Toolbox()
     toolbox.register("attr_float", genind, BOUND_LOW, BOUND_UP, NDIM) #genera numeri
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float) #crea individui con attr_float
     toolbox.register("population", tools.initRepeat, list, toolbox.individual) #ripete funzione individual
-    pop = toolbox.population(n=MU)
 
-    print(f"STOCK NAMES: {stocknames}",file=term)
-    print(f"LISTA NOMI == DA AZIONI == STOCK AZIONI ({len(stocknames)} == {len(pop[0])} == {len(stockdf)})",file=term)
-    print(f'LISTA AZIONI PREFERITE: {len(preftitle)} - {preftitle}',file=term)
-    print(f'POP INIZIALE: {len(pop)}', end='',file=term)
-    
+    MAXTIME=len(stockdf[0])   
+    MAXTIME=12
+
     for MU in [48,100,200,500]:
+        pop = toolbox.population(n=MU)
+        print(f"LISTA NOMI == DA AZIONI == STOCK AZIONI ({len(stocknames)} == {len(pop[0])} == {len(stockdf)})",file=term)
+        print(f'POP INIZIALE: {len(pop)} ', end='',file=term)
         print(f'MU:{MU}', end=', ')
         for TOURNPARAM in [0.9,0.7,0.5]:
             print(f'TOURNPARAM:{TOURNPARAM}', end=', ')
@@ -210,33 +204,34 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
                     print(f'CXPB:{CXPB}', end=', ')
                     for NGEN in [10,25,50,100]:
                         print(f'NGEN:{NGEN}')
+                        print(f"MU={MU}_TOURNPARAM={TOURNPARAM}_SELPARAM={SELPARAM}_CXPB={CXPB}_NGEN={NGEN} INIZIO")
                         statslist=[]
                         listguadagno=[]
-                        for tempo in range(1,maxtime+1): #arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY (NUMERO DI RIGHE DA PRENDERE)
+                        for tempo in range(1,MAXTIME+1): #arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY (NUMERO DI RIGHE DA PRENDERE)
                             
-                            # time.sleep()
+                            # time.sleep(1)
 
                             def myfitness(ind):
+                                listyeld=[]
                                 listvar=[]
                                 listrisk=[]
-                                for i in range(len(stocknames)):
-                                    totyield=0
-                                    df=stockdf[i]
-                                    listyeld=calcyield(df,"Close",tempo)
-                                    listvar.append(np.var(listyeld))
-                                    totyield += ind[i]*np.average(listyeld) #chiedere se usare np.mean()!!!!!!!!!!!
-                                    # print(f"AVG: {np.average(listyeld)} totalyeld {totyield}")
+                                totyield=0
+                                for i in range(len(ind)):
+                                    if(ind[i]!=0):
+                                        df=stockdf[i]
+                                        yeld=calclistyield(df,"Close",tempo)
+                                        listyeld.append(yeld)
+                                        listvar.append(np.var(yeld))
+                                        totyield += ind[i]*np.mean(yeld)
+                                    else:
+                                        listyeld.append(0)
+                                        listvar.append(0)
                                 for coppia in comb:
-                                    x=coppia[0]
-                                    y=coppia[1]
-                                    df1=stockdf[x]
-                                    df2=stockdf[y]
-                                    listyeld1=calcyield(df1,"Close",tempo)
-                                    listyeld2=calcyield(df2,"Close",tempo)
-                                    cov=calccov(listyeld1,listyeld2,tempo)
-                                    # print(f'{coppia},({individual[x]}{individual[y]}), {sum(individual)}')
-                                    risk=calcrisk(ind[x]/sum(ind),ind[y]/sum(ind),listvar[x],listvar[y],cov) # crasha se sum(individual)=0
-                                    listrisk.append(risk)
+                                    if(ind[coppia[0]]!=0 and ind[coppia[1]]!=0):
+                                        x=coppia[0]
+                                        y=coppia[1]
+                                        risk=calcrisk(ind[x]/sum(ind),ind[y]/sum(ind),listvar[x],listvar[y],calccov(listyeld[x],listyeld[y],tempo))
+                                        listrisk.append(risk)
                                 totrisk=sum(listrisk)
                                 return (totrisk,totyield)
 
@@ -249,29 +244,19 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
 
                                 global pop
                                 
-                                if(len(stocknames)==len(pop[0])==len(stockdf)):
-
-                                    data=str(pd.to_datetime(stockdf[0]["Date"][tempo-1]))[:-9] # -9 taglia i caratteri dei hh:mm:ss dalla stringa
-                                    print(f"\n\n\n\n{tempo} ---- {data} ------------------------------------------------",file=term)
-                                    print(f"\n\n\n\n{tempo} ---- {data} ------------------------------------------------",file=logb)
-                                    print(f"{tempo} ---- {data}")
+                                data=str(pd.to_datetime(stockdf[0]["Date"][tempo-1]))[:-9] # -9 taglia i caratteri dei hh:mm:ss dalla stringa
+                                print(f"\n\n\n\n{tempo} ---- {data} ------------------------------------------------",file=term)
+                                print(f"\n\n\n\n{tempo} ---- {data} ------------------------------------------------",file=logb)
+                                print(f"{tempo} ---- {data}")
 
 
-                                    print(f'\n%%%%%%%%PRIMA NSGA2: {len(pop)}',end='',file=term)
+                                print(f'\n%%%%%%%%PRIMA NSGA2: {len(pop)}',end='',file=term)
 
-                                    pop,logbook =nsga2(pop)
-                                    
-                                    statslist.append(logbook)
+                                pop,logbook =nsga2(pop)
+                                
+                                statslist.append(logbook)
 
-                                    pickle.dump(listguadagno,open(f"guadagni_NGEN={NGEN}_CXPB={CXPB}_SELPARAM={SELPARAM}_TOURNPARAM={TOURNPARAM}_MU={MU}.dump","wb"))
-                                    pickle.dump(statslist,open(f"stats_NGEN={NGEN}_CXPB={CXPB}_SELPARAM={SELPARAM}_TOURNPARAM={TOURNPARAM}_MU={MU}.dump","wb"))
-
-                                    print(f'\n\n%%%%%%%%%DOPO NSGA2: {len(pop)}',end='',file=term)
-
-                                    return
-
-                                else:
-                                    print(f"ERRORE: Lunghezza stocknames,pop,stockdf ({len(stocknames)}!={len(pop[0])}!={len(stockdf)})",file=term)
+                                print(f'\n\n%%%%%%%%%DOPO NSGA2: {len(pop)}',end='',file=term)
 
                             def nsga2(pop):
 
@@ -288,16 +273,21 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
                                 if tempo>1:
                                     listguadagno.append([tempo,middle(stockdf,pop[0]),[i for i in pop[0]]])
 
-                                invalid_ind = [ind for ind in pop if not ind.fitness.valid] #entra se valid = !False
+                                invalid_ind = [ind for ind in pop if not ind.fitness.valid] #entra se valid = !False (entra se valid è vuota)
                                 fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
                                 for ind, fit in zip(invalid_ind, fitnesses): #viene eseguito solo al primo for
                                     ind.fitness.values = fit
 
                                 print(f'\n\n\t$$$ Prima di contazero e middle {len(pop)}',end='',file=term)
-                                pop = [ind for ind in pop if (conta_azioni_possedute(ind)>=MINAZIONI and conta_azioni_possedute(ind)<=MAXAZIONI)] #cancella individui che hanno più di MAXZERI azioni a 0
+                                # printpop(pop)
+                                
+                                pop = [ind for ind in pop if (conta_azioni_possedute(ind)>=MINAZIONI and conta_azioni_possedute(ind)<=MAXAZIONI)]
                                 pop = [ind for ind in pop if middle(stockdf,ind)<=BUDG] #cancella individui che hanno speso più di BUDG
 
-                                print(f'\n\n\t$$$ dopo contazero e middle {len(pop)}',end='',file=term)
+                                print(f'\n\n\t$$$ dopo contazero e middle {len(pop)} ',end='',file=term)
+                                # printpop(pop)
+
+           
 
                                 # Questo serve solo ad assegnare la distanza di affollamento agli individui non viene effettuata una vera e propria selezione
                                 pop = toolbox.select(pop, int(len(pop)*SELPARAM))
@@ -311,12 +301,14 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
                                 # Iniziare il processo generazionale
                                 for gen in range(1, NGEN):
                                     
-                                    print(f'\n\t\tiniz gen{gen} {len(pop)} ',file=term)
+                                    print(f'\n\t\tiniz gen {gen} {len(pop)} ',file=term)
 
                                     elite=genelite(pop,PREF)
                                     elite = [toolbox.clone(ind) for ind in elite]
 
-                                    # Vary the population            
+                                    # Vary the population  
+                                    # print(f"{closestMultiple(int(len(pop)*TOURNPARAM))} ------ {len(pop)}")          
+                                    # offspring = tools.selTournamentDCD(pop, len(pop)*TOURNPARAM) # k must be divisible by four if k == len(individuals),  k must be less than or equal to individuals length
                                     offspring = tools.selTournamentDCD(pop, closestMultiple(int(len(pop)*TOURNPARAM)))
                                     offspring = [toolbox.clone(ind) for ind in offspring]
 
@@ -349,10 +341,15 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
                                     invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
                                     fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
                                     for ind, fit in zip(invalid_ind, fitnesses):
+                                        # print(f'compile {ind} {fit}',file=logb)
                                         ind.fitness.values = fit
 
                                     # Seleziona la popolazione di nuova generazione
                                     pop = toolbox.select(pop + offspring, MU)
+                                    
+                                    # for i in range(len(pop)):
+                                    #     print(f'print {pop[i]} {myfitness(pop[i])}',file=logb)
+                                    
                                     record = stats.compile(pop) #compile() Applica ai dati della sequenza di input ogni funzione registrata e restituisce un dizionario. 
                                     logbook.record(gen=gen, evals=len(invalid_ind), **record)
                                     print(logbook.stream,file=logb) #print riga gen
@@ -371,41 +368,34 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
 
                             def lucky(stockdf,ind):
                                 lowtotal=0
-                                for i in range(len(stockdf)):
+                                for i in range(len(ind)):
+                                    if(ind[i]!=0):
                                         low = (stockdf[i]["Low"][tempo-1])*ind[i]
-                                        # print(f"Low {low}")
                                         lowtotal+=low
-                                # print(f"lowtotal: {lowtotal}")
                                 return lowtotal
 
                             def murphy(stockdf,ind):
                                 hightotal=0
-                                for i in range(len(stockdf)):
+                                for i in range(len(ind)):
+                                    if(ind[i]!=0):
                                         high = (stockdf[i]["High"][tempo-1])*ind[i]
-                                        # print(f"High {high}")
                                         hightotal+=high
-                                # print(f"hightotal: {hightotal}")
                                 return hightotal
 
-                            def calcyield(df,col,tempo): #individual è il numero di azioni possedute di quella azione è un indice di individual[]
-                                yeld=[]
+                            def calclistyield(df,col,tempo): 
+                                listyield=[]
                                 if tempo>=2:
                                     for i in reversed(range(1,len(df[col][:tempo]))):
-                                        yeld.append(np.log(df[col][tempo-i]/df[col][tempo-i-1]))
-                                        # print(i)
-                                        # print(f'{df[col][tempo-i]} "+" {df[col][tempo-i-1]}')
-                                        # print(f"{col} YIELD: {yeld}")
-                                    return yeld
+                                        listyield.append(np.log(df[col][tempo-i]/df[col][tempo-i-1]))
+                                    return listyield
                                 else: 
-                                    # print("calcyield: tempo è minore di 2")
-                                    yeld=[0]
-                                    return yeld
+                                    listyield=[0]
+                                    return listyield
 
                             def calccov(list1,list2,tempo):
                                 if tempo>=3:
                                     cov=np.cov(list1,list2)
                                     cov=float(cov[1][0])
-                                    # print(f"l1 {list1} l2 {list2} cov {cov}")
                                     return cov
                                 else:
                                     return 0 
@@ -429,7 +419,7 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
                             def grafico(min,max):
                                 fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(18, 5))
                                 # date=pd.to_datetime(stockdf[0]["Date"]) 
-                                date=pd.to_datetime(stockdf[0]["Date"][:maxtime-1]) 
+                                date=pd.to_datetime(stockdf[0]["Date"][:MAXTIME-1]) 
                                 # plt.gca().xaxis.set_major_locator(mdates.DayLocator(interval=6))
                                 plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%b %Y')) # '%d-%m-%Y' ----- gca() get current axis, gcf() get current figure 
                                 # plt.plot(date,valorimax,label="max",color="red")
@@ -446,8 +436,15 @@ with open('terminalout.txt', 'w') as term, open('log.txt', 'w') as logb:
                                 # plt.gcf().autofmt_xdate()
                                 plt.show()   
 
-
                             if __name__ == "__main__":
                                 main()
+                      
+                        pickle.dump(listguadagno,open(f"MU={MU}_TOURNPARAM={TOURNPARAM}_SELPARAM={SELPARAM}_CXPB={CXPB}_NGEN={NGEN}_NDIM={NDIM}_guadagni.pkl","wb"))
+                        pickle.dump(statslist,open(f"MU={MU}_TOURNPARAM={TOURNPARAM}_SELPARAM={SELPARAM}_CXPB={CXPB}_NGEN={NGEN}__NDIM={NDIM}_stats.plk","wb"))
+                        print(f"MU={MU}_TOURNPARAM={TOURNPARAM}_SELPARAM={SELPARAM}_CXPB={CXPB}_NGEN={NGEN} FINE\n")
+
 
     # grafico(valorimin,[i[1] for i in listguadagno],valorimax)
+
+
+    # pass: msmtis_pwd

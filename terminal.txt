@@ -1,0 +1,194 @@
+STOCK NAMES 47 : ['A2', 'AAPL', 'ADS', 'AIR', 'AMGN', 'AMP', 'AMZN', 'AXP', 'BA', 'BMED', 'CAT', 'CNHI', 'CPR', 'CRM', 'CSCO', 'CVX', 'DIS', 'DOW', 'EL', 'ENEL', 'ENI', 'G', 'GOOG', 'GS', 'HD', 'HON', 'IBM', 'INTC', 'JNJ', 'JPM', 'KO', 'MCD', 'META', 'MMM', 'MRK', 'MSFT', 'NKE', 'PG', 'STLA', 'TRV', 'TSLA', 'UCG', 'UNH', 'V', 'VZ', 'WBA', 'WMT']
+AZIONI PREFERITE 2 : ['WBA', 'WMT']
+LISTA NOMI == DA AZIONI == STOCK AZIONI (47 == 47 == 47)
+POP INIZIALE: 48 
+
+
+
+1 ---- 2019-12-30 ------------------------------------------------
+
+%%%%%%%%PRIMA NSGA2: 48
+
+	$$$ Prima di contazero e middle 48
+
+	$$$ dopo contazero e middle 48 
+
+	$$$ Prima di gen 38
+
+		iniz gen 1 38 
+
+		fine gen 1 48: 
+
+		iniz gen 2 48 
+
+		fine gen 2 48: 
+
+		iniz gen 3 48 
+
+		fine gen 3 48: 
+
+		iniz gen 4 48 
+
+		fine gen 4 48: 
+
+		iniz gen 5 48 
+
+		fine gen 5 48: 
+
+		iniz gen 6 48 
+
+		fine gen 6 48: 
+
+		iniz gen 7 48 
+
+		fine gen 7 48: 
+
+		iniz gen 8 48 
+
+		fine gen 8 48: 
+
+		iniz gen 9 48 
+
+		fine gen 9 48: 
+
+	$$$$ Fine di nsgaII 48
+
+%%%%%%%%%DOPO NSGA2: 48
+
+
+
+2 ---- 2020-01-06 ------------------------------------------------
+
+%%%%%%%%PRIMA NSGA2: 48
+
+	$$$ Prima di contazero e middle 48
+
+	$$$ dopo contazero e middle 48 
+
+	$$$ Prima di gen 38
+
+		iniz gen 1 38 
+
+		fine gen 1 48: 
+
+		iniz gen 2 48 
+
+		fine gen 2 48: 
+
+		iniz gen 3 48 
+
+		fine gen 3 48: 
+
+		iniz gen 4 48 
+
+		fine gen 4 48: 
+
+		iniz gen 5 48 
+
+		fine gen 5 48: 
+
+		iniz gen 6 48 
+
+		fine gen 6 48: 
+
+		iniz gen 7 48 
+
+		fine gen 7 48: 
+
+		iniz gen 8 48 
+
+		fine gen 8 48: 
+
+		iniz gen 9 48 
+
+		fine gen 9 48: 
+
+	$$$$ Fine di nsgaII 48
+
+%%%%%%%%%DOPO NSGA2: 48
+
+
+
+3 ---- 2020-01-13 ------------------------------------------------
+
+%%%%%%%%PRIMA NSGA2: 48
+
+	$$$ Prima di contazero e middle 48
+
+	$$$ dopo contazero e middle 48 
+
+	$$$ Prima di gen 38
+
+		iniz gen 1 38 
+
+		fine gen 1 48: 
+
+		iniz gen 2 48 
+
+		fine gen 2 48: 
+
+		iniz gen 3 48 
+
+		fine gen 3 48: 
+
+		iniz gen 4 48 
+
+		fine gen 4 48: 
+
+		iniz gen 5 48 
+
+		fine gen 5 48: 
+
+		iniz gen 6 48 
+
+		fine gen 6 48: 
+
+		iniz gen 7 48 
+
+		fine gen 7 48: 
+
+		iniz gen 8 48 
+
+		fine gen 8 48: 
+
+		iniz gen 9 48 
+
+		fine gen 9 48: 
+
+	$$$$ Fine di nsgaII 48
+
+%%%%%%%%%DOPO NSGA2: 48
+
+
+
+4 ---- 2020-01-20 ------------------------------------------------
+
+%%%%%%%%PRIMA NSGA2: 48
+
+	$$$ Prima di contazero e middle 48
+
+	$$$ dopo contazero e middle 48 
+
+	$$$ Prima di gen 38
+
+		iniz gen 1 38 
+
+		fine gen 1 48: 
+
+		iniz gen 2 48 
+
+		fine gen 2 48: 
+
+		iniz gen 3 48 
+
+		fine gen 3 48: 
+
+		iniz gen 4 48 
+
+		fine gen 4 48: 
+
+		iniz gen 5 48 
+
+		fine gen 5 48: 
+
+		iniz gen 6 48 
