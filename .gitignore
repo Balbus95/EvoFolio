@@ -156,5 +156,5 @@ cython_debug/
 .DS_Store
 *.txt
 Desktop.ini
-stock/
 output/
+stock/test/
