@@ -3,6 +3,7 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+import datetime
 
 ABSPATH=os.path.dirname(os.path.abspath(__file__))
 
@@ -35,62 +36,91 @@ def genstockdf():
 stockdf,stocknames= genstockdf()
 MAXTIME=24
 
-def grafico(min,max):
+def graficoriskyield(minrisk,minyield,maxrisk,maxyield,avgrisk,avgyield,stdrisk,stdyield):
     plt.style.use("ggplot")
-    fig, (ax1,ax2) = plt.subplots(nrows=2, ncols=1, sharex=True)
-    # fig, ((ax1,ax2),(ax3,ax4)) = plt.subplots(nrows=2, ncols=2, sharex=True)
-    date=pd.to_datetime(stockdf[0]["Date"][:MAXTIME]) 
-    # plt.gca().xaxis.set_major_locator(mdates.DayLocator(interval=6))
-    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%b %Y')) # '%d-%m-%Y' ----- gca() get current axis, gcf() get current figure 
-    # plt.plot(date,valorimax,label="max",color="red")
-    ax1.plot(date,min,label="min",color="blue")
+    
+    fig, ((ax1,ax2,ax3,ax4)) = plt.subplots(nrows=4, ncols=1, sharex=True,figsize=(10, 8))
+    # fig, (ax1,ax2) = plt.subplots(nrows=2, ncols=1, sharex=True,figsize=(10, 7))
+    date = pd.date_range(stockdf[0]["Date"][0],stockdf[0]["Date"][MAXTIME-1], periods=len(maxrisk))
+    # plt.gca().xaxis.set_major_locator(mdates.DayLocator(interval=8))
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%d-%m-%Y')) # '%d-%m-%Y' ----- gca() get current axis, gcf() get current figure 
+    
+    
+    ax1.plot(date,minrisk,label="minrisk",color="blue")
+    ax1.plot(date,maxrisk,label="maxrisk",color="red")
     ax1.set_ylabel("% Rischio")
-    ax1.set_title(f"Portfolio")
-    # ax3.plot(date,max,label="max",color="green")
-    # ax4.plot(date,max,label="max",color="black")
+    ax1.set_title(f"Popolazione")
+    ax1.legend()
 
-    ax2.plot(date,max,label="max",color="red")
+    ax2.plot(date,minyield,label="minyield",color="green")
+    ax2.plot(date,maxyield,label="maxyield",color="blue")
     ax2.set_xlabel("Data")
     ax2.set_ylabel("Rendimento")
-    # ax1.set_xticks(rotation=20)
-    fig.legend()
-    # plt.grid()
-    # plt.gcf().autofmt_xdate()
+    ax2.legend()
+
+    ax3.plot(date,avgrisk,label="avgrisk",color="blue")
+    ax3.plot(date,avgyield,label="avgyield",color="green")
+    ax3.set_xlabel("Data")
+    ax3.set_ylabel("AVG")
+    ax3.legend()
+
+    ax4.plot(date,stdrisk,label="stdrisk",color="blue")
+    ax4.plot(date,stdyield,label="stdyield",color="green")
+    ax4.set_xlabel("Data")
+    ax4.set_ylabel("STD")
+    ax4.legend()
+
+    plt.gcf().autofmt_xdate()
     plt.show()   
 
-stats=pickle.load(open(f"{PATHSTATSFOLDER}Logbook_1_MU=48_TOURNPARAM=0.9_SELPARAM=0.8_CXPB=0.9_NGEN=10_NDIM=47_MAXTIME=24","rb"))
-listriskmin=[]
-listriskmax=[]
-listyieldmin=[]
-listyieldmax=[]
-i=0
-for stat in stats:
-    gen, max, min = stat.select("gen", "max", "min")
-    print(stat)
-    print(f'minrisk: {min[i][0]}')
-    print(f'maxrisk: {max[i][0]}')
-    print(f'minyield: {min[i][1]}')
-    print(f'maxyield: {max[i][1]}')
-    minrisk=min[i][0]
-    maxrisk=max[i][0]
-    minyield=min[i][1]
-    maxyield=max[i][1]
-    listriskmin.append(minrisk)
-    listriskmax.append(maxrisk)
-    listyieldmin.append(minyield)
-    listyieldmax.append(maxyield)
-    #print(str(gen),' sdsd',str(max))
+stats=pickle.load(open(f"{PATHSTATSFOLDER}old\\MU=100_TOURNPARAM=0.7_SELPARAM=0.6_CXPB=0.9_NGEN=25__NDIM=47_stats.plk","rb"))
+with open('logb.txt', 'w') as logb:
+    for i in range(len(stats)):
+        print(stats[i],file=logb)
+listminrisk=[]
+listminyield=[]
 
-# print(f'listriskmin: {listriskmin}')
-# print(f'listriskmax: {listriskmax}')
-# print(f'listyieldmin: {listyieldmin}')
-# print(f'listyieldmax: {listyieldmax}')
+listmaxrisk=[]
+listmaxyield=[]
+
+listavgrisk=[]
+listavgyield=[]
+
+liststdrisk=[]
+liststdyield=[]
+
+for logb in stats:
+    for stat in logb:
+
+        minrisk=stat["min"][0]
+        minyield=stat["min"][1]
+        listminrisk.append(minrisk)
+        listminyield.append(minyield)
+
+        maxrisk=stat["max"][0]
+        maxyield=stat["max"][1]
+        listmaxrisk.append(maxrisk)
+        listmaxyield.append(maxyield)
+
+        avgrisk=stat["avg"][0]
+        avgyield=stat["avg"][1]
+        listavgrisk.append(avgrisk)
+        listavgyield.append(avgyield)
+
+        stdrisk=stat["std"][0]
+        stdyield=stat["std"][1]
+        liststdrisk.append(stdrisk)
+        liststdyield.append(stdyield)
+
+
+if(len(listminrisk)==len(listminyield)==len(listmaxrisk)==len(listmaxyield)==len(listavgrisk)==len(listavgyield)==len(liststdrisk)==len(liststdyield)):
+    print(f'lunghezza logbook: {len(listmaxyield)}')
 
 
 # grafico(listriskmin,listriskmax)
 # grafico(listyieldmin,listyieldmax)
 
-grafico(listriskmax,listyieldmin)
+graficoriskyield(listminrisk,listminyield,listmaxrisk,listmaxyield,listavgrisk,listavgyield,liststdrisk,liststdyield)
 
 # pickle.dump(listyieldmax,open(f"output/MUs.plk","wb"))
 # x=pickle.load(open("stock\\MUs.plk","rb"))

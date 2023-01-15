@@ -189,23 +189,23 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
     toolbox.register("population", tools.initRepeat, list, toolbox.individual) #ripete funzione individual
 
     MAXTIME=len(stockdf[0])   
-    MAXTIME=24
+    MAXTIME=6
     i=0
 
-    for MU in [24,48,100,200,500]:
-        pop = toolbox.population(n=MU)
-        print(f"LISTA NOMI == DA AZIONI == STOCK AZIONI ({len(stocknames)} == {len(pop[0])} == {len(stockdf)})",file=term)
-        print(f'POP INIZIALE: {len(pop)} ', end='',file=term)
-        print(f'MU:{MU}', end=', ')
-        for TOURNPARAM in [0.9,0.7,0.5]:
-            print(f'TOURNPARAM:{TOURNPARAM}', end=', ')
-            for SELPARAM in [0.8,0.6,0.4]:
-                print(f'SELPARAM:{SELPARAM}', end=', ')
-                for CXPB in [0.9,0.7,0.5]:
-                    print(f'CXPB:{CXPB}', end=', ')
+    for TOURNPARAM in [0.9,0.7,0.5]:
+        print(f'TOURNPARAM:{TOURNPARAM}', end=', ')
+        for SELPARAM in [0.8,0.6,0.4]:
+            print(f'SELPARAM:{SELPARAM}', end=', ')
+            for CXPB in [0.9,0.7,0.5]:
+                print(f'CXPB:{CXPB}', end=', ')
+                for MU in [100,200,500]:
+                    pop = toolbox.population(n=MU)
+                    print(f"LISTA NOMI == DA AZIONI == STOCK AZIONI ({len(stocknames)} == {len(pop[0])} == {len(stockdf)})",file=term)
+                    print(f'POP INIZIALE: {len(pop)} ', end='',file=term)
+                    print(f'MU:{MU}', end=', ')
                     for NGEN in [10,25,50,100]:
                         print(f'NGEN:{NGEN}')
-                        print(f"{i})MU={MU}_TOURNPARAM={TOURNPARAM}_SELPARAM={SELPARAM}_CXPB={CXPB}_NGEN={NGEN}_NDIM={NDIM}_MAXTIME={MAXTIME}_INIZIO")
+                        print(f"{i+1})MU={MU}_NGEN={NGEN}_NDIM={NDIM}_MAXTIME={MAXTIME}_TOURNPARAM={TOURNPARAM}_SELPARAM={SELPARAM}_CXPB={CXPB}_INIZIO")
                         statslist=[]
                         listguadagno=[]
                         for tempo in range(1,MAXTIME+1): #arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY (NUMERO DI RIGHE DA PRENDERE)
@@ -261,8 +261,8 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
                             def nsga2(pop):
 
                                 stats = tools.Statistics(lambda ind: ind.fitness.values)
-                                # stats.register("avg", np.mean, axis=0)
-                                # stats.register("std", np.std, axis=0)
+                                stats.register("avg", np.mean, axis=0)
+                                stats.register("std", np.std, axis=0)
                                 stats.register("min", np.min, axis=0)
                                 stats.register("max", np.max, axis=0)
 
@@ -410,12 +410,12 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
                             def grafico(min,max):
                                 fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(18, 5))
                                 # date=pd.to_datetime(stockdf[0]["Date"]) 
-                                date=pd.to_datetime(stockdf[0]["Date"][:MAXTIME-1]) 
+                                date=pd.to_datetime(stockdf[0]["Date"][:MAXTIME]) 
                                 # plt.gca().xaxis.set_major_locator(mdates.DayLocator(interval=6))
-                                plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%b %Y')) # '%d-%m-%Y' ----- gca() get current axis, gcf() get current figure 
+                                plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%d %b %Y')) # '%d-%m-%Y' ----- gca() get current axis, gcf() get current figure 
                                 # plt.plot(date,valorimax,label="max",color="red")
-                                ax[1,0].plot(date,[i[1] for i in min],label="min",color="blue")
-                                ax[1,1].plot(date,[y[0] for y in max],label="max",color="red")
+                                ax[1,0].plot(date,min,label="min",color="blue")
+                                ax[1,1].plot(date,max,label="max",color="red")
                                 # plt.plot(date,list,label="max1",color="red")
                                 # plt.plot(date,valorimin,label="min",color="green")
                                 plt.title(f"Portfolio")
@@ -429,13 +429,14 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
 
                             if __name__ == "__main__":
                                 main()
+                            
+                        # grafico([logb[0]['max'][0] for logb in statslist],[logb[0]['min'][1] for logb in statslist])
                         i+=1
-                        pickle.dump(listguadagno,open(f"output/guadagni/Guadagni_{i}_MU={MU}_TOURNPARAM={TOURNPARAM}_SELPARAM={SELPARAM}_CXPB={CXPB}_NGEN={NGEN}_NDIM={NDIM}_MAXTIME={MAXTIME}.dump","wb"))
-                        pickle.dump(statslist,open(f"output/logbook/Logbook_{i}_MU={MU}_TOURNPARAM={TOURNPARAM}_SELPARAM={SELPARAM}_CXPB={CXPB}_NGEN={NGEN}_NDIM={NDIM}_MAXTIME={MAXTIME}.dump","wb"))
-                        print(f"{i})MU={MU}_TOURNPARAM={TOURNPARAM}_SELPARAM={SELPARAM}_CXPB={CXPB}_NGEN={NGEN} FINE\n")
+                        pickle.dump(listguadagno,open(f"output/guadagni/Guadagni_{i}_MU={MU}_NGEN={NGEN}_NDIM={NDIM}_MAXTIME={MAXTIME}_TOURNPARAM={TOURNPARAM}_SELPARAM={SELPARAM}_CXPB={CXPB}.dump","wb"))
+                        pickle.dump(statslist,open(f"output/logbook/Logbook_{i}_MU={MU}_NGEN={NGEN}_NDIM={NDIM}_MAXTIME={MAXTIME}_TOURNPARAM={TOURNPARAM}_SELPARAM={SELPARAM}_CXPB={CXPB}.dump","wb"))
+                        print(f"{i})MU={MU}_NGEN={NGEN}_NDIM={NDIM}_MAXTIME={MAXTIME}_TOURNPARAM={TOURNPARAM}_SELPARAM={SELPARAM}_CXPB={CXPB} FINE\n")
 
 
-    # grafico(valorimin,[i[1] for i in listguadagno],valorimax)
 
 
     # pass: msmtis_pwd
