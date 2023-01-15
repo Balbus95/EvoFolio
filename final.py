@@ -189,7 +189,7 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
     toolbox.register("population", tools.initRepeat, list, toolbox.individual) #ripete funzione individual
 
     MAXTIME=len(stockdf[0])   
-    MAXTIME=6
+    MAXTIME=8
     i=0
 
     for TOURNPARAM in [0.9,0.7,0.5]:
