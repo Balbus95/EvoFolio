@@ -19,8 +19,8 @@ if(isWindows()):
 else: PATHCSVFOLDER= ABSPATH+"/stock/WEEK" #path per unix
 
 if(isWindows()): 
-    PATHSTATSFOLDER= ABSPATH+"\\output\\logbook" #path per windows
-else: PATHSTATSFOLDER= ABSPATH+"/output/logbook" #path per unix
+    PATHLOGBFOLDER= ABSPATH+"\\output\\logbook" #path per windows
+else: PATHLOGBFOLDER= ABSPATH+"/output/logbook" #path per unix
 
   
 def genstockdf():
@@ -39,21 +39,21 @@ def genstockdf():
 
 def gendumpnames():
         
-        def lensort(filename):
-            return len(filename[:filename.find("_MU")])
+    def lensort(filename):
+        return len(filename[:filename.find("_MU")])
 
-        dumpnames=[]
-        pattern="*.dump"
-        i=0
-        for dump in os.listdir(PATHSTATSFOLDER):
-            if(dump!='.DS_Store' and fnmatch.fnmatch(dump, pattern)):
-                dumpnames.append(dump[:-5])
-                i+=1
-        dumpnames.sort(key=lensort)
-        return dumpnames
+    dumpnames=[]
+    pattern="*.dump"
+    i=0
+    for dump in os.listdir(PATHLOGBFOLDER):
+        if(dump!='.DS_Store' and fnmatch.fnmatch(dump, pattern)):
+            dumpnames.append(dump[:-5])
+            i+=1
+    dumpnames.sort(key=lensort)
+    return dumpnames
 
 def tkloadlogbook(dumpnames):
-    
+  
     win = Tk()
     win.title("Logbook Disponibili")
     win.geometry("600x80")
@@ -62,7 +62,7 @@ def tkloadlogbook(dumpnames):
         win.destroy()
 
     def funprov(event):
-        path=os.path.join(PATHSTATSFOLDER, file.get()+'.dump')
+        path=os.path.join(PATHLOGBFOLDER, file.get()+'.dump')
         plotlogbook(path)
 
     file=StringVar()
@@ -78,52 +78,23 @@ def tkloadlogbook(dumpnames):
     win.mainloop()   
 
 def plotlogbook(path):
-    filename=path[len(PATHSTATSFOLDER)+1:-5]
+    filename=path[len(PATHLOGBFOLDER)+1:-5]
     stats=pickle.load(open(path,"rb"))
-
     listavgrisk=[]
     listavgyield=[]
-
-    # listminrisk=[]
-    # listminyield=[]
-
-    # listmaxrisk=[]
-    # listmaxyield=[]
-
-    # liststdrisk=[]
-    # liststdyield=[]
-
     for logb in stats:
         for stat in logb:
-
             avgrisk=stat["avg"][0]
             avgyield=stat["avg"][1]
             listavgrisk.append(avgrisk)
             listavgyield.append(avgyield)
-
-            # stdrisk=stat["std"][0]
-            # stdyield=stat["std"][1]
-            # liststdrisk.append(stdrisk)
-            # liststdyield.append(stdyield)
-
-            # minrisk=stat["min"][0]
-            # minyield=stat["min"][1]
-            # listminrisk.append(minrisk)
-            # listminyield.append(minyield)
-
-            # maxrisk=stat["max"][0]
-            # maxyield=stat["max"][1]
-            # listmaxrisk.append(maxrisk)
-            # listmaxyield.append(maxyield)
-
-    # graficoriskyield(listminrisk,listminyield,listmaxrisk,listmaxyield,listavgrisk,listavgyield,liststdrisk,liststdyield,filename)
     graficoriskyield(listavgrisk,listavgyield,filename)
 
 def graficoriskyield(listavgrisk,listavgyield,filename="File"):
-# def graficoriskyield(listminrisk,listminyield,listmaxrisk,listmaxyield,listavgrisk,listavgyield,liststdrisk,liststdyield,filename):
+    
     plt.style.use("ggplot")
     # fig, ((ax1,ax2,ax3,ax4)) = plt.subplots(nrows=4, ncols=1, sharex=True,figsize=(10, 8))
-    fig, (ax1,ax2) = plt.subplots(nrows=2, ncols=1, sharex=True,figsize=(10, 6))
+    fig, (ax1,ax2) = plt.subplots(nrows=2, ncols=1, sharex=True,figsize=(9, 6))
 
     maxtime=int(filename[filename.find("MAXTIME=")+8:filename.find("_TOURNPARAM")])
     date = pd.date_range(stockdf[0]["Date"][0],stockdf[0]["Date"][maxtime-1], periods=len(listavgrisk))
@@ -134,18 +105,12 @@ def graficoriskyield(listavgrisk,listavgyield,filename="File"):
   
     fig.suptitle(f"{filename}")
     
-    # ax1.plot(date,listmaxyield,label=f"Y max: {max(listmaxyield)}",color="red")
     ax1.plot(date,listavgyield,label=f"Y avg: {np.mean(listavgyield)}",color="green")
-    # ax1.plot(date,listminyield,label=f"Y min: {min(listminyield)}",color="blue")
-    # ax1.plot(date,liststdyield,label=f"Y std: {np.std(liststdyield)}",color="black")
     ax1.set_title(f"Yield")
     ax1.set_ylabel("Yield")
     ax1.legend()
 
-    # ax2.plot(date,listmaxrisk,label=f"R max: {max(listmaxrisk)}",color="red")
     ax2.plot(date,listavgrisk,label=f"R avg: {np.mean(listavgrisk)}",color="green")
-    # ax2.plot(date,listminrisk,label=f"R min: {min(listminrisk)}",color="blue")
-    # ax2.plot(date,liststdrisk,label=f"R std: {np.std(liststdrisk)}",color="black")
     ax2.set_title(f"Risk")
     ax2.set_ylabel("% Rischio")
     ax2.set_xlabel(f'Data\n Dal {stockdf[0]["Date"][0]} al {stockdf[0]["Date"][maxtime-1]} maxtime:{maxtime}')
@@ -155,7 +120,7 @@ def graficoriskyield(listavgrisk,listavgyield,filename="File"):
     plt.gcf().autofmt_xdate()
     plt.show()
 
-
 stockdf,stocknames= genstockdf()
-# dumpnames=gendumpnames()
 tkloadlogbook(gendumpnames())
+# for df in stockdf:
+#     print(df.index[-1])

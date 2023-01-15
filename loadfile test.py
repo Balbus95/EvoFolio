@@ -52,6 +52,53 @@ def gendumpnames():
         dumpnames.sort(key=lensort)
         return dumpnames
 
+def loadfileconcheckbox(dumpnames): #non usata
+    
+    win = Tk()
+    win.title("Logbook Disponibili")
+    # win.geometry("700x250")
+    checkboxes = {}
+
+    def genlist_to_load():
+        global LOAD
+        if (len(LOAD)==0):
+            for box in checkboxes:
+                LOAD.append(box.var.get())
+            print('button',LOAD)
+            win.destroy()
+        elif (len(LOAD)==len(checkboxes)):
+            LOAD=[]
+            for box in checkboxes:
+                LOAD.append(box.var.get())
+            print('button',LOAD)
+            win.destroy()
+        else: print("impossibile")
+
+
+    def ShowCheckBoxes(dumpnames):
+        Cbcolumn = 0
+        Cbrow = 4
+        Chkcount = 0
+
+        for Checkbox in range(len(dumpnames)):
+            name = dumpnames[Checkbox]
+            indpref = Checkbox
+            current_var = IntVar()
+            current_box = Checkbutton(win, text=name, variable=current_var)
+            current_box.var = current_var
+            current_box.grid(row=Cbrow, column=Cbcolumn)
+            checkboxes[current_box] = indpref  # so checkbutton object is the key and value is string
+            if Cbcolumn == 0:
+                Cbcolumn = 0
+                Cbrow += 1
+            else:
+                Cbcolumn += 1
+            Chkcount += 1
+
+    Button(win, text='PLOT FILE SELEZIONATO', command=genlist_to_load).grid(row=1000, column=0, columnspan=3)
+    ShowCheckBoxes(dumpnames)
+    win.mainloop()
+
 def tkloadlogbook(dumpnames):
     
     win = Tk()
@@ -116,11 +163,11 @@ def plotlogbook(path):
             # listmaxrisk.append(maxrisk)
             # listmaxyield.append(maxyield)
 
-    # graficoriskyield(listminrisk,listminyield,listmaxrisk,listmaxyield,listavgrisk,listavgyield,liststdrisk,liststdyield,filename)
     graficoriskyield(listavgrisk,listavgyield,filename)
+    # graficoriskyield(listminrisk,listminyield,listmaxrisk,listmaxyield,listavgrisk,listavgyield,liststdrisk,liststdyield,filename)
 
-def graficoriskyield(listavgrisk,listavgyield,filename="File"):
 # def graficoriskyield(listminrisk,listminyield,listmaxrisk,listmaxyield,listavgrisk,listavgyield,liststdrisk,liststdyield,filename):
+def graficoriskyield(listavgrisk,listavgyield,filename="File"):
     plt.style.use("ggplot")
     # fig, ((ax1,ax2,ax3,ax4)) = plt.subplots(nrows=4, ncols=1, sharex=True,figsize=(10, 8))
     fig, (ax1,ax2) = plt.subplots(nrows=2, ncols=1, sharex=True,figsize=(10, 6))
@@ -157,5 +204,5 @@ def graficoriskyield(listavgrisk,listavgyield,filename="File"):
 
 
 stockdf,stocknames= genstockdf()
-# dumpnames=gendumpnames()
-tkloadlogbook(gendumpnames())
+dumpnames=gendumpnames()
+tkloadlogbook(dumpnames)

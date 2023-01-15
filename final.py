@@ -2,7 +2,7 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
     
     import time
     import random
-    import os
+    import os,fnmatch
     import itertools as iter
     import pandas as pd
     import numpy as np
@@ -32,9 +32,10 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
     def genstockdf():
         stockdf=[]
         stocknames=[] 
+        pattern="*.csv"
         i=0
         for stock in os.listdir(PATHCSVFOLDER):
-            if(stock!='.DS_Store'):
+            if(stock!='.DS_Store'and fnmatch.fnmatch(stock, pattern)):
                 stocknames.append(stock[:-4])
                 path=os.path.join(PATHCSVFOLDER, stocknames[i]+'.csv')
                 df=pd.read_csv(path,usecols=["Date","Open","High","Low","Close","Adj Close","Volume"])
@@ -205,7 +206,7 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
                     print(f'MU:{MU}', end=', ')
                     for NGEN in [10,25,50,100]:
                         print(f'NGEN:{NGEN}')
-                        print(f"{i+1})MU={MU}_NGEN={NGEN}_NDIM={NDIM}_MAXTIME={MAXTIME}_TOURNPARAM={TOURNPARAM}_SELPARAM={SELPARAM}_CXPB={CXPB}_INIZIO")
+                        print(f"{i+1})MU={MU}_NGEN={NGEN}_NDIM={NDIM}_MAXTIME={MAXTIME}_TOURNPARAM={TOURNPARAM}_SELPARAM={SELPARAM}_CXPB={CXPB}_INIZIO STOCK={len(stocknames)}")
                         statslist=[]
                         listguadagno=[]
                         for tempo in range(1,MAXTIME+1): #arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY (NUMERO DI RIGHE DA PRENDERE)
@@ -407,7 +408,7 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
                                         indliked.append(maxind)
                                 return indliked
 
-                            def grafico(min,max):
+                            def grafico(min,max): # non usato
                                 fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(18, 5))
                                 # date=pd.to_datetime(stockdf[0]["Date"]) 
                                 date=pd.to_datetime(stockdf[0]["Date"][:MAXTIME]) 
