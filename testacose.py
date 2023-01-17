@@ -117,15 +117,15 @@ def plotlogbook(path):
             # listmaxyield.append(maxyield)
 
     # graficoriskyield(listminrisk,listminyield,listmaxrisk,listmaxyield,listavgrisk,listavgyield,liststdrisk,liststdyield,filename)
-    graficoriskyield(listavgrisk,listavgyield,filename)
+    plotlogbook(listavgrisk,listavgyield,filename)
 
-def graficoriskyield(listavgrisk,listavgyield,filename="File"):
-# def graficoriskyield(listminrisk,listminyield,listmaxrisk,listmaxyield,listavgrisk,listavgyield,liststdrisk,liststdyield,filename):
+def plotlogbook(listavgrisk,listavgyield,filename="File"): #non usato
+
     plt.style.use("ggplot")
     # fig, ((ax1,ax2,ax3,ax4)) = plt.subplots(nrows=4, ncols=1, sharex=True,figsize=(10, 8))
     fig, (ax1,ax2) = plt.subplots(nrows=2, ncols=1, sharex=True,figsize=(10, 6))
 
-    maxtime=int(filename[filename.find("MAXTIME=")+8:filename.find("_TOURNPARAM")])
+    maxtime=int(filename[filename.find("MAXTIME=")+8:filename.find("TOURNPARAM")-1])
     date = pd.date_range(stockdf[0]["Date"][0],stockdf[0]["Date"][maxtime-1], periods=len(listavgrisk))
     
     # plt.gca().xaxis.set_major_locator(mdates.DayLocator(interval=8))
@@ -134,24 +134,42 @@ def graficoriskyield(listavgrisk,listavgyield,filename="File"):
   
     fig.suptitle(f"{filename}")
     
-    # ax1.plot(date,listmaxyield,label=f"Y max: {max(listmaxyield)}",color="red")
-    ax1.plot(date,listavgyield,label=f"Y avg: {np.mean(listavgyield)}",color="green")
-    # ax1.plot(date,listminyield,label=f"Y min: {min(listminyield)}",color="blue")
-    # ax1.plot(date,liststdyield,label=f"Y std: {np.std(liststdyield)}",color="black")
-    ax1.set_title(f"Yield")
+    ax1.plot(date,listavgyield,label=f"Yield avg: {np.mean(listavgyield)}",color="green")
+    ax1.set_title(f"Average")
     ax1.set_ylabel("Yield")
-    ax1.legend()
+    # ax1.legend()
 
-    # ax2.plot(date,listmaxrisk,label=f"R max: {max(listmaxrisk)}",color="red")
-    ax2.plot(date,listavgrisk,label=f"R avg: {np.mean(listavgrisk)}",color="green")
-    # ax2.plot(date,listminrisk,label=f"R min: {min(listminrisk)}",color="blue")
-    # ax2.plot(date,liststdrisk,label=f"R std: {np.std(liststdrisk)}",color="black")
-    ax2.set_title(f"Risk")
-    ax2.set_ylabel("% Rischio")
-    ax2.set_xlabel(f'Data\n Dal {stockdf[0]["Date"][0]} al {stockdf[0]["Date"][maxtime-1]} maxtime:{maxtime}')
-    ax2.legend()
+    ax2.plot(date,listavgrisk,label=f"Risk avg: {np.mean(listavgrisk)}",color="red")
+    ax2.set_ylabel("Risk")
+    ax2.set_xlabel(f'Data\n Dal {stockdf[0]["Date"][0]} al {stockdf[0]["Date"][maxtime-1]}')
+    # ax2.legend()
     
+    fig.legend(loc="lower right", title="", frameon=False)
     # fig.legend()
+    plt.gcf().autofmt_xdate()
+    plt.show()
+
+def plotguadagni(listguadagni,bestind,filename="File"): #non usato
+
+    plt.style.use("ggplot")
+    fig, ax = plt.subplots(figsize=(13, 6))
+    
+    maxtime=int(filename[filename.find("MAXTIME=")+8:filename.find("TOURNPARAM")-1])
+    date = pd.date_range(stockdf[0]["Date"][0],stockdf[0]["Date"][maxtime-1], periods=len(listguadagni))
+    bestdate=pd.to_datetime(stockdf[0]["Date"][bestind[0]-1])
+    # plt.gca().xaxis.set_major_locator(mdates.DayLocator(interval=8))
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%d-%m-%Y')) # '%d-%m-%Y' ----- gca() get current axis, gcf() get current figure 
+    # plt.gca().yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.8f}'))
+  
+    fig.suptitle(f"Best Portfolio: {str(bestdate)[:-9]} - {bestind[1]}")
+    
+    ax.set_title(f"{filename}")
+    ax.plot(date,listguadagni,label=f"Portfogli",color="blue",marker='o')
+    ax.scatter(bestdate,(np.max(listguadagni)),s=125,label=f"Guadagno Miglior Portfolio: {np.max(listguadagni)}")
+    ax.set_ylabel("$$$")
+    ax.set_xlabel(f'Data\nDal {stockdf[0]["Date"][0]} al {stockdf[0]["Date"][maxtime-1]}') 
+    
+    fig.legend(loc="lower left", title="", frameon=False)
     plt.gcf().autofmt_xdate()
     plt.show()
 
@@ -159,3 +177,7 @@ def graficoriskyield(listavgrisk,listavgyield,filename="File"):
 stockdf,stocknames= genstockdf()
 # dumpnames=gendumpnames()
 tkloadlogbook(gendumpnames())
+
+
+# # for df in stockdf:
+# #     print(df.index[-1])

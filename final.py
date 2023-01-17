@@ -19,7 +19,6 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
         return os.name=="nt"
 
     MINAZIONI, MAXAZIONI= 10, 14
-    # MINAZIONI, MAXAZIONI= 1, 5
 
 
     ABSPATH=os.path.dirname(os.path.abspath(__file__))
@@ -43,6 +42,11 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
                 i+=1
         return (stockdf,stocknames)
 
+    def printpop(pop):
+        print(f"{len(pop)} - ", end='',file=term)
+        for i in range(len(pop)):
+            print(f"{str(pop[i])[16:-1]}", end=',',file=term)
+  
     def maxazione(stockdf):
         maxcost=0
         for i in range(len(stockdf)):
@@ -51,11 +55,6 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
                 if cost > maxcost:
                     maxcost=cost
         return maxcost
-
-    def printpop(pop):
-        print(f"{len(pop)} - ", end='',file=term)
-        for i in range(len(pop)):
-            print(f"{str(pop[i])[16:-1]}", end=',',file=term)
 
     def combinator(len):
             comb=[]
@@ -105,15 +104,15 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
             if (len(PREF)==0):
                 for box in checkboxes:
                     PREF.append(box.var.get())
-                print('button',PREF)
+                print('PREFERITI SETTATI',PREF)
                 win.destroy()
             elif (len(PREF)==len(checkboxes)):
                 PREF=[]
                 for box in checkboxes:
                     PREF.append(box.var.get())
-                print('button',PREF)
+                # print('PREFERITI SETTATI',PREF)
                 win.destroy()
-            else: print("impossibile")
+            else: print("IMPOSSIBILE")
 
 
         def ShowCheckBoxes(stocknames):
@@ -127,8 +126,9 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
                 current_var = IntVar()
                 current_box = Checkbutton(win, text=name, variable=current_var)
                 current_box.var = current_var
+                # current_box.pack()
                 current_box.grid(row=Cbrow, column=Cbcolumn)
-                checkboxes[current_box] = indpref  # so checkbutton object is the key and value is string
+                checkboxes[current_box] = indpref 
                 if Cbcolumn == 4:
                     Cbcolumn = 0
                     Cbrow += 1
@@ -136,8 +136,11 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
                     Cbcolumn += 1
                 Chkcount += 1
 
+        # label = Label(win, text="Seleziona azioni preferite")
+        # # label.pack()
         Button(win, text='CONFERMA AZIONI PREFERITE', command=genPREF).grid(row=100, column=1, columnspan=3)
-        ShowCheckBoxes(stocknames)# nessuna pref
+        # button.pack()
+        ShowCheckBoxes(stocknames)
         win.mainloop()
 
     def getTitlePREF(listpref):
@@ -168,8 +171,8 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
     set_tkPREF()
     preftitle=getTitlePREF(PREF)
 
-    print(f"STOCK NAMES {len(stocknames)} : {stocknames}",file=term)
-    print(f'AZIONI PREFERITE {len(preftitle)} : {preftitle}',file=term)
+    print(f"\nSTOCK NAMES {len(stocknames)} :\n{stocknames}\n")
+    print(f'AZIONI PREFERITE {len(preftitle)} : {preftitle}\n')
 
     BUDG = 100000
     BOUND_LOW, BOUND_UP = 0, int((BUDG/maxazione(stockdf))/10)
@@ -183,7 +186,7 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
     NGEN = 250 #numero generazioni
     ELITEPARAM=0.3
     
-    random.seed(404)
+    random.seed()
     toolbox = base.Toolbox()
     toolbox.register("attr_float", genind, BOUND_LOW, BOUND_UP, NDIM) #genera numeri
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float) #crea individui con attr_float
@@ -191,22 +194,22 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
 
     MAXTIME=len(stockdf[0])   
     MAXTIME=8
+    
     i=0
-
     for TOURNPARAM in [0.9,0.7,0.5]:
         print(f'TOURNPARAM:{TOURNPARAM}', end=', ')
         for SELPARAM in [0.8,0.6,0.4]:
             print(f'SELPARAM:{SELPARAM}', end=', ')
             for CXPB in [0.9,0.7,0.5]:
                 print(f'CXPB:{CXPB}', end=', ')
-                for MU in [100,200,500]:
+                for MU in [10,500,200,100]:
                     pop = toolbox.population(n=MU)
-                    print(f"LISTA NOMI == DA AZIONI == STOCK AZIONI ({len(stocknames)} == {len(pop[0])} == {len(stockdf)})",file=term)
-                    print(f'POP INIZIALE: {len(pop)} ', end='',file=term)
+                    # print(f"LISTA NOMI == DA AZIONI == STOCK AZIONI ({len(stocknames)} == {len(pop[0])} == {len(stockdf)})",file=term)
+                    # print(f'POP INIZIALE: {len(pop)} ', end='',file=term)
                     print(f'MU:{MU}', end=', ')
-                    for NGEN in [10,25,50,100]:
+                    for NGEN in [5,100,50,25,10]:
                         print(f'NGEN:{NGEN}')
-                        print(f"{i+1})MU={MU}_NGEN={NGEN}_NDIM={NDIM}_MAXTIME={MAXTIME}_TOURNPARAM={TOURNPARAM}_SELPARAM={SELPARAM}_CXPB={CXPB}_INIZIO STOCK={len(stocknames)}")
+                        print(f"{i+1}) MU={MU} NGEN={NGEN} NDIM={NDIM} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} - STARTED")
                         statslist=[]
                         listguadagno=[]
                         for tempo in range(1,MAXTIME+1): #arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY (NUMERO DI RIGHE DA PRENDERE)
@@ -243,21 +246,17 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
                             toolbox.register("select", tools.selNSGA2) # funzione di selection
 
                             def main():
-
                                 global pop
-                                
+
                                 data=str(pd.to_datetime(stockdf[0]["Date"][tempo-1]))[:-9] # -9 taglia i caratteri dei hh:mm:ss dalla stringa
-                                print(f"\n\n\n\n{tempo} ---- {data} ------------------------------------------------",file=term)
-                                print(f"\n\n\n\n{tempo} ---- {data} ------------------------------------------------\n",file=logb)
+                                # print(f"\n\n\n\n{tempo} ---- {data} ------------------------------------------------",file=term)
+                                # print(f"\n\n\n\n{tempo} ---- {data} ------------------------------------------------\n",file=logb)
                                 print(f"{tempo} ---- {data}")
-
-                                print(f'\n%%%%%%%%PRIMA NSGA2: {len(pop)}',end='',file=term)
-
+                                # print(f'\n%%%%%%%%PRIMA NSGA2: {len(pop)}',end='',file=term)
                                 pop,logbook =nsga2(pop)
-                                
+                                # print(f'\n\n%%%%%%%%%DOPO NSGA2: {len(pop)}',end='',file=term)
                                 statslist.append(logbook)
 
-                                print(f'\n\n%%%%%%%%%DOPO NSGA2: {len(pop)}',end='',file=term)
 
                             def nsga2(pop):
 
@@ -282,7 +281,7 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
                                 pop = [ind for ind in pop if (conta_azioni_possedute(ind)>=MINAZIONI and conta_azioni_possedute(ind)<=MAXAZIONI)]
                                 pop = [ind for ind in pop if middle(stockdf,ind)<=BUDG] #cancella individui che hanno speso più di BUDG
 
-                                print(f'\n\n\t$$$ dopo contazero e middle {len(pop)} ',end='',file=term)
+                                # print(f'\n\n\t$$$ dopo contazero e middle {len(pop)} ',end='',file=term)
                                 # printpop(pop)
                                 
                                 # Questo serve solo ad assegnare la distanza di affollamento agli individui non viene effettuata una vera e propria selezione
@@ -290,12 +289,13 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
 
                                 record = stats.compile(pop) #compile() Applica ai dati della sequenza di input ogni funzione registrata e restituisce un dizionario. 
                                 logbook.record(gen=0, evals=len(invalid_ind), **record)
-                                print(logbook.stream,file=logb) #print header e gen0
+                                # print(logbook.stream) #print header e gen0
+                                # print(logbook.stream,file=logb) #print header e gen0
 
                                 # Iniziare il processo generazionale
                                 for gen in range(1, NGEN):
                                     
-                                    print(f'\n\t\tiniz gen {gen} {len(pop)} ',file=term)
+                                    # print(f'\n\t\tiniz gen {gen} {len(pop)} ',file=term)
 
                                     elite=genelite(pop,PREF)
                                     elite = [toolbox.clone(ind) for ind in elite]
@@ -335,44 +335,30 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
                                     invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
                                     fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
                                     for ind, fit in zip(invalid_ind, fitnesses):
-                                        print(f'invalid_ind {ind} {fit}',file=logb)
+                                        # print(f'invalid_ind {ind} {fit}',file=logb)
                                         ind.fitness.values = fit
 
                                     # Seleziona la popolazione di nuova generazione
                                     pop = toolbox.select(pop + offspring, MU) #vedere se aggiungere elite
                                     
-                                    for i in range(len(pop)):
-                                        print(f'pop myfit {pop[i]} {myfitness(pop[i])}',file=logb)
+                                    # for i in range(len(pop)):
+                                    #     print(f'pop myfit {pop[i]} {myfitness(pop[i])}',file=logb)
                                     
                                     record = stats.compile(pop) #compile() Applica ai dati della sequenza di input ogni funzione registrata e restituisce un dizionario. 
                                     logbook.record(gen=gen, evals=len(invalid_ind), **record)
-                                    print(logbook.stream,file=logb) #print riga gen
+                                    # print(logbook.stream) #print riga gen
+                                    # print(logbook.stream,file=logb) #print riga gen
                                     
-                                    print(f'\n\t\tfine gen {gen} {len(pop)}: ',file=term)
+                                    # print(f'\n\t\tfine gen {gen} {len(pop)}: ',file=term)
 
 
-                                print("Final population hypervolume is %f" % hypervolume(pop, [11.0, 11.0]),file=logb)
+                                # print("Final population hypervolume is %f" % hypervolume(pop, [11.0, 11.0]))
+                                # print("Final population hypervolume is %f" % hypervolume(pop, [11.0, 11.0]),file=logb)
 
                                 if tempo==1:
                                     listguadagno.append([tempo,middle(stockdf,pop[0]),[i for i in pop[0]]])
 
                                 return pop ,logbook
-
-                            def lucky(stockdf,ind):
-                                lowtotal=0
-                                for i in range(len(ind)):
-                                    if(ind[i]!=0):
-                                        low = (stockdf[i]["Low"][tempo-1])*ind[i]
-                                        lowtotal+=low
-                                return lowtotal
-
-                            def murphy(stockdf,ind):
-                                hightotal=0
-                                for i in range(len(ind)):
-                                    if(ind[i]!=0):
-                                        high = (stockdf[i]["High"][tempo-1])*ind[i]
-                                        hightotal+=high
-                                return hightotal
 
                             def calclistyield(df,col,tempo): 
                                 listyield=[]
@@ -408,36 +394,29 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
                                         indliked.append(maxind)
                                 return indliked
 
-                            def grafico(min,max): # non usato
-                                fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(18, 5))
-                                # date=pd.to_datetime(stockdf[0]["Date"]) 
-                                date=pd.to_datetime(stockdf[0]["Date"][:MAXTIME]) 
-                                # plt.gca().xaxis.set_major_locator(mdates.DayLocator(interval=6))
-                                plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%d %b %Y')) # '%d-%m-%Y' ----- gca() get current axis, gcf() get current figure 
-                                # plt.plot(date,valorimax,label="max",color="red")
-                                ax[1,0].plot(date,min,label="min",color="blue")
-                                ax[1,1].plot(date,max,label="max",color="red")
-                                # plt.plot(date,list,label="max1",color="red")
-                                # plt.plot(date,valorimin,label="min",color="green")
-                                plt.title(f"Portfolio")
-                                plt.xlabel("Data")
-                                plt.xticks(rotation=20)
-                                plt.ylabel("Valore")
-                                plt.legend()
-                                # plt.grid()
-                                # plt.gcf().autofmt_xdate()
-                                plt.show()   
+                            def lucky(stockdf,ind): #non usato
+                                lowtotal=0
+                                for i in range(len(ind)):
+                                    if(ind[i]!=0):
+                                        low = (stockdf[i]["Low"][tempo-1])*ind[i]
+                                        lowtotal+=low
+                                return lowtotal
+
+                            def murphy(stockdf,ind): #non usato
+                                hightotal=0
+                                for i in range(len(ind)):
+                                    if(ind[i]!=0):
+                                        high = (stockdf[i]["High"][tempo-1])*ind[i]
+                                        hightotal+=high
+                                return hightotal
 
                             if __name__ == "__main__":
                                 main()
                             
-                        # grafico([logb[0]['max'][0] for logb in statslist],[logb[0]['min'][1] for logb in statslist])
                         i+=1
-                        pickle.dump(listguadagno,open(f"output/guadagni/Guadagni_{i}_MU={MU}_NGEN={NGEN}_NDIM={NDIM}_MAXTIME={MAXTIME}_TOURNPARAM={TOURNPARAM}_SELPARAM={SELPARAM}_CXPB={CXPB}.dump","wb"))
-                        pickle.dump(statslist,open(f"output/logbook/Logbook_{i}_MU={MU}_NGEN={NGEN}_NDIM={NDIM}_MAXTIME={MAXTIME}_TOURNPARAM={TOURNPARAM}_SELPARAM={SELPARAM}_CXPB={CXPB}.dump","wb"))
-                        print(f"{i})MU={MU}_NGEN={NGEN}_NDIM={NDIM}_MAXTIME={MAXTIME}_TOURNPARAM={TOURNPARAM}_SELPARAM={SELPARAM}_CXPB={CXPB} FINE\n")
-
-
+                        pickle.dump(listguadagno,open(f"output/guadagni/Guad_{i}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB}.dump","wb"))
+                        pickle.dump(statslist,open(f"output/logbook/Logb_{i}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB}.dump","wb"))
+                        print(f"{i}) MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} - END")
 
 
     # pass: msmtis_pwd
