@@ -70,33 +70,34 @@ def tkloadfile(logbnames,guadagninames):
   
     win = Tk()
     win.title("PlotLoader")
-    # win.geometry("300x150")
+    win.geometry("620x150")
+    win.columnconfigure(0,weight=1)
+    win.columnconfigure(1,weight=1)
 
     def closewin():
         win.destroy()
 
     def plotall():
-        loadall(os.path.join(PATHLOGBFOLDER, logb.get())+'.dump',os.path.join(PATHGUADFOLDER, guad.get())+'.dump')
-    
-    win.columnconfigure(0,weight=1)
-    win.columnconfigure(1,weight=1)
+        logbpath=os.path.join(PATHLOGBFOLDER, logb.get())+'.dump'
+        guadpath=os.path.join(PATHGUADFOLDER, guad.get())+'.dump'
+        loadall(logbpath,guadpath)
 
     Label(win, text="Seleziona file da visualizzare").grid(column=0,row=0,columnspan=2,pady=2)
     
     logb=StringVar()
-    logb_combobox = ttk.Combobox(win, textvariable=logb,justify=CENTER,width=75)
+    logb_combobox = ttk.Combobox(win, textvariable=logb,justify=CENTER)
     logb_combobox.set("Lista Logbook")
     logb_combobox['values']=logbnames
     logb_combobox['state']='readonly'
-    logb_combobox.grid(column=0,row=1,columnspan=2,pady=2,padx=5)
+    logb_combobox.grid(column=0,row=1,columnspan=2,pady=2,padx=5,sticky='nesw')
     # logb_combobox.bind('<<ComboboxSelected>>',selectlogb)
   
     guad=StringVar()
-    guad_combobox = ttk.Combobox(win, textvariable=guad,justify=CENTER,width=75)
+    guad_combobox = ttk.Combobox(win, textvariable=guad,justify=CENTER)
     guad_combobox.set("Lista Guadagni")
     guad_combobox['values']=guadagninames
     guad_combobox['state']='readonly'
-    guad_combobox.grid(column=0,row=3,columnspan=2,pady=15,padx=5)
+    guad_combobox.grid(column=0,row=3,columnspan=2,pady=15,padx=5,sticky='nesw')
     # guad_combobox.bind('<<ComboboxSelected>>',selectguad)
 
     plotbutton=Button(win, text='PLOT', command=plotall,bg='#3A75C4',fg='black')
@@ -107,8 +108,8 @@ def tkloadfile(logbnames,guadagninames):
     win.mainloop()   
 
 def loadall(logbpath,guadpath):
-    logbfile=logbpath[len(PATHLOGBFOLDER)+1:-5]
-    guadfile=guadpath[len(PATHGUADFOLDER)+1:-5]
+    logbfile=logbpath[len(PATHLOGBFOLDER):-5]
+    guadfile=guadpath[len(PATHGUADFOLDER):-5]
     logbooks=pickle.load(open(logbpath,"rb"))
     guadagni=pickle.load(open(guadpath,"rb"))
     
@@ -133,13 +134,19 @@ def loadall(logbpath,guadpath):
 
 def plotall(listguadagni,bestind,listavgrisk,listavgyield,logbfile,guadfile):
 
-    regex="^[A-Z][a-z]+[_]?[ ]?[0-9]+|[A-Z\[a-z\]]+[=][0-9\[.\]]+"
+    paramRegex="^[A-Z\[a-z\]]+[_]?[ ]?[0-9]+|[A-Z\[a-z\]]+[=][0-9\[.\]]+"
+    matchlogb= re.findall(paramRegex, logbfile)
+    matchguad= re.findall(paramRegex, guadfile)
 
-    if re.findall(regex, logbfile)[1:]==re.findall(regex, guadfile)[1:]:
-        matchguad= re.findall(regex, guadfile)
+    idfileRegex= re.compile(r'\d+')
+    idlogb= idfileRegex.search(matchlogb[0]).group()
+    idguad= idfileRegex.search(matchguad[0]).group()
+
+    
+    if (matchlogb[1:]==matchguad[1:]) and (int(idlogb)==int(idguad)):
         
         plt.style.use("ggplot")
-        fig = plt.figure(f"GRAFICO {str(matchguad[1:])[1:-1]}",figsize=(13,6))
+        fig = plt.figure(f"GRAFICO DI {str(matchguad[1:])[1:-1]}",figsize=(13,6))
 
         maxtime=int(str(matchguad[4])[8:])
         datelogb=pd.date_range(stockdf[0]["Date"][0],stockdf[0]["Date"][maxtime-1], periods=len(listavgrisk))
@@ -151,7 +158,7 @@ def plotall(listguadagni,bestind,listavgrisk,listavgyield,logbfile,guadfile):
         
         yplt = plt.subplot2grid((3, 3), loc=(0, 0),colspan=3)
         yplt.plot(datelogb,listavgyield,label=f"Yield avg: {np.mean(listavgyield)}",color="green")
-        yplt.set_title(f"Configurazione: {matchguad[1:]}")
+        yplt.set_title(f"Config: {matchguad[1:]}")
         yplt.legend(frameon=False)
 
         rplt = plt.subplot2grid((3, 3), loc=(1, 0),colspan=3)
@@ -166,10 +173,10 @@ def plotall(listguadagni,bestind,listavgrisk,listavgyield,logbfile,guadfile):
         
         # fig.legend(loc="lower left", title="", frameon=False)
         fig.tight_layout(h_pad=-1)
-        plt.gcf().autofmt_xdate()
+        # plt.gcf().autofmt_xdate()
         plt.show()
     else:
-        return print("i file non hanno gli stessi parametri")
+        return print("I file non sono compatibili")
 
 def main():
     tkloadfile(gendumpnames(PATHLOGBFOLDER),gendumpnames(PATHGUADFOLDER))
