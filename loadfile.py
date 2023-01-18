@@ -8,6 +8,7 @@ import re
 from tkinter import *
 from tkinter import ttk
 
+
 ABSPATH=os.path.dirname(os.path.abspath(__file__))
 
 def isWindows():
@@ -18,11 +19,11 @@ if(isWindows()):
 else: PATHCSVFOLDER= ABSPATH+"/stock/WEEK" #path per unix
 
 if(isWindows()): 
-    PATHLOGBFOLDER= ABSPATH+"\\output\\logbook\\3" #path per windows
+    PATHLOGBFOLDER= ABSPATH+"\\output\\logbook\\" #path per windows
 else: PATHLOGBFOLDER= ABSPATH+"/output/logbook" #path per unix
 
 if(isWindows()): 
-    PATHGUADFOLDER= ABSPATH+"\\output\\guadagni\\3" #path per windows
+    PATHGUADFOLDER= ABSPATH+"\\output\\guadagni\\" #path per windows
 else: PATHGUADFOLDER= ABSPATH+"/output/guadagni" #path per unix
 
   
@@ -68,7 +69,7 @@ def tkloadfile(logbnames,guadagninames):
   
     win = Tk()
     win.title("PlotLoader")
-    win.geometry("630x150")
+    # win.geometry("300x150")
 
     def closewin():
         win.destroy()
@@ -82,7 +83,7 @@ def tkloadfile(logbnames,guadagninames):
     Label(win, text="Seleziona file da visualizzare").grid(column=0,row=0,columnspan=2,pady=2)
     
     logb=StringVar()
-    logb_combobox = ttk.Combobox(win, textvariable=logb,width=95,justify=CENTER)
+    logb_combobox = ttk.Combobox(win, textvariable=logb,justify=CENTER,width=75)
     logb_combobox.set("Lista Logbook")
     logb_combobox['values']=logbnames
     logb_combobox['state']='readonly'
@@ -90,7 +91,7 @@ def tkloadfile(logbnames,guadagninames):
     # logb_combobox.bind('<<ComboboxSelected>>',selectlogb)
   
     guad=StringVar()
-    guad_combobox = ttk.Combobox(win, textvariable=guad,width=95,justify=CENTER)
+    guad_combobox = ttk.Combobox(win, textvariable=guad,justify=CENTER,width=75)
     guad_combobox.set("Lista Guadagni")
     guad_combobox['values']=guadagninames
     guad_combobox['state']='readonly'
@@ -98,9 +99,9 @@ def tkloadfile(logbnames,guadagninames):
     # guad_combobox.bind('<<ComboboxSelected>>',selectguad)
 
     plotbutton=Button(win, text='PLOT', command=plotall,bg='#3A75C4',fg='white')
-    plotbutton.grid(column=0, row=4,pady=5,padx=10,sticky='nesw')
+    plotbutton.grid(column=0, row=4,pady=10,padx=10,sticky='nesw')
     closebutton=Button(win, text='ESCI', command=closewin,bg='#7B1B02',fg='white')
-    closebutton.grid(column=1, row=4,pady=5,padx=10,sticky='nesw')
+    closebutton.grid(column=1, row=4,pady=10,padx=10,sticky='nesw')
 
     win.mainloop()   
 

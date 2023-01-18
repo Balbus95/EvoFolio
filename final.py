@@ -73,6 +73,16 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
                 avgtotal+=avg
         return avgtotal
 
+    def middlestart(stockdf,ind):
+        avgtotal=0
+        for i in range(len(ind)):
+            if(ind[i]!=0):
+                low = (stockdf[i]["Low"][0])*ind[i]
+                high = (stockdf[i]["High"][0])*ind[i]
+                avg=(low+high)/2
+                avgtotal+=avg
+        return avgtotal
+
     def conta_azioni_possedute(ind):
         count=0
         for num in ind:
@@ -81,15 +91,18 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
         return len(ind)-count
 
     def genind(low,up,size):
-        ind=[0 for i in range(size)]
-        numstock=random.randint(MINAZIONI,MAXAZIONI)
-        stockused=[]
-        for i in range(numstock):
-            stock=random.randint(0,size-1)
-            while stock in stockused:
+        maxbudg=BUDG+1
+        while maxbudg>BUDG:
+            ind=[0 for i in range(size)]
+            numstock=random.randint(MINAZIONI,MAXAZIONI)
+            stockused=[]
+            for i in range(numstock):
                 stock=random.randint(0,size-1)
-            stockused.append(stock)
-            ind[stock]=random.randint(low+1,up)
+                while stock in stockused:
+                    stock=random.randint(0,size-1)
+                stockused.append(stock)
+                ind[stock]=random.randint(low+1,up)
+            maxbudg=middlestart(stockdf,ind)
         return ind
 
     def set_tkPREF():
@@ -150,12 +163,9 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
         return listpreftitle
 
     def closestMultiple(n,mult=4):
-        if mult>n:
-            return mult
-        z=int(mult / 2)
-        n=n+z
-        n=n-(n%mult)
-        return n
+        x=n%mult
+        z=n-x 
+        return z
 
     creator.create("FitnessMulti", base.Fitness, weights=(-1.0, 1.0))
     creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMulti)
@@ -171,8 +181,8 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
     print(f"\nSTOCK NAMES {len(stocknames)} :\n{stocknames}\n")
     print(f'AZIONI PREFERITE {len(preftitle)} : {preftitle}\n')
 
-    BUDG = 100000
-    BOUND_LOW, BOUND_UP = 0, int((BUDG/maxazione(stockdf))/10)
+    BUDG = 1000000
+    BOUND_LOW, BOUND_UP = 0, int((BUDG/maxazione(stockdf)))
     NDIM = len(stockdf) #dimensione singola tupla default 30 # lunghezza portafoglio (numero di azioni disponibili)
 
 
@@ -189,8 +199,7 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float) #crea individui con attr_float
     toolbox.register("population", tools.initRepeat, list, toolbox.individual) #ripete funzione individual
 
-    MAXTIME=len(stockdf[0])   
-    MAXTIME=8
+    MAXTIME=len(stockdf[0])  
     
     i=0
     for TOURNPARAM in [0.9,0.7,0.5]:
@@ -202,14 +211,14 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
                 for MU in [10,500,200,100]:
                     pop = toolbox.population(n=MU)
                     # print(f"LISTA NOMI == DA AZIONI == STOCK AZIONI ({len(stocknames)} == {len(pop[0])} == {len(stockdf)})",file=term)
-                    # print(f'POP INIZIALE: {len(pop)} ', end='',file=term)
+                    print(f'POP INIZIALE: {len(pop)} ', end='',file=term)
                     print(f'MU:{MU}', end=', ')
                     for NGEN in [5,100,50,25,10]:
                         print(f'NGEN:{NGEN}')
                         print(f"{i+1}) MU={MU} NGEN={NGEN} NDIM={NDIM} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} - STARTED")
                         statslist=[]
                         listguadagno=[]
-                        for tempo in range(1,MAXTIME+1): #arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY (NUMERO DI RIGHE DA PRENDERE)
+                        for tempo in range(4,MAXTIME+1,4): #arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY (NUMERO DI RIGHE DA PRENDERE)
                             
                             # time.sleep(1)
 
@@ -275,9 +284,17 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
                                 for ind, fit in zip(invalid_ind, fitnesses): #viene eseguito solo al primo for
                                     ind.fitness.values = fit
 
+                                #pop = [ind for ind in pop if middle(stockdf,ind)<=BUDG] #cancella individui che hanno speso più di BUDG
+                                for ind in pop:
+                                    cb=middle(stockdf,ind)
+                                    while cb>BUDG:
+                                        r=random.randint(0,len(ind)-1)
+                                        while ind[r]==0 or (ind[r]==1 and conta_azioni_possedute(ind)==MINAZIONI):
+                                            r=random.randint(0,len(ind)-1)
+                                        ind[r]-=1
+                                        cb=middle(stockdf,ind)
+                                
                                 pop = [ind for ind in pop if (conta_azioni_possedute(ind)>=MINAZIONI and conta_azioni_possedute(ind)<=MAXAZIONI)]
-                                pop = [ind for ind in pop if middle(stockdf,ind)<=BUDG] #cancella individui che hanno speso più di BUDG
-
                                 # print(f'\n\n\t$$$ dopo contazero e middle {len(pop)} ',end='',file=term)
                                 # printpop(pop)
                                 
@@ -324,9 +341,18 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
                                             toolbox.mutate(ind2)
                                             del ind1.fitness.values, ind2.fitness.values
                                     
+                                    #offspring = [ind for ind in offspring if middle(stockdf,ind)<=BUDG] #cancella individua che hanno speso più di BUDG
+                                    for ind in offspring:
+                                        cb=middle(stockdf,ind)
+                                        while cb>BUDG:
+                                            r=random.randint(0,len(ind)-1)
+                                            while ind[r]==0 or (ind[r]==1 and conta_azioni_possedute(ind)==MINAZIONI):
+                                                r=random.randint(0,len(ind)-1)
+                                            ind[r]-=1
+                                            cb=middle(stockdf,ind)
+                                    
                                     offspring = [ind for ind in offspring if (conta_azioni_possedute(ind)>=MINAZIONI and conta_azioni_possedute(ind)<=MAXAZIONI)] #cancella individui che hanno maxzeri azioni a 0
-                                    offspring = [ind for ind in offspring if middle(stockdf,ind)<=BUDG] #cancella individua che hanno speso più di BUDG
-                                
+
 
                                     # Valutare gli individual con un fitness non valido
                                     invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
@@ -411,9 +437,9 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
                                 main()
                             
                         i+=1
-                        pickle.dump(listguadagno,open(f"output/guadagni/Guad_{i}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB}.dump","wb"))
-                        pickle.dump(statslist,open(f"output/logbook/Logb_{i}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB}.dump","wb"))
-                        print(f"{i}) MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} - END")
+                        pickle.dump(listguadagno,open(f"output/guadagni/Guad_{i}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump","wb"))
+                        pickle.dump(statslist,open(f"output/logbook/Logb_{i}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump","wb"))
+                        print(f"{i}) MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG} - END\n")
 
 
     # pass: msmtis_pwd
