@@ -116,8 +116,8 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
 
 
         def ShowCheckBoxes(stocknames):
-            Cbcolumn = 0
-            Cbrow = 4
+            Cbcolumn = 1
+            Cbrow = 5
             Chkcount = 0
 
             for Checkbox in range(len(stocknames)):
@@ -126,20 +126,17 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
                 current_var = IntVar()
                 current_box = Checkbutton(win, text=name, variable=current_var)
                 current_box.var = current_var
-                # current_box.pack()
                 current_box.grid(row=Cbrow, column=Cbcolumn)
                 checkboxes[current_box] = indpref 
-                if Cbcolumn == 4:
-                    Cbcolumn = 0
+                if Cbcolumn == 6:
+                    Cbcolumn = 1
                     Cbrow += 1
                 else:
                     Cbcolumn += 1
                 Chkcount += 1
+            Button(win, text='CONFERMA', command=genPREF,bg='#3A75C4',fg='white').grid(row=Cbrow+1, column=2, columnspan=4,pady=5)
 
-        # label = Label(win, text="Seleziona azioni preferite")
-        # # label.pack()
-        Button(win, text='CONFERMA AZIONI PREFERITE', command=genPREF).grid(row=100, column=1, columnspan=3)
-        # button.pack()
+        Label(win, text="Seleziona azioni preferite",pady=5).grid(row=0, column=2, columnspan=4)
         ShowCheckBoxes(stocknames)
         win.mainloop()
 

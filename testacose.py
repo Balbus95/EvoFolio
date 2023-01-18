@@ -19,8 +19,8 @@ if(isWindows()):
 else: PATHCSVFOLDER= ABSPATH+"/stock/WEEK" #path per unix
 
 if(isWindows()): 
-    PATHSTATSFOLDER= ABSPATH+"\\output\\logbook" #path per windows
-else: PATHSTATSFOLDER= ABSPATH+"/output/logbook" #path per unix
+    PATHLOGBFOLDER= ABSPATH+"\\output\\logbook" #path per windows
+else: PATHLOGBFOLDER= ABSPATH+"/output/logbook" #path per unix
 
   
 def genstockdf():
@@ -45,12 +45,20 @@ def gendumpnames():
         dumpnames=[]
         pattern="*.dump"
         i=0
-        for dump in os.listdir(PATHSTATSFOLDER):
+        for dump in os.listdir(PATHLOGBFOLDER):
             if(dump!='.DS_Store' and fnmatch.fnmatch(dump, pattern)):
                 dumpnames.append(dump[:-5])
                 i+=1
         dumpnames.sort(key=lensort)
         return dumpnames
+
+def genportfolio(ind):
+    listportfoliotitle=[]
+    for i,stock in enumerate(stocknames):
+        if(ind[i]!=0):
+            listportfoliotitle.append(f'{stock}:{int(ind[i])}')
+            # listportfoliotitle.append([stock,int(ind[i])])
+    return listportfoliotitle
 
 def tkloadlogbook(dumpnames):
     
@@ -62,7 +70,7 @@ def tkloadlogbook(dumpnames):
         win.destroy()
 
     def funprov(event):
-        path=os.path.join(PATHSTATSFOLDER, file.get()+'.dump')
+        path=os.path.join(PATHLOGBFOLDER, file.get()+'.dump')
         plotlogbook(path)
 
     file=StringVar()
@@ -77,47 +85,30 @@ def tkloadlogbook(dumpnames):
 
     win.mainloop()   
 
-def plotlogbook(path):
-    filename=path[len(PATHSTATSFOLDER)+1:-5]
-    stats=pickle.load(open(path,"rb"))
-
+def loadlogbook(logbpath):
+    filename=logbpath[len(PATHLOGBFOLDER)+1:-5]
+    stats=pickle.load(open(logbpath,"rb"))
     listavgrisk=[]
     listavgyield=[]
-
-    # listminrisk=[]
-    # listminyield=[]
-
-    # listmaxrisk=[]
-    # listmaxyield=[]
-
-    # liststdrisk=[]
-    # liststdyield=[]
-
     for logb in stats:
         for stat in logb:
-
             avgrisk=stat["avg"][0]
             avgyield=stat["avg"][1]
             listavgrisk.append(avgrisk)
             listavgyield.append(avgyield)
-
-            # stdrisk=stat["std"][0]
-            # stdyield=stat["std"][1]
-            # liststdrisk.append(stdrisk)
-            # liststdyield.append(stdyield)
-
-            # minrisk=stat["min"][0]
-            # minyield=stat["min"][1]
-            # listminrisk.append(minrisk)
-            # listminyield.append(minyield)
-
-            # maxrisk=stat["max"][0]
-            # maxyield=stat["max"][1]
-            # listmaxrisk.append(maxrisk)
-            # listmaxyield.append(maxyield)
-
-    # graficoriskyield(listminrisk,listminyield,listmaxrisk,listmaxyield,listavgrisk,listavgyield,liststdrisk,liststdyield,filename)
     plotlogbook(listavgrisk,listavgyield,filename)
+
+def loadguadagni(guadpath):
+    filename=guadpath[len(PATHLOGBFOLDER)+1:-5]
+    guadagni=pickle.load(open(guadpath,"rb"))
+    listguadagni=[]
+    maxguadagno=0
+    for ind in guadagni:
+        if ind[1]>=maxguadagno:
+            maxguadagno=ind[1]
+            bestind=[ind[0],genportfolio(ind[2])]
+        listguadagni.append(ind[1])
+    plotguadagni(listguadagni,bestind,filename)
 
 def plotlogbook(listavgrisk,listavgyield,filename="File"): #non usato
 

@@ -44,10 +44,6 @@ def gendumpnames(path):
         
 
     def lensort(filename):
-        # regex="(?<=^)[0-9]?\d+|(?<=_)[0-9]?\d+|(?<= )[0-9]?\d+|(?<=[A-Z\[a-z\]])[0-9]?\d+"
-        # numfile= re.findall(regex, filename)
-        # print(numfile)
-        # return re.findall(regex, filename)
         return len(filename[:filename.find("_MU")])
 
     dumpnames=[]
@@ -107,31 +103,6 @@ def tkloadfile(logbnames,guadagninames):
     closebutton.grid(column=1, row=4,pady=5,padx=10,sticky='nesw')
 
     win.mainloop()   
-
-def loadlogbook(logbpath):
-    filename=logbpath[len(PATHLOGBFOLDER)+1:-5]
-    stats=pickle.load(open(logbpath,"rb"))
-    listavgrisk=[]
-    listavgyield=[]
-    for logb in stats:
-        for stat in logb:
-            avgrisk=stat["avg"][0]
-            avgyield=stat["avg"][1]
-            listavgrisk.append(avgrisk)
-            listavgyield.append(avgyield)
-    plotlogbook(listavgrisk,listavgyield,filename)
-
-def loadguadagni(guadpath):
-    filename=guadpath[len(PATHGUADFOLDER)+1:-5]
-    guadagni=pickle.load(open(guadpath,"rb"))
-    listguadagni=[]
-    maxguadagno=0
-    for ind in guadagni:
-        if ind[1]>=maxguadagno:
-            maxguadagno=ind[1]
-            bestind=[ind[0],genportfolio(ind[2])]
-        listguadagni.append(ind[1])
-    plotguadagni(listguadagni,bestind,filename)
 
 def loadall(logbpath,guadpath):
     logbfile=logbpath[len(PATHLOGBFOLDER)+1:-5]
