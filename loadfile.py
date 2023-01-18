@@ -42,7 +42,6 @@ def genstockdf():
     return (stockdf,stocknames)
 
 def gendumpnames(path):
-        
 
     def lensort(filename):
         return len(filename[:filename.find("_MU")])
@@ -50,10 +49,12 @@ def gendumpnames(path):
     dumpnames=[]
     pattern="*.dump"
     i=0
+
     for dump in os.listdir(path):
         if(dump!='.DS_Store' and fnmatch.fnmatch(dump, pattern)):
             dumpnames.append(dump[:-5])
             i+=1
+
     dumpnames.sort(key=lensort)
     return dumpnames
 
@@ -98,9 +99,9 @@ def tkloadfile(logbnames,guadagninames):
     guad_combobox.grid(column=0,row=3,columnspan=2,pady=15,padx=5)
     # guad_combobox.bind('<<ComboboxSelected>>',selectguad)
 
-    plotbutton=Button(win, text='PLOT', command=plotall,bg='#3A75C4',fg='white')
+    plotbutton=Button(win, text='PLOT', command=plotall,bg='#3A75C4',fg='black')
     plotbutton.grid(column=0, row=4,pady=10,padx=10,sticky='nesw')
-    closebutton=Button(win, text='ESCI', command=closewin,bg='#7B1B02',fg='white')
+    closebutton=Button(win, text='ESCI', command=closewin,bg='#7B1B02',fg='black')
     closebutton.grid(column=1, row=4,pady=10,padx=10,sticky='nesw')
 
     win.mainloop()   

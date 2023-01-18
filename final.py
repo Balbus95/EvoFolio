@@ -33,7 +33,9 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
         stocknames=[] 
         pattern="*.csv"
         i=0
-        for stock in os.listdir(PATHCSVFOLDER):
+        dirsorted=os.listdir(PATHCSVFOLDER)
+        dirsorted.sort()
+        for stock in dirsorted:
             if(stock!='.DS_Store'and fnmatch.fnmatch(stock, pattern)):
                 stocknames.append(stock[:-4])
                 path=os.path.join(PATHCSVFOLDER, stocknames[i]+'.csv')
@@ -147,7 +149,7 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
                 else:
                     Cbcolumn += 1
                 Chkcount += 1
-            Button(win, text='CONFERMA', command=genPREF,bg='#3A75C4',fg='white').grid(row=Cbrow+1, column=2, columnspan=4,pady=5)
+            Button(win, text='CONFERMA', command=genPREF,bg='#3A75C4',fg='black').grid(row=Cbrow+1, column=2, columnspan=4,pady=5)
 
         Label(win, text="Seleziona azioni preferite",pady=5).grid(row=0, column=2, columnspan=4)
         ShowCheckBoxes(stocknames)
