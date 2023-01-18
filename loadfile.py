@@ -20,11 +20,11 @@ else: PATHCSVFOLDER= ABSPATH+"/stock/WEEK" #path per unix
 
 if(isWindows()): 
     PATHLOGBFOLDER= ABSPATH+"\\output\\logbook\\" #path per windows
-else: PATHLOGBFOLDER= ABSPATH+"/output/logbook" #path per unix
+else: PATHLOGBFOLDER= ABSPATH+"/output/logbook/" #path per unix
 
 if(isWindows()): 
     PATHGUADFOLDER= ABSPATH+"\\output\\guadagni\\" #path per windows
-else: PATHGUADFOLDER= ABSPATH+"/output/guadagni" #path per unix
+else: PATHGUADFOLDER= ABSPATH+"/output/guadagni/" #path per unix
 
   
 def genstockdf():
@@ -134,7 +134,7 @@ def loadall(logbpath,guadpath):
 
 def plotall(listguadagni,bestind,listavgrisk,listavgyield,logbfile,guadfile):
 
-    paramRegex="^[A-Z\[a-z\]]+[_]?[ ]?[0-9]+|[A-Z\[a-z\]]+[=][0-9\[.\]]+"
+    paramRegex=r"^[A-Z\[a-z\]]+[_]?[ ]?[0-9]+|[A-Z\[a-z\]]+[=][0-9\[.\]]+"
     matchlogb= re.findall(paramRegex, logbfile)
     matchguad= re.findall(paramRegex, guadfile)
 
@@ -158,7 +158,7 @@ def plotall(listguadagni,bestind,listavgrisk,listavgyield,logbfile,guadfile):
         
         yplt = plt.subplot2grid((3, 3), loc=(0, 0),colspan=3)
         yplt.plot(datelogb,listavgyield,label=f"Yield avg: {np.mean(listavgyield)}",color="green")
-        yplt.set_title(f"Config: {matchguad[1:]}")
+        yplt.set_title(f"Config: {str(matchguad[1:-1])[1:-1]}")
         yplt.legend(frameon=False)
 
         rplt = plt.subplot2grid((3, 3), loc=(1, 0),colspan=3)
@@ -166,14 +166,15 @@ def plotall(listguadagni,bestind,listavgrisk,listavgyield,logbfile,guadfile):
         rplt.legend(frameon=False)
 
         gplt = plt.subplot2grid((3, 3), loc=(2, 0),colspan=3)
-        gplt.plot(dateguad,listguadagni,label=f"Valore Portfolio",color="blue",marker='o')
+        gplt.plot(dateguad,listguadagni,label=f"Valore Portfolio con € {str(idfileRegex.search(matchguad[-1]).group())}",color="blue",marker='o')
+        # gplt.plot(dateguad,listguadagni,label=f"Valore Portfolio con {str(matchguad[-1:])[2:-2]}€",color="blue",marker='o')
         gplt.scatter(bestdate,(np.max(listguadagni)),s=125,label=f"Guadagno Miglior Portfolio: {np.max(listguadagni)}")
         gplt.set_xlabel(f'Data\nDal {stockdf[0]["Date"][0]} al {stockdf[0]["Date"][maxtime-1]}') 
         gplt.legend(frameon=False)
         
         # fig.legend(loc="lower left", title="", frameon=False)
         fig.tight_layout(h_pad=-1)
-        # plt.gcf().autofmt_xdate()
+        plt.gcf().autofmt_xdate()
         plt.show()
     else:
         return print("I file non sono compatibili")
