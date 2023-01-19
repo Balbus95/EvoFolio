@@ -58,6 +58,24 @@ def gendumpnames(path):
     dumpnames.sort(key=lensort)
     return dumpnames
 
+def gendumpnamesReg(path):
+
+    def grp(pat, txt): 
+        r = re.search(pat, txt)
+        return r.group(0) if r else '&'
+
+    dumpnames=[]
+    pattern="*.dump"
+    i=0
+
+    for dump in os.listdir(path):
+        if(dump!='.DS_Store' and fnmatch.fnmatch(dump, pattern)):
+            dumpnames.append(dump[:-5])
+            i+=1
+    dumpnames.sort(key=lambda l: grp(r'\d+', l))
+    # dumpnames.sort(key=lensort)
+    return dumpnames
+
 def genportfolio(ind):
     listportfoliotitle=[]
     for i,stock in enumerate(stocknames):
@@ -70,7 +88,7 @@ def tkloadfile(logbnames,guadagninames):
   
     win = Tk()
     win.title("PlotLoader")
-    win.geometry("620x150")
+    win.geometry("620x144")
     win.columnconfigure(0,weight=1)
     win.columnconfigure(1,weight=1)
 
@@ -101,9 +119,9 @@ def tkloadfile(logbnames,guadagninames):
     # guad_combobox.bind('<<ComboboxSelected>>',selectguad)
 
     plotbutton=Button(win, text='PLOT', command=plotall,bg='#3A75C4',fg='black')
-    plotbutton.grid(column=0, row=4,pady=10,padx=10,sticky='nesw')
+    plotbutton.grid(column=0, row=4,padx=10,sticky='nesw')
     closebutton=Button(win, text='ESCI', command=closewin,bg='#7B1B02',fg='black')
-    closebutton.grid(column=1, row=4,pady=10,padx=10,sticky='nesw')
+    closebutton.grid(column=1, row=4,padx=10,sticky='nesw')
 
     win.mainloop()   
 

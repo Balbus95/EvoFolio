@@ -168,6 +168,12 @@ def plotguadagni(listguadagni,bestind,filename="File"): #non usato
 stockdf,stocknames= genstockdf()
 # dumpnames=gendumpnames()
 tkloadlogbook(gendumpnames())
+# x=[]
+# y=[]
+# for i in range(1,111):
+#     pickle.dump(x,open(f"output/guadagni/Guad_{i}_MU=2323.dump","wb"))
+#     pickle.dump(y,open(f"output/logbook/Logb_{i}_MU=2323.dump","wb"))
+#     print(f"{i}) - END\n")
 
 
 # # for df in stockdf:

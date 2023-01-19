@@ -176,7 +176,7 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
     comb=combinator(len(stockdf))
 
     for i,df in enumerate(stockdf):
-        if len(df)<157:
+        # if len(df)<157:
             print(stocknames[i],len(df))
 
     # PREF=[0 for i in range(len(stockdf))] # nessuna pref
