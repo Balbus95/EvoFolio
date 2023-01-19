@@ -26,7 +26,6 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
     if(isWindows()): 
         PATHCSVFOLDER= ABSPATH+"\\stock\\WEEK" #path per windows
     else: PATHCSVFOLDER= ABSPATH+"/stock/WEEK" #path per unix
-  
 
     def genstockdf():
         stockdf=[]
@@ -175,9 +174,7 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
     stockdf,stocknames = genstockdf()
     comb=combinator(len(stockdf))
 
-    for i,df in enumerate(stockdf):
-        # if len(df)<157:
-            print(stocknames[i],len(df))
+
 
     # PREF=[0 for i in range(len(stockdf))] # nessuna pref
     PREF=[]
@@ -205,8 +202,11 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float) #crea individui con attr_float
     toolbox.register("population", tools.initRepeat, list, toolbox.individual) #ripete funzione individual
 
-    MAXTIME=len(stockdf[0])  
-    
+    MAXTIME=len(stockdf[0])
+    for df in stockdf:
+        if len(df)<MAXTIME:
+            MAXTIME=len(df)
+
     i=0
     for TOURNPARAM in [0.9,0.7,0.5]:
         print(f'TOURNPARAM:{TOURNPARAM}', end=', ')
@@ -214,12 +214,12 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
             print(f'SELPARAM:{SELPARAM}', end=', ')
             for CXPB in [0.9,0.7,0.5]:
                 print(f'CXPB:{CXPB}', end=', ')
-                for MU in [10,500,200,100]:
+                for MU in [50,100,250,500]:
                     pop = toolbox.population(n=MU)
                     # print(f"LISTA NOMI == DA AZIONI == STOCK AZIONI ({len(stocknames)} == {len(pop[0])} == {len(stockdf)})",file=term)
                     print(f'POP INIZIALE: {len(pop)} ', end='',file=term)
                     print(f'MU:{MU}', end=', ')
-                    for NGEN in [5,100,50,25,10]:
+                    for NGEN in [10,50,100,200]:
                         print(f'NGEN:{NGEN}')
                         print(f"{i+1}) MU={MU} NGEN={NGEN} NDIM={NDIM} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} - STARTED")
                         statslist=[]
@@ -290,7 +290,6 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
                                 for ind, fit in zip(invalid_ind, fitnesses): #viene eseguito solo al primo for
                                     ind.fitness.values = fit
 
-                                #pop = [ind for ind in pop if middle(stockdf,ind)<=BUDG] #cancella individui che hanno speso più di BUDG
                                 for ind in pop:
                                     cb=middle(stockdf,ind)
                                     while cb>BUDG:
