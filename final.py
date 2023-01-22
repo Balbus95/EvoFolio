@@ -1,6 +1,5 @@
 with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
     
-    import time
     import random
     import os,fnmatch
     import itertools as iter
@@ -174,8 +173,6 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
     stockdf,stocknames = genstockdf()
     comb=combinator(len(stockdf))
 
-
-
     # PREF=[0 for i in range(len(stockdf))] # nessuna pref
     PREF=[]
     set_tkPREF()
@@ -224,10 +221,9 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
                         print(f"{i+1}) MU={MU} NGEN={NGEN} NDIM={NDIM} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} - STARTED")
                         statslist=[]
                         listguadagno=[]
-                        for tempo in range(4,MAXTIME+1,4): #arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY (NUMERO DI RIGHE DA PRENDERE)
+                        for tempo in range(12,MAXTIME+1,12): #arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY (NUMERO DI RIGHE DA PRENDERE)
+                        # for tempo in range(4,MAXTIME+1,4): #arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY (NUMERO DI RIGHE DA PRENDERE)
                             
-                            # time.sleep(1)
-
                             def myfitness(ind):
                                 listyield=[]
                                 listvar=[]
@@ -268,7 +264,6 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
                                 pop,logbook =nsga2(pop)
                                 # print(f'\n\n%%%%%%%%%DOPO NSGA2: {len(pop)}',end='',file=term)
                                 statslist.append(logbook)
-
 
                             def nsga2(pop):
 
