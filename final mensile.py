@@ -1,228 +1,225 @@
-with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
-    
-    import random
-    import os,fnmatch
-    import itertools as iter
-    import pandas as pd
-    import numpy as np
-    import matplotlib.pyplot as plt
-    import matplotlib.dates as mdates
-    import array
-    import pickle
-    from tkinter import *
+import random
+import os,fnmatch
+import itertools as iter
+import pandas as pd
+import numpy as np
+import array
+import pickle
+from tkinter import *
 
-    from deap.benchmarks.tools import diversity, convergence, hypervolume
-    from deap import creator, base, tools
+from deap.benchmarks.tools import diversity, convergence, hypervolume
+from deap import creator, base, tools
 
-    def isWindows():
-        return os.name=="nt"
+def isWindows():
+    return os.name=="nt"
 
-    MINAZIONI, MAXAZIONI= 10, 14
+MINAZIONI, MAXAZIONI= 10, 14
 
 
-    ABSPATH=os.path.dirname(os.path.abspath(__file__))
+ABSPATH=os.path.dirname(os.path.abspath(__file__))
 
-    if(isWindows()): 
-        PATHCSVFOLDER= ABSPATH+"\\stock\\WEEK" #path per windows
-    else: PATHCSVFOLDER= ABSPATH+"/stock/WEEK" #path per unix
+if(isWindows()): 
+    PATHCSVFOLDER= ABSPATH+"\\stock\\WEEK" #path per windows
+else: PATHCSVFOLDER= ABSPATH+"/stock/WEEK" #path per unix
 
-    def genstockdf():
-        stockdf=[]
-        stocknames=[] 
-        pattern="*.csv"
-        i=0
-        dirsorted=os.listdir(PATHCSVFOLDER)
-        dirsorted.sort()
-        for stock in dirsorted:
-            if(stock!='.DS_Store'and fnmatch.fnmatch(stock, pattern)):
-                stocknames.append(stock[:-4])
-                path=os.path.join(PATHCSVFOLDER, stocknames[i]+'.csv')
-                df=pd.read_csv(path,usecols=["Date","Open","High","Low","Close","Adj Close","Volume"])
-                stockdf.append(df)
-                i+=1
-        return (stockdf,stocknames)
-
-    def printpop(pop):
-        print(f"{len(pop)} - ", end='',file=term)
-        for i in range(len(pop)):
-            print(f"{str(pop[i])[16:-1]}", end=',',file=term)
-  
-    def maxazione(stockdf):
-        maxcost=0
-        for i in range(len(stockdf)):
-            for row in range(1,len(stockdf[i])+1):
-                cost = stockdf[i]["Close"][row-1]
-                if cost > maxcost:
-                    maxcost=cost
-        return maxcost
-
-    def combinator(len):
-            comb=[]
-            for i in range(len):
-                comb.append(i)
-            comb=list(iter.combinations(comb, 2))
-            return comb
-
-    def middle(stockdf,ind):
-        avgtotal=0
-        for i in range(len(ind)):
-            if(ind[i]!=0):
-                low = (stockdf[i]["Low"][tempo-1])*ind[i]
-                high = (stockdf[i]["High"][tempo-1])*ind[i]
-                avg=(low+high)/2
-                avgtotal+=avg
-        return avgtotal
-
-    def middlestart(stockdf,ind):
-        avgtotal=0
-        for i in range(len(ind)):
-            if(ind[i]!=0):
-                low = (stockdf[i]["Low"][0])*ind[i]
-                high = (stockdf[i]["High"][0])*ind[i]
-                avg=(low+high)/2
-                avgtotal+=avg
-        return avgtotal
-
-    def conta_azioni_possedute(ind):
-        count=0
-        for num in ind:
-            if(num==0):
-                count+=1
-        return len(ind)-count
-
-    def genind(low,up,size):
-        maxbudg=BUDG+1
-        while maxbudg>BUDG:
-            ind=[0 for i in range(size)]
-            numstock=random.randint(MINAZIONI,MAXAZIONI)
-            stockused=[]
-            for i in range(numstock):
-                stock=random.randint(0,size-1)
-                while stock in stockused:
-                    stock=random.randint(0,size-1)
-                stockused.append(stock)
-                ind[stock]=random.randint(low+1,up)
-            maxbudg=middlestart(stockdf,ind)
-        return ind
-
-    def set_tkPREF():
-        
-        win = Tk()
-        win.title("Stock Azioni")
-        # win.geometry("700x250")
-        checkboxes = {}
-
-        def genPREF():
-            global PREF
-            if (len(PREF)==0):
-                for box in checkboxes:
-                    PREF.append(box.var.get())
-                print('PREFERITI SETTATI',PREF)
-                win.destroy()
-            elif (len(PREF)==len(checkboxes)):
-                PREF=[]
-                for box in checkboxes:
-                    PREF.append(box.var.get())
-                # print('PREFERITI SETTATI',PREF)
-                win.destroy()
-            else: print("IMPOSSIBILE")
-
-
-        def ShowCheckBoxes(stocknames):
-            Cbcolumn = 1
-            Cbrow = 5
-            Chkcount = 0
-
-            for Checkbox in range(len(stocknames)):
-                name = stocknames[Checkbox]
-                indpref = Checkbox
-                current_var = IntVar()
-                current_box = Checkbutton(win, text=name, variable=current_var)
-                current_box.var = current_var
-                current_box.grid(row=Cbrow, column=Cbcolumn)
-                checkboxes[current_box] = indpref 
-                if Cbcolumn == 6:
-                    Cbcolumn = 1
-                    Cbrow += 1
-                else:
-                    Cbcolumn += 1
-                Chkcount += 1
-            Button(win, text='CONFERMA', command=genPREF,bg='#3A75C4',fg='black').grid(row=Cbrow+1, column=2, columnspan=4,pady=5)
-
-        Label(win, text="Seleziona azioni preferite",pady=5).grid(row=0, column=2, columnspan=4)
-        ShowCheckBoxes(stocknames)
-        win.mainloop()
-
-    def getTitlePREF(listpref):
-        listpreftitle=[]
-        if listpref:
-            for i,stock in enumerate(stocknames):
-                if(listpref[i]==1):
-                    listpreftitle.append(stock)
-        else: return listpreftitle
-        return listpreftitle
-
-    def closestMultiple(n,mult=4):
-        x=n%mult
-        z=n-x 
-        return z
-
-    creator.create("FitnessMulti", base.Fitness, weights=(-1.0, 1.0))
-    creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMulti)
-
-    stockdf,stocknames = genstockdf()
-    comb=combinator(len(stockdf))
-
-    # PREF=[0 for i in range(len(stockdf))] # nessuna pref
-    PREF=[]
-    set_tkPREF()
-    preftitle=getTitlePREF(PREF)
-
-    print(f"\nSTOCK NAMES {len(stocknames)} :\n{stocknames}\n")
-    print(f'AZIONI PREFERITE {len(preftitle)} : {preftitle}\n')
-
-    BUDG = 1000000
-    BOUND_LOW, BOUND_UP = 0, int((BUDG/maxazione(stockdf)))
-    NDIM = len(stockdf) #dimensione singola tupla default 30 # lunghezza portafoglio (numero di azioni disponibili)
-
-
-    MU = 100 #generazione tuple population, deve essere multiplo di 4 (Dimensione popolazione)
-    TOURNPARAM= 0.9 # 0.9
-    SELPARAM= 0.8 # 0.8
-    CXPB = 0.9 # probability of mating each individual at each generation 
-    NGEN = 250 #numero generazioni
-    ELITEPARAM=0.3
-    
-    random.seed()
-    toolbox = base.Toolbox()
-    toolbox.register("attr_float", genind, BOUND_LOW, BOUND_UP, NDIM) #genera numeri
-    toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float) #crea individui con attr_float
-    toolbox.register("population", tools.initRepeat, list, toolbox.individual) #ripete funzione individual
-
-    MAXTIME=len(stockdf[0])
-    for df in stockdf:
-        if len(df)<MAXTIME:
-            MAXTIME=len(df)
-
+def genstockdf():
+    stockdf=[]
+    stocknames=[] 
+    pattern="*.csv"
     i=0
-    for TOURNPARAM in [0.9,0.7,0.5]:
-        print(f'TOURNPARAM:{TOURNPARAM}', end=', ')
-        for SELPARAM in [0.8,0.6,0.4]:
-            print(f'SELPARAM:{SELPARAM}', end=', ')
-            for CXPB in [0.9,0.7,0.5]:
-                print(f'CXPB:{CXPB}', end=', ')
-                for MU in [50,100,250,500]:
-                    pop = toolbox.population(n=MU)
-                    # print(f"LISTA NOMI == DA AZIONI == STOCK AZIONI ({len(stocknames)} == {len(pop[0])} == {len(stockdf)})",file=term)
-                    print(f'POP INIZIALE: {len(pop)} ', end='',file=term)
-                    print(f'MU:{MU}', end=', ')
-                    for NGEN in [10,50,100,200]:
-                        print(f'NGEN:{NGEN}')
-                        print(f"{i+1}) MU={MU} NGEN={NGEN} NDIM={NDIM} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} - STARTED")
-                        statslist=[]
-                        listguadagno=[]
-                        for tempo in range(12,MAXTIME+1,12): #arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY (NUMERO DI RIGHE DA PRENDERE)
-                        # for tempo in range(4,MAXTIME+1,4): #arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY (NUMERO DI RIGHE DA PRENDERE)
+    dirsorted=os.listdir(PATHCSVFOLDER)
+    dirsorted.sort()
+    for stock in dirsorted:
+        if(stock!='.DS_Store'and fnmatch.fnmatch(stock, pattern)):
+            stocknames.append(stock[:-4])
+            path=os.path.join(PATHCSVFOLDER, stocknames[i]+'.csv')
+            df=pd.read_csv(path,usecols=["Date","Open","High","Low","Close","Adj Close","Volume"])
+            stockdf.append(df)
+            i+=1
+    return (stockdf,stocknames)
+
+def printpop(pop):
+    print(f"{len(pop)} - ", end='')
+    for i in range(len(pop)):
+        print(f"{str(pop[i])[16:-1]}", end=',')
+
+def maxazione(stockdf):
+    maxcost=0
+    for i in range(len(stockdf)):
+        for row in range(1,len(stockdf[i])+1):
+            cost = stockdf[i]["Close"][row-1]
+            if cost > maxcost:
+                maxcost=cost
+    return maxcost
+
+def combinator(len):
+        comb=[]
+        for i in range(len):
+            comb.append(i)
+        comb=list(iter.combinations(comb, 2))
+        return comb
+
+def middle(stockdf,ind):
+    avgtotal=0
+    for i in range(len(ind)):
+        if(ind[i]!=0):
+            low = (stockdf[i]["Low"][tempo-1])*ind[i]
+            high = (stockdf[i]["High"][tempo-1])*ind[i]
+            avg=(low+high)/2
+            avgtotal+=avg
+    return avgtotal
+
+def middlestart(stockdf,ind):
+    avgtotal=0
+    for i in range(len(ind)):
+        if(ind[i]!=0):
+            low = (stockdf[i]["Low"][0])*ind[i]
+            high = (stockdf[i]["High"][0])*ind[i]
+            avg=(low+high)/2
+            avgtotal+=avg
+    return avgtotal
+
+def conta_azioni_possedute(ind):
+    count=0
+    for num in ind:
+        if(num==0):
+            count+=1
+    return len(ind)-count
+
+def genind(low,up,size):
+    maxbudg=BUDG+1
+    while maxbudg>BUDG:
+        ind=[0 for i in range(size)]
+        numstock=random.randint(MINAZIONI,MAXAZIONI)
+        stockused=[]
+        for i in range(numstock):
+            stock=random.randint(0,size-1)
+            while stock in stockused:
+                stock=random.randint(0,size-1)
+            stockused.append(stock)
+            ind[stock]=random.randint(low+1,up)
+        maxbudg=middlestart(stockdf,ind)
+    return ind
+
+def set_tkPREF():
+    
+    win = Tk()
+    win.title("Stock Azioni")
+    # win.geometry("700x250")
+    checkboxes = {}
+
+    def genPREF():
+        global PREF
+        if (len(PREF)==0):
+            for box in checkboxes:
+                PREF.append(box.var.get())
+            print('PREFERITI SETTATI',PREF)
+            win.destroy()
+        elif (len(PREF)==len(checkboxes)):
+            PREF=[]
+            for box in checkboxes:
+                PREF.append(box.var.get())
+            # print('PREFERITI SETTATI',PREF)
+            win.destroy()
+        else: print("IMPOSSIBILE")
+
+
+    def ShowCheckBoxes(stocknames):
+        Cbcolumn = 1
+        Cbrow = 5
+        Chkcount = 0
+
+        for Checkbox in range(len(stocknames)):
+            name = stocknames[Checkbox]
+            indpref = Checkbox
+            current_var = IntVar()
+            current_box = Checkbutton(win, text=name, variable=current_var)
+            current_box.var = current_var
+            current_box.grid(row=Cbrow, column=Cbcolumn)
+            checkboxes[current_box] = indpref 
+            if Cbcolumn == 6:
+                Cbcolumn = 1
+                Cbrow += 1
+            else:
+                Cbcolumn += 1
+            Chkcount += 1
+        Button(win, text='CONFERMA', command=genPREF,bg='#3A75C4',fg='black').grid(row=Cbrow+1, column=2, columnspan=4,pady=5)
+
+    Label(win, text="Seleziona azioni preferite",pady=5).grid(row=0, column=2, columnspan=4)
+    ShowCheckBoxes(stocknames)
+    win.mainloop()
+
+def getTitlePREF(listpref):
+    listpreftitle=[]
+    if listpref:
+        for i,stock in enumerate(stocknames):
+            if(listpref[i]==1):
+                listpreftitle.append(stock)
+    else: return listpreftitle
+    return listpreftitle
+
+def closestMultiple(n,mult=4):
+    x=n%mult
+    z=n-x 
+    return z
+
+creator.create("FitnessMulti", base.Fitness, weights=(-1.0, 1.0))
+creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMulti)
+
+stockdf,stocknames = genstockdf()
+comb=combinator(len(stockdf))
+
+# PREF=[0 for i in range(len(stockdf))] # nessuna pref
+PREF=[]
+set_tkPREF()
+preftitle=getTitlePREF(PREF)
+
+print(f"\nSTOCK NAMES {len(stocknames)} :\n{stocknames}\n")
+print(f'AZIONI PREFERITE {len(preftitle)} : {preftitle}\n')
+
+BUDG = 1000000
+BOUND_LOW, BOUND_UP = 0, int((BUDG/maxazione(stockdf)))
+NDIM = len(stockdf) #dimensione singola tupla default 30 # lunghezza portafoglio (numero di azioni disponibili)
+
+
+MU = 100 #generazione tuple population, deve essere multiplo di 4 (Dimensione popolazione)
+TOURNPARAM= 0.9 # 0.9
+SELPARAM= 0.8 # 0.8
+CXPB = 0.9 # probability of mating each individual at each generation 
+NGEN = 250 #numero generazioni
+ELITEPARAM=0.3
+
+random.seed()
+toolbox = base.Toolbox()
+toolbox.register("attr_float", genind, BOUND_LOW, BOUND_UP, NDIM) #genera numeri
+toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float) #crea individui con attr_float
+toolbox.register("population", tools.initRepeat, list, toolbox.individual) #ripete funzione individual
+
+MAXTIME=len(stockdf[0])
+for df in stockdf:
+    if len(df)<MAXTIME:
+        MAXTIME=len(df)
+MAXTIME=24
+i=0
+for TOURNPARAM in [0.9,0.7,0.5]:
+    print(f'TOURNPARAM:{TOURNPARAM}', end=', ')
+    for SELPARAM in [0.8,0.6,0.4]:
+        print(f'SELPARAM:{SELPARAM}', end=', ')
+        for CXPB in [0.9,0.7,0.5]:
+            print(f'CXPB:{CXPB}', end=', ')
+            for MU in [50,100,250,500]:
+                pop = toolbox.population(n=MU)
+                # print(f"LISTA NOMI == DA AZIONI == STOCK AZIONI ({len(stocknames)} == {len(pop[0])} == {len(stockdf)})",file=term)
+                # print(f'POP INIZIALE: {len(pop)} ', end='',file=term)
+                print(f'MU:{MU}', end=', ')
+                for NGEN in [10,50,100,200]:
+                    print(f'NGEN:{NGEN}')
+                    print(f"{i+1}) MU={MU} NGEN={NGEN} NDIM={NDIM} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG} - STARTED")
+                    statslist=[]
+                    listguadagno=[]
+                    i+=1
+                    if (not os.path.isfile(f"output/guadagni/Guad_{i}_MU={MU} NGEN={NGEN} NDIM={NDIM} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump")):
+                        for tempo in range(4,MAXTIME+1,4): #arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY (NUMERO DI RIGHE DA PRENDERE)
                             
                             def myfitness(ind):
                                 listyield=[]
@@ -436,10 +433,10 @@ with open('term.txt', 'w') as term, open('logb.txt', 'w') as logb:
                             if __name__ == "__main__":
                                 main()
                             
-                        i+=1
-                        pickle.dump(listguadagno,open(f"output/guadagni/Guad_{i}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump","wb"))
-                        pickle.dump(statslist,open(f"output/logbook/Logb_{i}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump","wb"))
-                        print(f"{i}) MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG} - END\n")
+                        pickle.dump(listguadagno,open(f"output/guadagni/Guad_{i}_MU={MU} NGEN={NGEN} NDIM={NDIM} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump","wb"))
+                        pickle.dump(statslist,open(f"output/logbook/Logb_{i}_MU={MU} NGEN={NGEN} NDIM={NDIM} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump","wb"))
+                        print(f"{i}) MU={MU} NGEN={NGEN} NDIM={NDIM} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG} - END\n")
+                    
+                    else: print('Configurazione già eseguita\n')
 
-
-    # pass: msmtis_pwd
+# pass: msmtis_pwd
