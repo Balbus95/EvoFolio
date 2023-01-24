@@ -199,7 +199,7 @@ MAXTIME=len(stockdf[0])
 for df in stockdf:
     if len(df)<MAXTIME:
         MAXTIME=len(df)
-MAXTIME=24
+
 i=0
 for TOURNPARAM in [0.9,0.7,0.5]:
     print(f'TOURNPARAM:{TOURNPARAM}', end=', ')
@@ -214,11 +214,11 @@ for TOURNPARAM in [0.9,0.7,0.5]:
                 print(f'MU:{MU}', end=', ')
                 for NGEN in [10,50,100,200]:
                     print(f'NGEN:{NGEN}')
-                    print(f"{i+1}) MU={MU} NGEN={NGEN} NDIM={NDIM} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG} - STARTED")
+                    print(f"{i+1}) MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG} - STARTED")
                     statslist=[]
                     listguadagno=[]
                     i+=1
-                    if (not os.path.isfile(f"output/guadagni/Guad_{i}_MU={MU} NGEN={NGEN} NDIM={NDIM} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump")):
+                    if (not os.path.isfile(f"output/trimestrale/guadagni/Guad_{i}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump")):
                         for tempo in range(12,MAXTIME+1,12): #arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY (NUMERO DI RIGHE DA PRENDERE)
                             
                             def myfitness(ind):
@@ -433,9 +433,9 @@ for TOURNPARAM in [0.9,0.7,0.5]:
                             if __name__ == "__main__":
                                 main()
                             
-                        pickle.dump(listguadagno,open(f"output/guadagni/Guad_{i}_MU={MU} NGEN={NGEN} NDIM={NDIM} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump","wb"))
-                        pickle.dump(statslist,open(f"output/logbook/Logb_{i}_MU={MU} NGEN={NGEN} NDIM={NDIM} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump","wb"))
-                        print(f"{i}) MU={MU} NGEN={NGEN} NDIM={NDIM} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG} - END\n")
+                        pickle.dump(listguadagno,open(f"output/trimestrale/guadagni/Guad_{i}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump","wb"))
+                        pickle.dump(statslist,open(f"output/trimestrale/logbook/Logb_{i}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump","wb"))
+                        print(f"{i}) MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG} - END\n")
                     
                     else: print('Configurazione già eseguita\n')
 
