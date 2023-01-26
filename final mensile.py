@@ -50,6 +50,15 @@ def maxazione(stockdf):
                 maxcost=cost
     return maxcost
 
+def minazione(stockdf):
+    mincost=stockdf[0]["Close"][0]
+    for i in range(len(stockdf)):
+        for row in range(1,len(stockdf[i])+1):
+            cost = stockdf[i]["Close"][row-1]
+            if cost < mincost:
+                mincost=cost
+    return mincost
+
 def combinator(len):
         comb=[]
         for i in range(len):
@@ -246,6 +255,8 @@ for TOURNPARAM in [0.9,0.7,0.5]:
                                 return (totrisk,totyield)
 
                             toolbox.register("evaluate", myfitness) #funzione fitness
+                            # toolbox.register("mate", tools.cxOnePoint)
+                            # toolbox.register("mutate", tools.mutUniformInt, low=BOUND_LOW, up=BOUND_UP, indpb=1.0/NDIM)
                             toolbox.register("mate", tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0) #crossover func MODIFICATA CON INT
                             toolbox.register("mutate", tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0/NDIM) #mutation func MODIFICATA CON INT
                             toolbox.register("select", tools.selNSGA2) # funzione di selection

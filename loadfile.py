@@ -289,7 +289,6 @@ def plotall(listguadagni,bestind,listavgrisk,listavgyield,logbfile,guadfile):
         return print("I file non sono compatibili")
 
 def genlistavgtuple(logbpathfolder,logbnames):
-
     listavgtuple=[]
     for dump in logbnames:
         logbpathfile=os.path.join(logbpathfolder, dump)+'.dump'
@@ -305,14 +304,38 @@ def genlistavgtuple(logbpathfolder,logbnames):
         listavgtuple.append([np.mean(listavgrisk),np.mean(listavgyield)])
 
     return listavgtuple
+
+def findbestconfig(logbpathfolder,logbnames):
+    maxyield=0
+    minrisk=1
+    for dump in logbnames:
+        logbpathfile=os.path.join(logbpathfolder, dump)+'.dump'
+        logbooks=pickle.load(open(logbpathfile,"rb"))
+        for logb in logbooks:
+            for stat in logb:
+                avgrisk=stat["avg"][0]
+                avgyield=stat["avg"][1]
+                if avgrisk<minrisk:
+                    minrisk=avgrisk
+                    configminrisk=logbpathfile[logbpathfile.find("Logb"):-5]
+                if avgyield>maxyield:
+                    maxyield=avgyield
+                    configmaxyield=logbpathfile[logbpathfile.find("Logb"):-5]
+    bestconfigrisk=[[configminrisk,minrisk]]
+    bestconfigyield=[[configmaxyield,maxyield]]
+    return (bestconfigrisk,bestconfigyield)
     
 def main():
     global scelta
     scelta=-1
-    listavgtuplemon=genlistavgtuple(PATHLOGBMONFOLDER,gendumpnames(PATHLOGBMONFOLDER))
-    listavgtupletrim=genlistavgtuple(PATHLOGBTRIFOLDER,gendumpnames(PATHLOGBTRIFOLDER))
-    print(len(listavgtuplemon))
-    print(len(listavgtupletrim))
+    bestconfigriskmon,bestconfigyieldmon=findbestconfig(PATHLOGBMONFOLDER,gendumpnames(PATHLOGBMONFOLDER))
+    bestconfigrisktrim,bestconfigyieldtrim=findbestconfig(PATHLOGBTRIFOLDER,gendumpnames(PATHLOGBTRIFOLDER))
+    print('\nMigliori portafogli trovati fra le configurazioni MENSILI:')
+    print(f'MIN RISK: {bestconfigriskmon[0][1]} con la configurazione {bestconfigriskmon[0][0]}')
+    print(f'MAX YIELD: {bestconfigyieldmon[0][1]} con la configurazione {bestconfigyieldmon[0][0]}')
+    print('\nMigliori portafogli trovati fra le configurazioni TRIMESTRALI:')
+    print(f'MIN RISK: {bestconfigrisktrim[0][1]} con la configurazione {bestconfigrisktrim[0][0]}')
+    print(f'MAX YIELD: {bestconfigyieldtrim[0][1]} con la configurazione {bestconfigyieldtrim[0][0]}')
     while(not scelta==0):
         tkChooseButton()
         if scelta==1:
