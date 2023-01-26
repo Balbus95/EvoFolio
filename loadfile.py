@@ -57,14 +57,14 @@ def gendumpnames(path):
     dumpnames=[]
     pattern="*.dump"
 
-    for dump in os.listdir(path):
+    for dump in sorted(os.listdir(path)):
         if(dump!='.DS_Store' and fnmatch.fnmatch(dump, pattern)):
             dumpnames.append(dump[:-5])
 
     dumpnames.sort(key=lensort)
     return dumpnames
 
-def gendumpnamesReg(path):
+def gendumpnamesReg(path): # non usato
 
     def grp(pat, txt): 
         r = re.search(pat, txt)
