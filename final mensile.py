@@ -22,17 +22,15 @@ if(isWindows()):
     PATHCSVFOLDER= ABSPATH+"\\stock\\WEEK" #path per windows
 else: PATHCSVFOLDER= ABSPATH+"/stock/WEEK" #path per unix
 
-def genstockdf():
+def genstockdf(pathfolder):
     stockdf=[]
     stocknames=[] 
     pattern="*.csv"
     i=0
-    dirsorted=os.listdir(PATHCSVFOLDER)
-    dirsorted.sort()
-    for stock in dirsorted:
+    for stock in sorted(os.listdir(pathfolder)):
         if(stock!='.DS_Store'and fnmatch.fnmatch(stock, pattern)):
             stocknames.append(stock[:-4])
-            path=os.path.join(PATHCSVFOLDER, stocknames[i]+'.csv')
+            path=os.path.join(pathfolder, stocknames[i]+'.csv')
             df=pd.read_csv(path,usecols=["Date","Open","High","Low","Close","Adj Close","Volume"])
             stockdf.append(df)
             i+=1
@@ -113,7 +111,7 @@ def set_tkPREF():
         if (len(PREF)==0):
             for box in checkboxes:
                 PREF.append(box.var.get())
-            print('PREFERITI SETTATI',PREF)
+            # print('PREFERITI SETTATI',PREF)
             win.destroy()
         elif (len(PREF)==len(checkboxes)):
             PREF=[]
@@ -166,7 +164,7 @@ def closestMultiple(n,mult=4):
 creator.create("FitnessMulti", base.Fitness, weights=(-1.0, 1.0))
 creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMulti)
 
-stockdf,stocknames = genstockdf()
+stockdf,stocknames = genstockdf(PATHCSVFOLDER)
 comb=combinator(len(stockdf))
 
 # PREF=[0 for i in range(len(stockdf))] # nessuna pref
@@ -199,6 +197,8 @@ MAXTIME=len(stockdf[0])
 for df in stockdf:
     if len(df)<MAXTIME:
         MAXTIME=len(df)
+
+MAXTIME=24
 
 i=0
 for TOURNPARAM in [0.9,0.7,0.5]:

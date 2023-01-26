@@ -33,7 +33,7 @@ def genstockdf():
     stocknames=[] 
     pattern="*.csv"
     i=0
-    for stock in os.listdir(PATHCSVFOLDER):
+    for stock in sorted(os.listdir(PATHCSVFOLDER)):
         if(stock!='.DS_Store' and fnmatch.fnmatch(stock, pattern)):
             stocknames.append(stock[:-4])
             path=os.path.join(PATHCSVFOLDER, stocknames[i]+'.csv')
