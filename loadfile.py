@@ -19,12 +19,20 @@ if(isWindows()):
 else: PATHCSVFOLDER= ABSPATH+"/stock/WEEK" #path per unix
 
 if(isWindows()): 
-    PATHLOGBFOLDER= ABSPATH+"\\output\\logbook\\" #path per windows
-else: PATHLOGBFOLDER= ABSPATH+"/output/logbook/" #path per unix
+    PATHLOGBMONFOLDER= ABSPATH+"\\output\\mensile\\logbook\\" #path per windows
+else: PATHLOGBMONFOLDER= ABSPATH+"/output/mensile/logbook/" #path per unix
 
 if(isWindows()): 
-    PATHGUADFOLDER= ABSPATH+"\\output\\guadagni\\" #path per windows
-else: PATHGUADFOLDER= ABSPATH+"/output/guadagni/" #path per unix
+    PATHGUADMONFOLDER= ABSPATH+"\\output\\mensile\\guadagni\\" #path per windows
+else: PATHGUADMONFOLDER= ABSPATH+"/output/mensile/guadagni/" #path per unix
+
+if(isWindows()): 
+    PATHLOGBTRIFOLDER= ABSPATH+"\\output\\trimestrale\\logbook\\" #path per windows
+else: PATHLOGBTRIFOLDER= ABSPATH+"/output/trimestrale/logbook/" #path per unix
+
+if(isWindows()): 
+    PATHGUADTRIFOLDER= ABSPATH+"\\output\\trimestrale\\guadagni\\" #path per windows
+else: PATHGUADTRIFOLDER= ABSPATH+"/output/trimestrale/guadagni/" #path per unix
 
   
 def genstockdf():
@@ -84,10 +92,30 @@ def genportfolio(ind):
             # listportfoliotitle.append([stock,int(ind[i])])
     return listportfoliotitle
 
-def tkloadfile(logbnames,guadagninames):
-  
+def tkChooseButton():
     win = Tk()
     win.title("PlotLoader")
+    win.geometry("250x125")
+
+    def sceltamensile():
+        global scelta
+        scelta=1
+        win.destroy()
+
+    def sceltatrimestrale():
+        global scelta
+        scelta=2
+        win.destroy()
+
+    Label(win, text="Seleziona file da visualizzare").pack()
+    Button(win, text='MENSILI', command=sceltamensile,bg='#3A75C4',fg='black',width=30,pady=10).pack()
+    Button(win, text='TRIMESTRALI', command=sceltatrimestrale,bg='#3A75C4',fg='black',width=30,pady=10).pack()
+    win.mainloop()   
+
+def tkloadmensile(logbnames,guadagninames):
+  
+    win = Tk()
+    win.title("PlotLoader Mensile")
     win.geometry("620x144")
     win.columnconfigure(0,weight=1)
     win.columnconfigure(1,weight=1)
@@ -95,10 +123,10 @@ def tkloadfile(logbnames,guadagninames):
     def closewin():
         win.destroy()
 
-    def plotall():
-        logbpath=os.path.join(PATHLOGBFOLDER, logb.get())+'.dump'
-        guadpath=os.path.join(PATHGUADFOLDER, guad.get())+'.dump'
-        loadall(logbpath,guadpath)
+    def plotmon():
+        logbpath=os.path.join(PATHLOGBMONFOLDER, logb.get())+'.dump'
+        guadpath=os.path.join(PATHGUADMONFOLDER, guad.get())+'.dump'
+        loadmon(logbpath,guadpath)
 
     Label(win, text="Seleziona file da visualizzare").grid(column=0,row=0,columnspan=2,pady=2)
     
@@ -118,16 +146,82 @@ def tkloadfile(logbnames,guadagninames):
     guad_combobox.grid(column=0,row=3,columnspan=2,pady=15,padx=5,sticky='nesw')
     # guad_combobox.bind('<<ComboboxSelected>>',selectguad)
 
-    plotbutton=Button(win, text='PLOT', command=plotall,bg='#3A75C4',fg='black')
+    plotbutton=Button(win, text='PLOT', command=plotmon,bg='#3A75C4',fg='black')
     plotbutton.grid(column=0, row=4,padx=10,sticky='nesw')
     closebutton=Button(win, text='ESCI', command=closewin,bg='#7B1B02',fg='black')
     closebutton.grid(column=1, row=4,padx=10,sticky='nesw')
 
     win.mainloop()   
 
-def loadall(logbpath,guadpath):
-    logbfile=logbpath[len(PATHLOGBFOLDER):-5]
-    guadfile=guadpath[len(PATHGUADFOLDER):-5]
+def tkloadtrimestrale(logbnames,guadagninames):
+  
+    win = Tk()
+    win.title("PlotLoader Trimestrale")
+    win.geometry("620x144")
+    win.columnconfigure(0,weight=1)
+    win.columnconfigure(1,weight=1)
+
+    def closewin():
+        win.destroy()
+
+    def plottrim():
+        logbpath=os.path.join(PATHLOGBTRIFOLDER, logb.get())+'.dump'
+        guadpath=os.path.join(PATHGUADTRIFOLDER, guad.get())+'.dump'
+        loadtrim(logbpath,guadpath)
+
+    Label(win, text="Seleziona file da visualizzare").grid(column=0,row=0,columnspan=2,pady=2)
+    
+    logb=StringVar()
+    logb_combobox = ttk.Combobox(win, textvariable=logb,justify=CENTER)
+    logb_combobox.set("Lista Logbook")
+    logb_combobox['values']=logbnames
+    logb_combobox['state']='readonly'
+    logb_combobox.grid(column=0,row=1,columnspan=2,pady=2,padx=5,sticky='nesw')
+    # logb_combobox.bind('<<ComboboxSelected>>',selectlogb)
+  
+    guad=StringVar()
+    guad_combobox = ttk.Combobox(win, textvariable=guad,justify=CENTER)
+    guad_combobox.set("Lista Guadagni")
+    guad_combobox['values']=guadagninames
+    guad_combobox['state']='readonly'
+    guad_combobox.grid(column=0,row=3,columnspan=2,pady=15,padx=5,sticky='nesw')
+    # guad_combobox.bind('<<ComboboxSelected>>',selectguad)
+
+    plotbutton=Button(win, text='PLOT', command=plottrim,bg='#3A75C4',fg='black')
+    plotbutton.grid(column=0, row=4,padx=10,sticky='nesw')
+    closebutton=Button(win, text='ESCI', command=closewin,bg='#7B1B02',fg='black')
+    closebutton.grid(column=1, row=4,padx=10,sticky='nesw')
+
+    win.mainloop()   
+
+def loadmon(logbpath,guadpath):
+    logbfile=logbpath[len(PATHLOGBMONFOLDER):-5]
+    guadfile=guadpath[len(PATHGUADMONFOLDER):-5]
+    logbooks=pickle.load(open(logbpath,"rb"))
+    guadagni=pickle.load(open(guadpath,"rb"))
+    
+    listguadagni=[]
+    maxguadagno=0
+    for ind in guadagni:
+        if ind[1]>=maxguadagno:
+            maxguadagno=ind[1]
+            bestind=[ind[0],genportfolio(ind[2])]
+        listguadagni.append(ind[1])
+
+    listavgrisk=[]
+    listavgyield=[]
+    for logb in logbooks:
+        for stat in logb:
+            avgrisk=stat["avg"][0]
+            avgyield=stat["avg"][1]
+            listavgrisk.append(avgrisk)
+            listavgyield.append(avgyield)
+
+    plotall(listguadagni,bestind,listavgrisk,listavgyield,logbfile,guadfile)
+
+def loadtrim(logbpath,guadpath):
+    logbfile=logbpath[len(PATHLOGBTRIFOLDER):-5]
+    guadfile=guadpath[len(PATHGUADTRIFOLDER):-5]
     logbooks=pickle.load(open(logbpath,"rb"))
     guadagni=pickle.load(open(guadpath,"rb"))
     
@@ -198,7 +292,12 @@ def plotall(listguadagni,bestind,listavgrisk,listavgyield,logbfile,guadfile):
         return print("I file non sono compatibili")
 
 def main():
-    tkloadfile(gendumpnames(PATHLOGBFOLDER),gendumpnames(PATHGUADFOLDER))
+    tkChooseButton()
+    if scelta==1:
+        tkloadmensile(gendumpnames(PATHLOGBMONFOLDER),gendumpnames(PATHGUADMONFOLDER))
+    elif scelta==2:
+        tkloadtrimestrale(gendumpnames(PATHLOGBTRIFOLDER),gendumpnames(PATHGUADTRIFOLDER))
+    else: print("scelta errata")
 
 if __name__ == "__main__":
     stockdf,stocknames= genstockdf()
