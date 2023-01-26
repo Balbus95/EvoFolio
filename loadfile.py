@@ -14,25 +14,18 @@ ABSPATH=os.path.dirname(os.path.abspath(__file__))
 def isWindows():
     return os.name=="nt"
 
-if(isWindows()): 
-    PATHCSVFOLDER= ABSPATH+"\\stock\\WEEK" #path per windows
-else: PATHCSVFOLDER= ABSPATH+"/stock/WEEK" #path per unix
-
-if(isWindows()): 
-    PATHLOGBMONFOLDER= ABSPATH+"\\output\\mensile\\logbook\\" #path per windows
-else: PATHLOGBMONFOLDER= ABSPATH+"/output/mensile/logbook/" #path per unix
-
-if(isWindows()): 
-    PATHGUADMONFOLDER= ABSPATH+"\\output\\mensile\\guadagni\\" #path per windows
-else: PATHGUADMONFOLDER= ABSPATH+"/output/mensile/guadagni/" #path per unix
-
-if(isWindows()): 
-    PATHLOGBTRIFOLDER= ABSPATH+"\\output\\trimestrale\\logbook\\" #path per windows
-else: PATHLOGBTRIFOLDER= ABSPATH+"/output/trimestrale/logbook/" #path per unix
-
-if(isWindows()): 
-    PATHGUADTRIFOLDER= ABSPATH+"\\output\\trimestrale\\guadagni\\" #path per windows
-else: PATHGUADTRIFOLDER= ABSPATH+"/output/trimestrale/guadagni/" #path per unix
+if(isWindows()): #path per windows
+    PATHCSVFOLDER=ABSPATH+"\\stock\\WEEK\\" 
+    PATHLOGBMONFOLDER=ABSPATH+"\\output\\mensile\\logbook\\"
+    PATHGUADMONFOLDER=ABSPATH+"\\output\\mensile\\guadagni\\"
+    PATHLOGBTRIFOLDER=ABSPATH+"\\output\\trimestrale\\logbook\\"
+    PATHGUADTRIFOLDER=ABSPATH+"\\output\\trimestrale\\guadagni\\"
+else: #path per unix
+    PATHCSVFOLDER=ABSPATH+"/stock/WEEK/" 
+    PATHLOGBMONFOLDER=ABSPATH+"/output/mensile/logbook/"
+    PATHGUADMONFOLDER=ABSPATH+"/output/mensile/guadagni/"
+    PATHLOGBTRIFOLDER=ABSPATH+"/output/trimestrale/logbook/"
+    PATHGUADTRIFOLDER=ABSPATH+"/output/trimestrale/guadagni/"
 
 
 def genstockdf():
@@ -78,8 +71,8 @@ def gendumpnamesReg(path): # non usato
         if(dump!='.DS_Store' and fnmatch.fnmatch(dump, pattern)):
             dumpnames.append(dump[:-5])
             i+=1
+    
     dumpnames.sort(key=lambda l: grp(r'\d+', l))
-    # dumpnames.sort(key=lensort)
     return dumpnames
 
 def genportfolio(ind):
