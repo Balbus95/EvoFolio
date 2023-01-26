@@ -34,7 +34,7 @@ if(isWindows()):
     PATHGUADTRIFOLDER= ABSPATH+"\\output\\trimestrale\\guadagni\\" #path per windows
 else: PATHGUADTRIFOLDER= ABSPATH+"/output/trimestrale/guadagni/" #path per unix
 
-  
+
 def genstockdf():
     stockdf=[]
     stocknames=[] 
@@ -56,12 +56,10 @@ def gendumpnames(path):
 
     dumpnames=[]
     pattern="*.dump"
-    i=0
 
     for dump in os.listdir(path):
         if(dump!='.DS_Store' and fnmatch.fnmatch(dump, pattern)):
             dumpnames.append(dump[:-5])
-            i+=1
 
     dumpnames.sort(key=lensort)
     return dumpnames
@@ -95,7 +93,7 @@ def genportfolio(ind):
 def tkChooseButton():
     win = Tk()
     win.title("PlotLoader")
-    win.geometry("250x125")
+    win.geometry("250x160")
 
     def sceltamensile():
         global scelta
@@ -107,9 +105,15 @@ def tkChooseButton():
         scelta=2
         win.destroy()
 
+    def closewin():
+        global scelta
+        scelta=0
+        win.destroy()
+
     Label(win, text="Seleziona file da visualizzare").pack()
     Button(win, text='MENSILI', command=sceltamensile,bg='#3A75C4',fg='black',width=30,pady=10).pack()
     Button(win, text='TRIMESTRALI', command=sceltatrimestrale,bg='#3A75C4',fg='black',width=30,pady=10).pack()
+    Button(win, text='ESCI', command=closewin,bg='#7B1B02',fg='black',width=15,pady=10).pack()
     win.mainloop()   
 
 def tkloadmensile(logbnames,guadagninames):
@@ -291,13 +295,37 @@ def plotall(listguadagni,bestind,listavgrisk,listavgyield,logbfile,guadfile):
     else:
         return print("I file non sono compatibili")
 
+def genlistavgtuple(logbpathfolder,logbnames):
+
+    listavgtuple=[]
+    for dump in logbnames:
+        logbpathfile=os.path.join(logbpathfolder, dump)+'.dump'
+        logbooks=pickle.load(open(logbpathfile,"rb"))
+        listavgyield=[]
+        listavgrisk=[]
+        for logb in logbooks:
+            for stat in logb:
+                avgrisk=stat["avg"][0]
+                avgyield=stat["avg"][1]
+                listavgrisk.append(avgrisk)
+                listavgyield.append(avgyield)
+        listavgtuple.append([np.mean(listavgrisk),np.mean(listavgyield)])
+
+    return listavgtuple
+    
 def main():
-    tkChooseButton()
-    if scelta==1:
-        tkloadmensile(gendumpnames(PATHLOGBMONFOLDER),gendumpnames(PATHGUADMONFOLDER))
-    elif scelta==2:
-        tkloadtrimestrale(gendumpnames(PATHLOGBTRIFOLDER),gendumpnames(PATHGUADTRIFOLDER))
-    else: print("scelta errata")
+    global scelta
+    scelta=-1
+    listavgtuplemon=genlistavgtuple(PATHLOGBMONFOLDER,gendumpnames(PATHLOGBMONFOLDER))
+    listavgtupletrim=genlistavgtuple(PATHLOGBTRIFOLDER,gendumpnames(PATHLOGBTRIFOLDER))
+    print(len(listavgtuplemon))
+    print(len(listavgtupletrim))
+    while(not scelta==0):
+        tkChooseButton()
+        if scelta==1:
+            tkloadmensile(gendumpnames(PATHLOGBMONFOLDER),gendumpnames(PATHGUADMONFOLDER))
+        elif scelta==2:
+            tkloadtrimestrale(gendumpnames(PATHLOGBTRIFOLDER),gendumpnames(PATHGUADTRIFOLDER))
 
 if __name__ == "__main__":
     stockdf,stocknames= genstockdf()
