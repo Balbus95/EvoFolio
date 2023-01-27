@@ -27,16 +27,15 @@ else: #path per unix
     PATHLOGBTRIFOLDER=ABSPATH+"/output/trimestrale/logbook/"
     PATHGUADTRIFOLDER=ABSPATH+"/output/trimestrale/guadagni/"
 
-
-def genstockdf():
+def genstockdf(pathfolder):
     stockdf=[]
     stocknames=[] 
     pattern="*.csv"
     i=0
-    for stock in sorted(os.listdir(PATHCSVFOLDER)):
-        if(stock!='.DS_Store' and fnmatch.fnmatch(stock, pattern)):
+    for stock in sorted(os.listdir(pathfolder)):
+        if(stock!='.DS_Store'and fnmatch.fnmatch(stock, pattern)):
             stocknames.append(stock[:-4])
-            path=os.path.join(PATHCSVFOLDER, stocknames[i]+'.csv')
+            path=os.path.join(pathfolder, stocknames[i]+'.csv')
             df=pd.read_csv(path,usecols=["Date","Open","High","Low","Close","Adj Close","Volume"])
             stockdf.append(df)
             i+=1
@@ -117,6 +116,32 @@ def tkloadmensile(logbnames,guadagninames):
     win.columnconfigure(0,weight=1)
     win.columnconfigure(1,weight=1)
 
+    def checklobg(event):
+        value = event.widget.get()
+
+        if value == '':
+            logb_combobox['values'] = logbnames
+        else:
+            data = []
+            for item in logbnames:
+                if value.lower() in item.lower():
+                    data.append(item)
+
+            logb_combobox['values'] = data
+
+    def checkguad(event):
+        value = event.widget.get()
+
+        if value == '':
+            guad_combobox['values'] = guadagninames
+        else:
+            data = []
+            for item in guadagninames:
+                if value.lower() in item.lower():
+                    data.append(item)
+
+            guad_combobox['values'] = data
+
     def closewin():
         win.destroy()
 
@@ -129,19 +154,17 @@ def tkloadmensile(logbnames,guadagninames):
     
     logb=StringVar()
     logb_combobox = ttk.Combobox(win, textvariable=logb,justify=CENTER)
-    logb_combobox.set("Lista Logbook")
+    logb_combobox.set("Logb_")
     logb_combobox['values']=logbnames
-    logb_combobox['state']='readonly'
+    logb_combobox.bind('<KeyRelease>',checklobg)
     logb_combobox.grid(column=0,row=1,columnspan=2,pady=2,padx=5,sticky='nesw')
-    # logb_combobox.bind('<<ComboboxSelected>>',selectlogb)
-  
+
     guad=StringVar()
     guad_combobox = ttk.Combobox(win, textvariable=guad,justify=CENTER)
-    guad_combobox.set("Lista Guadagni")
+    guad_combobox.set("Guad_")
     guad_combobox['values']=guadagninames
-    guad_combobox['state']='readonly'
+    guad_combobox.bind('<KeyRelease>',checkguad)
     guad_combobox.grid(column=0,row=3,columnspan=2,pady=15,padx=5,sticky='nesw')
-    # guad_combobox.bind('<<ComboboxSelected>>',selectguad)
 
     plotbutton=Button(win, text='PLOT', command=plotmon,bg='#3A75C4',fg='black')
     plotbutton.grid(column=0, row=4,padx=10,sticky='nesw')
@@ -158,6 +181,32 @@ def tkloadtrimestrale(logbnames,guadagninames):
     win.columnconfigure(0,weight=1)
     win.columnconfigure(1,weight=1)
 
+    def checklobg(event):
+        value = event.widget.get()
+
+        if value == '':
+            logb_combobox['values'] = logbnames
+        else:
+            data = []
+            for item in logbnames:
+                if value.lower() in item.lower():
+                    data.append(item)
+
+            logb_combobox['values'] = data
+
+    def checkguad(event):
+        value = event.widget.get()
+
+        if value == '':
+            guad_combobox['values'] = guadagninames
+        else:
+            data = []
+            for item in guadagninames:
+                if value.lower() in item.lower():
+                    data.append(item)
+
+            guad_combobox['values'] = data
+
     def closewin():
         win.destroy()
 
@@ -166,23 +215,21 @@ def tkloadtrimestrale(logbnames,guadagninames):
         guadpath=os.path.join(PATHGUADTRIFOLDER, guad.get())+'.dump'
         loadtrim(logbpath,guadpath)
 
-    Label(win, text="Seleziona file da visualizzare").grid(column=0,row=0,columnspan=2,pady=2)
+    Label(win, text="Seleziona file da visualizszare").grid(column=0,row=0,columnspan=2,pady=2)
     
     logb=StringVar()
     logb_combobox = ttk.Combobox(win, textvariable=logb,justify=CENTER)
-    logb_combobox.set("Lista Logbook")
+    logb_combobox.set("Logb_")
     logb_combobox['values']=logbnames
-    logb_combobox['state']='readonly'
+    logb_combobox.bind('<KeyRelease>',checklobg)
     logb_combobox.grid(column=0,row=1,columnspan=2,pady=2,padx=5,sticky='nesw')
-    # logb_combobox.bind('<<ComboboxSelected>>',selectlogb)
   
     guad=StringVar()
     guad_combobox = ttk.Combobox(win, textvariable=guad,justify=CENTER)
-    guad_combobox.set("Lista Guadagni")
+    guad_combobox.set("Guad_")
     guad_combobox['values']=guadagninames
-    guad_combobox['state']='readonly'
+    guad_combobox.bind('<KeyRelease>',checkguad)
     guad_combobox.grid(column=0,row=3,columnspan=2,pady=15,padx=5,sticky='nesw')
-    # guad_combobox.bind('<<ComboboxSelected>>',selectguad)
 
     plotbutton=Button(win, text='PLOT', command=plottrim,bg='#3A75C4',fg='black')
     plotbutton.grid(column=0, row=4,padx=10,sticky='nesw')
@@ -344,10 +391,6 @@ def main():
             tkloadtrimestrale(gendumpnames(PATHLOGBTRIFOLDER),gendumpnames(PATHGUADTRIFOLDER))
 
 if __name__ == "__main__":
-    stockdf,stocknames= genstockdf()
+    stockdf,stocknames= genstockdf(PATHCSVFOLDER)
     main()
-                            
-
-
-
-
+                        
