@@ -156,10 +156,11 @@ cython_debug/
 .DS_Store
 *.txt
 Desktop.ini
-pythonenv/
-output/
+output/mensile/guadagni
+output/mensile/logbook
+output/trimestrale/guadagni
+output/trimestrale/logbook
 stock/test/
-deapevop/
 azione.py
 provaclose.xlsx
 testacose.py
