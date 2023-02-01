@@ -6,4 +6,4 @@ The latest version can be installed with
 
 Install DEAP's custom library with
 
-`pip install .\deap --use-pep517` o con `pip install .\deap`
+`pip install .\deap --use-pep517` or with `pip install .\deap`
