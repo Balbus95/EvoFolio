@@ -156,5 +156,6 @@ cython_debug/
 .DS_Store
 *.txt
 Desktop.ini
+pythonenv/
 output/
 stock/test/
