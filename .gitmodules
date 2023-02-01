@@ -1,0 +1,3 @@
+[submodule "deap"]
+	path = deap
+	url = https://github.com/DEAP/deap.git
