@@ -10,19 +10,19 @@ from tkinter import *
 from deap.benchmarks.tools import diversity, convergence, hypervolume
 from deap import creator, base, tools
 
-def isWindows():
+def isWindows(): # check if it is Windows or not
     return os.name=="nt"
 
-MINAZIONI, MAXAZIONI= 10, 14
+MINAZIONI, MAXAZIONI= 10, 14 # min and max number of different stocks that a portfolio can hold
 
 
-ABSPATH=os.path.dirname(os.path.abspath(__file__))
+ABSPATH=os.path.dirname(os.path.abspath(__file__)) # takes the path of this folder
 
-if(isWindows()): 
-    PATHCSVFOLDER= ABSPATH+"\\stock\\WEEK" #path per windows
-else: PATHCSVFOLDER= ABSPATH+"/stock/WEEK" #path per unix
+if(isWindows()): # check of OS
+    PATHCSVFOLDER= ABSPATH+"\\stock\\WEEK" # path windows
+else: PATHCSVFOLDER= ABSPATH+"/stock/WEEK" # path unix
 
-def genstockdf(pathfolder):
+def genstockdf(pathfolder): # returns a list of dataframe and the list of stock names
     stockdf=[]
     stocknames=[] 
     pattern="*.csv"
@@ -36,12 +36,12 @@ def genstockdf(pathfolder):
             i+=1
     return (stockdf,stocknames)
 
-def printpop(pop):
+def printpop(pop): # function for printing a population
     print(f"{len(pop)} - ", end='')
     for i in range(len(pop)):
         print(f"{str(pop[i])[16:-1]}", end=',')
 
-def maxazione(stockdf):
+def maxazione(stockdf): # returns the value of the most expensive action of the entire stock of actions
     maxcost=0
     for i in range(len(stockdf)):
         for row in range(1,len(stockdf[i])+1):
@@ -50,7 +50,7 @@ def maxazione(stockdf):
                 maxcost=cost
     return maxcost
 
-def minazione(stockdf):
+def minazione(stockdf): # returns the value of the least expensive action of entire stock of actions
     mincost=stockdf[0]["Close"][0]
     for i in range(len(stockdf)):
         for row in range(1,len(stockdf[i])+1):
@@ -59,14 +59,14 @@ def minazione(stockdf):
                 mincost=cost
     return mincost
 
-def combinator(len):
+def combinator(len): # returns the list of possible combination of the entire stock of actions like [(0,1),(0,2),...,(last-1,last)]
         comb=[]
         for i in range(len):
             comb.append(i)
         comb=list(iter.combinations(comb, 2))
         return comb
 
-def middle(stockdf,ind):
+def middle(stockdf,ind): # returns portfolio's value calculated with the mean of every action's value
     avgtotal=0
     for i in range(len(ind)):
         if(ind[i]!=0):
@@ -76,7 +76,7 @@ def middle(stockdf,ind):
             avgtotal+=avg
     return avgtotal
 
-def middlestart(stockdf,ind):
+def middlestart(stockdf,ind): # equals to middle() but is only used to generate the portfolios with genind()
     avgtotal=0
     for i in range(len(ind)):
         if(ind[i]!=0):
@@ -86,27 +86,27 @@ def middlestart(stockdf,ind):
             avgtotal+=avg
     return avgtotal
 
-def conta_azioni_possedute(ind):
+def conta_azioni_possedute(ind): # return the number of different actions purchased in the portfolio 
     count=0
     for num in ind:
         if(num==0):
             count+=1
     return len(ind)-count
 
-def genind_old(low,up,size): #utilizzato per esperimento 1 e 2 con vecchie e nuove mate e mutate sia mensile che trimestrale
+def genind_old(low,up,size): # function for generating random portfolio
     maxbudg=BUDG+1
     while maxbudg>BUDG:
-        ind=[0 for i in range(size)]
-        numstock=random.randint(MINAZIONI,MAXAZIONI)
-        stockused=[]
+        ind=[0 for i in range(size)] # initialization of portfolio
+        numstock=random.randint(MINAZIONI,MAXAZIONI) # random number of different stocks to buy for this portfolio 
+        stockused=[]  # list of actions already used (bought)
         for i in range(numstock):
-            stock=random.randint(0,size-1)
+            stock=random.randint(0,size-1) # randomly chooses the 'stock' to buy for this portfolio
             while stock in stockused:
-                stock=random.randint(0,size-1)
-            stockused.append(stock)
-            ind[stock]=random.randint(low+1,up)
-        maxbudg=middlestart(stockdf,ind)
-    return ind
+                stock=random.randint(0,size-1) # stock has already been used, so try again with another random stock
+            stockused.append(stock) # 'stock' has been used, so it adds stock to the list of used stock
+            ind[stock]=random.randint(low+1,up) # random number of actions to buy of 'stock'
+        maxbudg=middlestart(stockdf,ind) # check whether the portfolio value is too high
+    return ind # returns the generated portfolio 
 
 def genind(low,up,size): #utilizzato per esperimento 3 con nuove mate e mutate mutUniformIntAdaptive
     """
@@ -135,7 +135,7 @@ def genind(low,up,size): #utilizzato per esperimento 3 con nuove mate e mutate m
         maxbudg=int(middlestart(stockdf,ind))
     return ind
 
-def set_tkPREF():
+def set_tkPREF(): # GUI used for choosing the list of favorite stocks
     
     win = Tk()
     win.title("Stock Azioni")
@@ -183,7 +183,7 @@ def set_tkPREF():
     ShowCheckBoxes(stocknames)
     win.mainloop()
 
-def getTitlePREF(listpref):
+def getTitlePREF(listpref): # returns the list of favorite stock names
     listpreftitle=[]
     if listpref:
         for i,stock in enumerate(stocknames):
@@ -192,7 +192,7 @@ def getTitlePREF(listpref):
     else: return listpreftitle
     return listpreftitle
 
-def closestMultiple(n,mult=4):
+def closestMultiple(n,mult=4): #find the closest minor multiple
     x=n%mult
     z=n-x 
     return z
