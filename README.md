@@ -19,3 +19,10 @@ Install other dependency libraries with
 `pip install matplotlib`
 `pip install pandas`
 `pip install numpy`
+
+Run the main script with `python evoportfolio.py`
+
+in the same way
+Run the `loadfile.py` script to see graphs of the .dump files created with the main script
+
+Run `stockToPDF.py` to generate PDFs of the trend graphs for each stock (change the `PATHCSVFOLDER` path), default path is `./stock/WEEK`, PDFs are saved in the `stockToPDF_out` folder

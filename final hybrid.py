@@ -241,6 +241,21 @@ for df in stockdf:
 
 MAXTIME=24 # maximum csv row to read, the row is the date in the csv, in this case using /stock/WEEK each csv row equals one week, 24 is 6 months, comment to use the maximum length of the csv
 
+while True:
+    choose=input("Select a configuration - select 1 for monthly and 2 for trimestral: ")
+    if choose == '1':
+        foldertosave="mensile"
+        offset=4
+        print("You chose monthly\n")
+        break
+    elif choose == '2':
+        foldertosave="trimestrale"
+        offset=12
+        print("You chose trimestral\n")
+        break
+    else:
+        print("Invalid Case, retry\n")
+
 i=0
 for TOURNPARAM in [0.9,0.7,0.5]: #for different configuration of TOURNPARAM , this overrides default parameter
     print(f'TOURNPARAM:{TOURNPARAM}', end=', ')
@@ -257,8 +272,8 @@ for TOURNPARAM in [0.9,0.7,0.5]: #for different configuration of TOURNPARAM , th
                     statslist=[]
                     listguadagno=[]
                     i+=1
-                    if (not (os.path.isfile(f"output/trimestrale/guadagni/Guad_{i}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump") and os.path.isfile(f"output/trimestrale/logbook/Logb_{i}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump"))):
-                        for tempo in range(12,MAXTIME+1,12): #arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY
+                    if (not (os.path.isfile(f"output/{foldertosave}/guadagni/Guad_{i}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump") and os.path.isfile(f"output/{foldertosave}/logbook/Logb_{i}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump"))):
+                        for tempo in range(offset,MAXTIME+1,offset): #arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY
                             
                             def myfitness(ind): # function that returns an individual's fitness, returns total risk and total yield
                                 listyield=[]
@@ -457,10 +472,8 @@ for TOURNPARAM in [0.9,0.7,0.5]: #for different configuration of TOURNPARAM , th
                                 main()
 
                         ## save .dump files
-                        pickle.dump(listguadagno,open(f"output/trimestrale/guadagni/Guad_{i}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump","wb"))
-                        pickle.dump(statslist,open(f"output/trimestrale/logbook/Logb_{i}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump","wb"))
+                        pickle.dump(listguadagno,open(f"output/{foldertosave}/guadagni/Guad_{i}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump","wb"))
+                        pickle.dump(statslist,open(f"output/{foldertosave}/logbook/Logb_{i}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump","wb"))
                         print(f"{i}) MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG} - END\n")
                     
                     else: print('Configuration already done\n')
-
-# pass: msmtis_pwd

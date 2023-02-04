@@ -102,16 +102,16 @@ def tkChooseButton():
         scelta=0
         win.destroy()
 
-    Label(win, text="Seleziona file da visualizzare").pack()
-    Button(win, text='MENSILI', command=sceltamensile,bg='#3A75C4',fg='black',width=30,pady=10).pack()
-    Button(win, text='TRIMESTRALI', command=sceltatrimestrale,bg='#3A75C4',fg='black',width=30,pady=10).pack()
-    Button(win, text='ESCI', command=closewin,bg='#7B1B02',fg='black',width=15,pady=10).pack()
+    Label(win, text="Select files to plot").pack()
+    Button(win, text='MONTHLY', command=sceltamensile,bg='#3A75C4',fg='black',width=30,pady=10).pack()
+    Button(win, text='TRIMESTRAL', command=sceltatrimestrale,bg='#3A75C4',fg='black',width=30,pady=10).pack()
+    Button(win, text='EXIT', command=closewin,bg='#7B1B02',fg='black',width=15,pady=10).pack()
     win.mainloop()   
 
 def tkloadmensile(logbnames,guadagninames):
   
     win = Tk()
-    win.title("PlotLoader Mensile")
+    win.title("PlotLoader Monthly")
     win.geometry("620x144")
     win.columnconfigure(0,weight=1)
     win.columnconfigure(1,weight=1)
@@ -150,7 +150,7 @@ def tkloadmensile(logbnames,guadagninames):
         guadpath=os.path.join(PATHGUADMONFOLDER, guad.get())+'.dump'
         loadmon(logbpath,guadpath)
 
-    Label(win, text="Seleziona file da visualizzare").grid(column=0,row=0,columnspan=2,pady=2)
+    Label(win, text="Select files to plot").grid(column=0,row=0,columnspan=2,pady=2)
     
     logb=StringVar()
     logb_combobox = ttk.Combobox(win, textvariable=logb,justify=CENTER)
@@ -168,7 +168,7 @@ def tkloadmensile(logbnames,guadagninames):
 
     plotbutton=Button(win, text='PLOT', command=plotmon,bg='#3A75C4',fg='black')
     plotbutton.grid(column=0, row=4,padx=10,sticky='nesw')
-    closebutton=Button(win, text='ESCI', command=closewin,bg='#7B1B02',fg='black')
+    closebutton=Button(win, text='EXIT', command=closewin,bg='#7B1B02',fg='black')
     closebutton.grid(column=1, row=4,padx=10,sticky='nesw')
 
     win.mainloop()   
@@ -176,7 +176,7 @@ def tkloadmensile(logbnames,guadagninames):
 def tkloadtrimestrale(logbnames,guadagninames):
   
     win = Tk()
-    win.title("PlotLoader Trimestrale")
+    win.title("PlotLoader Trimestral")
     win.geometry("620x144")
     win.columnconfigure(0,weight=1)
     win.columnconfigure(1,weight=1)
@@ -215,7 +215,7 @@ def tkloadtrimestrale(logbnames,guadagninames):
         guadpath=os.path.join(PATHGUADTRIFOLDER, guad.get())+'.dump'
         loadtrim(logbpath,guadpath)
 
-    Label(win, text="Seleziona file da visualizszare").grid(column=0,row=0,columnspan=2,pady=2)
+    Label(win, text="Select files to plot").grid(column=0,row=0,columnspan=2,pady=2)
     
     logb=StringVar()
     logb_combobox = ttk.Combobox(win, textvariable=logb,justify=CENTER)
@@ -233,7 +233,7 @@ def tkloadtrimestrale(logbnames,guadagninames):
 
     plotbutton=Button(win, text='PLOT', command=plottrim,bg='#3A75C4',fg='black')
     plotbutton.grid(column=0, row=4,padx=10,sticky='nesw')
-    closebutton=Button(win, text='ESCI', command=closewin,bg='#7B1B02',fg='black')
+    closebutton=Button(win, text='EXIT', command=closewin,bg='#7B1B02',fg='black')
     closebutton.grid(column=1, row=4,padx=10,sticky='nesw')
 
     win.mainloop()   
@@ -302,7 +302,7 @@ def plotall(listguadagni,bestind,listavgrisk,listavgyield,logbfile,guadfile):
     if (matchlogb[1:]==matchguad[1:]) and (int(idlogb)==int(idguad)):
         
         plt.style.use("ggplot")
-        fig = plt.figure(f"GRAFICO DI {str(matchguad[1:])[1:-1]}",figsize=(13,6))
+        fig = plt.figure(f"PLOT OF {str(matchguad[1:])[1:-1]}",figsize=(13,6))
 
         maxtime=int(str(matchguad[4])[8:])
         datelogb=pd.date_range(stockdf[0]["Date"][0],stockdf[0]["Date"][maxtime-1], periods=len(listavgrisk))
@@ -310,7 +310,7 @@ def plotall(listguadagni,bestind,listavgrisk,listavgyield,logbfile,guadfile):
         bestdate=pd.to_datetime(stockdf[0]["Date"][bestind[0]-1])
         plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%d-%b-%Y')) # '%d-%m-%Y' ----- gca() get current axis, gcf() get current figure 
     
-        fig.suptitle(f"Miglior Portfolio il {str(bestdate)[:-9]}\n{bestind[1]}")
+        fig.suptitle(f"Best Portfolio {str(bestdate)[:-9]}\n{bestind[1]}")
         
         yplt = plt.subplot2grid((3, 3), loc=(0, 0),colspan=3)
         yplt.plot(datelogb,listavgyield,label=f"Yield avg: {np.mean(listavgyield)}",color="green")
@@ -322,10 +322,10 @@ def plotall(listguadagni,bestind,listavgrisk,listavgyield,logbfile,guadfile):
         rplt.legend(frameon=False)
 
         gplt = plt.subplot2grid((3, 3), loc=(2, 0),colspan=3)
-        gplt.plot(dateguad,listguadagni,label=f"Valore Portfolio con € {str(idfileRegex.search(matchguad[-1]).group())}",color="blue",marker='o')
+        gplt.plot(dateguad,listguadagni,label=f"Portfolio value with € {str(idfileRegex.search(matchguad[-1]).group())}",color="blue",marker='o')
         # gplt.plot(dateguad,listguadagni,label=f"Valore Portfolio con {str(matchguad[-1:])[2:-2]}€",color="blue",marker='o')
-        gplt.scatter(bestdate,(np.max(listguadagni)),s=125,label=f"Guadagno Miglior Portfolio: {np.max(listguadagni)}")
-        gplt.set_xlabel(f'Data\nDal {stockdf[0]["Date"][0]} al {stockdf[0]["Date"][maxtime-1]}') 
+        gplt.scatter(bestdate,(np.max(listguadagni)),s=125,label=f"Best Earnings Portfolio: {np.max(listguadagni)}")
+        gplt.set_xlabel(f'Date\nfrom {stockdf[0]["Date"][0]} to {stockdf[0]["Date"][maxtime-1]}') 
         gplt.legend(frameon=False)
         
         # fig.legend(loc="lower left", title="", frameon=False)
@@ -333,7 +333,7 @@ def plotall(listguadagni,bestind,listavgrisk,listavgyield,logbfile,guadfile):
         plt.gcf().autofmt_xdate()
         plt.show()
     else:
-        return print("I file non sono compatibili")
+        return print("Files are not compatible")
 
 def genlistavgtuple(logbpathfolder,logbnames):
     listavgtuple=[]
@@ -364,12 +364,14 @@ def findbestconfig(logbpathfolder,logbnames):
                 avgyield=stat["avg"][1]
                 if avgrisk<minrisk:
                     minrisk=avgrisk
+                    relativeyield=avgyield
                     configminrisk=logbpathfile[logbpathfile.find("Logb"):-5]
                 if avgyield>maxyield:
                     maxyield=avgyield
+                    relativerisk=avgrisk
                     configmaxyield=logbpathfile[logbpathfile.find("Logb"):-5]
-    bestconfigrisk=[[configminrisk,minrisk]]
-    bestconfigyield=[[configmaxyield,maxyield]]
+    bestconfigrisk=[[configminrisk,minrisk,relativeyield]]
+    bestconfigyield=[[configmaxyield,maxyield,relativerisk]]
     return (bestconfigrisk,bestconfigyield)
     
 def main():
@@ -377,12 +379,12 @@ def main():
     scelta=-1
     bestconfigriskmon,bestconfigyieldmon=findbestconfig(PATHLOGBMONFOLDER,gendumpnames(PATHLOGBMONFOLDER))
     bestconfigrisktrim,bestconfigyieldtrim=findbestconfig(PATHLOGBTRIFOLDER,gendumpnames(PATHLOGBTRIFOLDER))
-    print('\nMigliori portafogli trovati fra le configurazioni MENSILI:')
-    print(f'MIN RISK: {bestconfigriskmon[0][1]} con la configurazione {bestconfigriskmon[0][0]}')
-    print(f'MAX YIELD: {bestconfigyieldmon[0][1]} con la configurazione {bestconfigyieldmon[0][0]}')
-    print('\nMigliori portafogli trovati fra le configurazioni TRIMESTRALI:')
-    print(f'MIN RISK: {bestconfigrisktrim[0][1]} con la configurazione {bestconfigrisktrim[0][0]}')
-    print(f'MAX YIELD: {bestconfigyieldtrim[0][1]} con la configurazione {bestconfigyieldtrim[0][0]}')
+    print('\nBest portfolios found among MONTHLY configurations:')
+    print(f'MIN RISK: {bestconfigriskmon[0][1]} with yield {bestconfigriskmon[0][2]} - configuration {bestconfigriskmon[0][0]}')
+    print(f'MAX YIELD: {bestconfigyieldmon[0][1]} with risk {bestconfigyieldmon[0][2]} - configuration {bestconfigyieldmon[0][0]}')
+    print('\nBest portfolios found among TRIMESTRAL configurations:')
+    print(f'MIN RISK: {bestconfigrisktrim[0][1]} with yield {bestconfigrisktrim[0][2]} - configuration {bestconfigrisktrim[0][0]}')
+    print(f'MAX YIELD: {bestconfigyieldtrim[0][1]} with risk {bestconfigyieldtrim[0][2]} - configuration {bestconfigyieldtrim[0][0]}')
     while(not scelta==0):
         tkChooseButton()
         if scelta==1:

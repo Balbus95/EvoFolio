@@ -119,26 +119,26 @@ def genind(low,up,size): #utilizzato per esperimento 3 con nuove mate e mutate m
     """
     maxbudg=BUDG+1
     while maxbudg>BUDG:
-        ind=[0 for i in range(size)]
-        numstock=random.randint(MINAZIONI,MAXAZIONI)
-        stockused=[]
+        ind=[0 for i in range(size)]  # initialization of portfolio
+        numstock=random.randint(MINAZIONI,MAXAZIONI) # random number of different stocks to buy for this portfolio
+        stockused=[] # list of actions already used (bought)
         currentbudg=BUDG #money in bank account
         for i in range(numstock):
-            stock=random.randint(0,size-1)
+            stock=random.randint(0,size-1) # randomly chooses the 'stock' to buy for this portfolio
             while stock in stockused:
-                stock=random.randint(0,size-1)
-            stockused.append(stock)
+                stock=random.randint(0,size-1) # stock has already been used, so try again with another random stock
+            stockused.append(stock)  # 'stock' has been used, so it adds stock to the list of used stock
             upperbound_default=int(currentbudg/np.max(stockdf[stock]["Close"])) #max no. of stocks of type 'stock' purchasable with my current money
             if upperbound_default>1:
-                ind[stock]=random.randint(low+1,upperbound_default)
+                ind[stock]=random.randint(low+1,upperbound_default) # random number of actions to buy of 'stock'
             currentbudg=BUDG-middlestart(stockdf,ind) #update current money available
-        maxbudg=int(middlestart(stockdf,ind))
-    return ind
+        maxbudg=int(middlestart(stockdf,ind))  # check whether the portfolio value is too high
+    return ind # returns the generated portfolio 
 
 def set_tkPREF(): # GUI used for choosing the list of favorite stocks
     
     win = Tk()
-    win.title("Stock Azioni")
+    win.title("Stock")
     # win.geometry("700x250")
     checkboxes = {}
 
@@ -177,9 +177,9 @@ def set_tkPREF(): # GUI used for choosing the list of favorite stocks
             else:
                 Cbcolumn += 1
             Chkcount += 1
-        Button(win, text='CONFERMA', command=genPREF,bg='#3A75C4',fg='black').grid(row=Cbrow+1, column=2, columnspan=4,pady=5)
+        Button(win, text='CONFIRM', command=genPREF,bg='#3A75C4',fg='black').grid(row=Cbrow+1, column=2, columnspan=4,pady=5)
 
-    Label(win, text="Seleziona azioni preferite",pady=5).grid(row=0, column=2, columnspan=4)
+    Label(win, text="Select favorite stocks",pady=5).grid(row=0, column=2, columnspan=4)
     ShowCheckBoxes(stocknames)
     win.mainloop()
 
@@ -209,55 +209,58 @@ set_tkPREF()
 preftitle=getTitlePREF(PREF)
 
 print(f"\nSTOCK NAMES {len(stocknames)} :\n{stocknames}\n")
-print(f'AZIONI PREFERITE {len(preftitle)} : {preftitle}\n')
-
-BUDG = 1000000
-BOUND_LOW, BOUND_UP = 0, BUDG
-NDIM = len(stockdf) #dimensione singola tupla default 30 # lunghezza portafoglio (numero di azioni disponibili)
+print(f'FAVORITE STOCK {len(preftitle)} : {preftitle}\n')
 
 
-MU = 100 #generazione tuple population, deve essere multiplo di 4 (Dimensione popolazione)
-TOURNPARAM= 0.9 # 0.9
-SELPARAM= 0.8 # 0.8
+##### Defaul parameters ##### 
+BUDG = 1000000 #initial budget of portfolios
+BOUND_LOW, BOUND_UP = 0, BUDG # min and max number of equal stock that a portfolio can hold
+NDIM = len(stockdf) #portfolio size (number of stock's files)
+
+###### these are overwritten by the next "for", edit or remove them
+MU = 100 #population size, number of individuals in the population.
+TOURNPARAM= 0.9 # #number of generation of nsga2()
+SELPARAM= 0.8 # NSGA-II selection parameter, e.g. 0.8 selects 80% of the pop
 CXPB = 0.9 # probability of mating each individual at each generation 
-NGEN = 250 #numero generazioni
-ELITEPARAM=0.3
+NGEN = 250 # number of generation of nsga2()
+ELITEPARAM=0.3 # number of generation of nsga2()
 
+##### Registration of functions for population generation #####
 random.seed()
 toolbox = base.Toolbox()
-toolbox.register("attr_float", genind, BOUND_LOW, BOUND_UP, NDIM) #genera numeri
-toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float) #crea individui con attr_float
-toolbox.register("population", tools.initRepeat, list, toolbox.individual) #ripete funzione individual
+toolbox.register("attr_float", genind, BOUND_LOW, BOUND_UP, NDIM) #generation portfolios
+toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float) #crates an individuals with attr_float
+toolbox.register("population", tools.initRepeat, list, toolbox.individual) #repeates the "individual" function
+###################
 
+#### adapt maxtime to csv with fewer rows
 MAXTIME=len(stockdf[0])
 for df in stockdf:
     if len(df)<MAXTIME:
         MAXTIME=len(df)
 
-MAXTIME=24
+MAXTIME=24 # maximum csv row to read, the row is the date in the csv, in this case using /stock/WEEK each csv row equals one week, 24 is 6 months, comment to use the maximum length of the csv
 
 i=0
-for TOURNPARAM in [0.9,0.7,0.5]:
+for TOURNPARAM in [0.9,0.7,0.5]: #for different configuration of TOURNPARAM , this overrides default parameter
     print(f'TOURNPARAM:{TOURNPARAM}', end=', ')
-    for SELPARAM in [0.8,0.6,0.4]:
+    for SELPARAM in [0.8,0.6,0.4]:  #for different configuration of SELPARAM, this overrides default parameter
         print(f'SELPARAM:{SELPARAM}', end=', ')
-        for CXPB in [0.9,0.7,0.5]:
+        for CXPB in [0.9,0.7,0.5]:  #for different configuration of CXPB, this overrides default parameter
             print(f'CXPB:{CXPB}', end=', ')
-            for MU in [250,500,1000]:
-                pop = toolbox.population(n=MU)
-                # print(f"LISTA NOMI == DA AZIONI == STOCK AZIONI ({len(stocknames)} == {len(pop[0])} == {len(stockdf)})",file=term)
-                # print(f'POP INIZIALE: {len(pop)} ', end='',file=term)
+            for MU in [250,500,1000]: #for different configuration of MU, this overrides default parameter
+                pop = toolbox.population(n=MU) #population creation
                 print(f'MU:{MU}', end=', ')
-                for NGEN in [10,50,100,200]:
+                for NGEN in [10,50,100,200]:  #for different configuration of NGEN, this overrides default parameter
                     print(f'NGEN:{NGEN}')
                     print(f"{i+1}) MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG} - STARTED")
                     statslist=[]
                     listguadagno=[]
                     i+=1
-                    if (not os.path.isfile(f"output/mensile/guadagni/Guad_{i}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump")):
-                        for tempo in range(4,MAXTIME+1,4): #arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY (NUMERO DI RIGHE DA PRENDERE)
+                    if (not (os.path.isfile(f"output/mensile/guadagni/Guad_{i}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump") and os.path.isfile(f"output/mensile/logbook/Logb_{i}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump"))):
+                        for tempo in range(4,MAXTIME+1,4): #arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY
                             
-                            def myfitness(ind):
+                            def myfitness(ind): # function that returns an individual's fitness, returns total risk and total yield
                                 listyield=[]
                                 listvar=[]
                                 listrisk=[]
@@ -281,26 +284,21 @@ for TOURNPARAM in [0.9,0.7,0.5]:
                                 totrisk=sum(listrisk)
                                 return (totrisk,totyield)
 
-                            toolbox.register("evaluate", myfitness) #funzione fitness
+                            toolbox.register("evaluate", myfitness) #registration of fitness function
                             toolbox.register("mate", tools.cxOnePoint)
                             toolbox.register("mutate", tools.mutUniformIntAdaptive, low=BOUND_LOW, up=BOUND_UP, indpb=1.0/NDIM,dfstocks=stockdf)
-                            # toolbox.register("mate", tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0) #crossover func MODIFICATA CON INT
-                            # toolbox.register("mutate", tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0/NDIM) #mutation func MODIFICATA CON INT
-                            toolbox.register("select", tools.selNSGA2) # funzione di selection
+                            # toolbox.register("mate", tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0) #crossover function customized for return a INT
+                            # toolbox.register("mutate", tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0/NDIM) #mutation function customized for return a INT
+                            toolbox.register("select", tools.selNSGA2) # selection function
 
                             def main():
                                 global pop
-
                                 data=str(pd.to_datetime(stockdf[0]["Date"][tempo-1]))[:-9] # -9 taglia i caratteri dei hh:mm:ss dalla stringa
-                                # print(f"\n\n\n\n{tempo} ---- {data} ------------------------------------------------",file=term)
-                                # print(f"\n\n\n\n{tempo} ---- {data} ------------------------------------------------\n",file=logb)
-                                print(f"{tempo} ---- {data}")
-                                # print(f'\n%%%%%%%%PRIMA NSGA2: {len(pop)}',end='',file=term)
-                                pop,logbook =nsga2(pop)
-                                # print(f'\n\n%%%%%%%%%DOPO NSGA2: {len(pop)}',end='',file=term)
+                                print(f"\t{tempo} ---- {data}")
+                                pop,logbook=nsga2(pop) #pop is iterated 'tempo' times, using the pop of the previous call for the new call of nsga2()
                                 statslist.append(logbook)
 
-                            def nsga2(pop):
+                            def nsga2(pop): # nsga2 algorithm of deap modified, the line next to #C is a custom line.
 
                                 stats = tools.Statistics(lambda ind: ind.fitness.values)
                                 stats.register("avg", np.mean, axis=0)
@@ -311,15 +309,16 @@ for TOURNPARAM in [0.9,0.7,0.5]:
                                 logbook = tools.Logbook()
                                 logbook.header = "gen", "evals", "std", "min", "avg", "max"
 
-                                #  Valutare gli individui con un'idoneità non valida
-                                if tempo>1:
+                                if tempo>1: #C
                                     listguadagno.append([tempo,middle(stockdf,pop[0]),[i for i in pop[0]]])
 
-                                invalid_ind = [ind for ind in pop if not ind.fitness.valid] #entra se valid = !False (entra se valid è vuota)
+                                # Evaluate the individuals with an invalid fitness
+                                invalid_ind = [ind for ind in pop if not ind.fitness.valid]
                                 fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
-                                for ind, fit in zip(invalid_ind, fitnesses): #viene eseguito solo al primo for
+                                for ind, fit in zip(invalid_ind, fitnesses):
                                     ind.fitness.values = fit
 
+                                # Decreases one stock at a time until the portfolio is within budget #C
                                 for ind in pop:
                                     cb=middle(stockdf,ind)
                                     while cb>BUDG:
@@ -329,33 +328,28 @@ for TOURNPARAM in [0.9,0.7,0.5]:
                                         ind[r]-=1
                                         cb=middle(stockdf,ind)
                                 
+                                # Checks the integrity of the portfolio #C
                                 pop = [ind for ind in pop if (conta_azioni_possedute(ind)>=MINAZIONI and conta_azioni_possedute(ind)<=MAXAZIONI)]
-                                # print(f'\n\n\t$$$ dopo contazero e middle {len(pop)} ',end='',file=term)
-                                # printpop(pop)
                                 
-                                # Questo serve solo ad assegnare la distanza di affollamento agli individui non viene effettuata una vera e propria selezione
+                                # This is just to assign the crowding distance to the individuals #C
                                 pop = toolbox.select(pop, int(len(pop)*SELPARAM))
 
                                 record = stats.compile(pop) #compile() Applica ai dati della sequenza di input ogni funzione registrata e restituisce un dizionario. 
                                 logbook.record(gen=0, evals=len(invalid_ind), **record)
                                 # print(logbook.stream) #print header e gen0
-                                # print(logbook.stream,file=logb) #print header e gen0
 
-                                # Iniziare il processo generazionale
+                                # Begin the generational process
                                 for gen in range(1, NGEN):
                                     
-                                    # print(f'\n\t\tiniz gen {gen} {len(pop)} ',file=term)
-
+                                    #C
                                     elite=genelite(pop,PREF)
                                     elite = [toolbox.clone(ind) for ind in elite]
 
-                                    # Vary the population  
-                                    # print(f"{closestMultiple(int(len(pop)*TOURNPARAM))} ------ {len(pop)}")          
-                                    # offspring = tools.selTournamentDCD(pop, len(pop)*TOURNPARAM) # k must be divisible by four if k == len(individuals),  k must be less than or equal to individuals length
+                                    # Vary the population #C
                                     offspring = tools.selTournamentDCD(pop, closestMultiple(int(len(pop)*TOURNPARAM)))
                                     offspring = [toolbox.clone(ind) for ind in offspring]
 
-                                    
+                                    # mutate and crossover
                                     for ind1, ind2 in zip(offspring[::2], offspring[1::2]):
 
                                         if random.random() <= CXPB:
@@ -365,7 +359,7 @@ for TOURNPARAM in [0.9,0.7,0.5]:
                                         toolbox.mutate(ind2)
                                         del ind1.fitness.values, ind2.fitness.values
 
-                                    
+                                    # mutate and crossover with elite #C
                                     for ind1 in elite:
                                         for ind2 in offspring:
 
@@ -375,9 +369,9 @@ for TOURNPARAM in [0.9,0.7,0.5]:
                                             toolbox.mutate(ind1)
                                             toolbox.mutate(ind2)
                                             del ind1.fitness.values, ind2.fitness.values
-                                    
-                                    #offspring = [ind for ind in offspring if middle(stockdf,ind)<=BUDG] #cancella individua che hanno speso più di BUDG
-                                    for ind in offspring:
+
+                                    # Decreases one stock at a time until the portfolio is within budget #C
+                                    for ind in offspring: 
                                         cb=middle(stockdf,ind)
                                         while cb>BUDG:
                                             r=random.randint(0,len(ind)-1)
@@ -385,40 +379,31 @@ for TOURNPARAM in [0.9,0.7,0.5]:
                                                 r=random.randint(0,len(ind)-1)
                                             ind[r]-=1
                                             cb=middle(stockdf,ind)
-                                    
+
+                                    # Checks the integrity of the portfolio #C
                                     offspring = [ind for ind in offspring if (conta_azioni_possedute(ind)>=MINAZIONI and conta_azioni_possedute(ind)<=MAXAZIONI)] #cancella individui che hanno maxzeri azioni a 0
 
-
-                                    # Valutare gli individual con un fitness non valido
+                                    # Evaluate the individuals with an invalid fitness
                                     invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
                                     fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
                                     for ind, fit in zip(invalid_ind, fitnesses):
-                                        # print(f'invalid_ind {ind} {fit}',file=logb)
                                         ind.fitness.values = fit
 
-                                    # Seleziona la popolazione di nuova generazione
-                                    pop = toolbox.select(pop + offspring, MU) #vedere se aggiungere elite
-                                    
-                                    # for i in range(len(pop)):
-                                    #     print(f'pop myfit {pop[i]} {myfitness(pop[i])}',file=logb)
-                                    
-                                    record = stats.compile(pop) #compile() Applica ai dati della sequenza di input ogni funzione registrata e restituisce un dizionario. 
+                                    # Select the next generation population
+                                    pop = toolbox.select(pop + offspring, MU)
+                            
+                                    record = stats.compile(pop)
                                     logbook.record(gen=gen, evals=len(invalid_ind), **record)
-                                    # print(logbook.stream) #print riga gen
-                                    # print(logbook.stream,file=logb) #print riga gen
-                                    
-                                    # print(f'\n\t\tfine gen {gen} {len(pop)}: ',file=term)
-
+                                    # print(logbook.stream) #print row gen
 
                                 # print("Final population hypervolume is %f" % hypervolume(pop, [11.0, 11.0]))
-                                # print("Final population hypervolume is %f" % hypervolume(pop, [11.0, 11.0]),file=logb)
 
-                                if tempo==1:
+                                if tempo==1: #C
                                     listguadagno.append([tempo,middle(stockdf,pop[0]),[i for i in pop[0]]])
 
                                 return pop ,logbook
 
-                            def calclistyield(df,col,tempo): 
+                            def calclistyield(df,col,tempo):
                                 listyield=[]
                                 if tempo>=2:
                                     for i in reversed(range(1,len(df[col][:tempo]))):
@@ -470,11 +455,12 @@ for TOURNPARAM in [0.9,0.7,0.5]:
 
                             if __name__ == "__main__":
                                 main()
-                            
+
+                        ## save .dump files
                         pickle.dump(listguadagno,open(f"output/mensile/guadagni/Guad_{i}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump","wb"))
                         pickle.dump(statslist,open(f"output/mensile/logbook/Logb_{i}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump","wb"))
                         print(f"{i}) MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG} - END\n")
                     
-                    else: print('Configurazione già eseguita\n')
+                    else: print('Configuration already done\n')
 
 # pass: msmtis_pwd
