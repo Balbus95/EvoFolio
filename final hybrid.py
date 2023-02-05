@@ -6,19 +6,25 @@ import numpy as np
 import array
 import pickle
 from tkinter import *
-
 from deap.benchmarks.tools import diversity, convergence, hypervolume
 from deap import creator, base, tools
 
-def isWindows(): # check if it is Windows or not
-    return os.name=="nt"
-
+#### Default parameters 
 MINAZIONI, MAXAZIONI= 10, 14 # min and max number of different stocks that a portfolio can hold
+BUDG = 1000000 # initial budget of portfolios
+BOUND_LOW, BOUND_UP = 0, BUDG # min and max number of equal stock that a portfolio can hold
+MAXTIME=24 # maximum csv row to read, the row is the date in the csv, in this case using /stock/WEEK each csv row equals one week, 24 is 6 months, comment to use the maximum length of the csv
+ELITEPARAM=0.3 # elite parameter, e.g. 0.3 selects 30% of the pop
 
+#### These below are overwritten by the next "for", edit or remove them
+MU = 100 # population size, number of individuals in the population.
+TOURNPARAM= 0.9 # tournament parameter, e.g. 0.9 selects 90% of the pop
+SELPARAM= 0.8 # NSGA-II selection parameter, e.g. 0.8 selects 80% of the pop
+CXPB = 0.9 # probability of mating each individual at each generation 
+NGEN = 250 # number of generation of nsga2
 
 ABSPATH=os.path.dirname(os.path.abspath(__file__)) # takes the path of this folder
-
-if(isWindows()): # check of OS
+if(os.name=="nt"): # check of OS
     PATHCSVFOLDER= ABSPATH+"\\stock\\WEEK" # path windows
 else: PATHCSVFOLDER= ABSPATH+"/stock/WEEK" # path unix
 
@@ -66,6 +72,22 @@ def combinator(len): # returns the list of possible combination of the entire st
         comb=list(iter.combinations(comb, 2))
         return comb
 
+def lucky(stockdf,ind): # returns portfolio's value calculated with the min of every action's value
+    lowtotal=0
+    for i in range(len(ind)):
+        if(ind[i]!=0):
+            low = (stockdf[i]["Low"][tempo-1])*ind[i]
+            lowtotal+=low
+    return lowtotal
+
+def murphy(stockdf,ind): # returns portfolio's value calculated with the max of every action's value
+    hightotal=0
+    for i in range(len(ind)):
+        if(ind[i]!=0):
+            high = (stockdf[i]["High"][tempo-1])*ind[i]
+            hightotal+=high
+    return hightotal
+
 def middle(stockdf,ind): # returns portfolio's value calculated with the mean of every action's value
     avgtotal=0
     for i in range(len(ind)):
@@ -92,48 +114,6 @@ def conta_azioni_possedute(ind): # return the number of different actions purcha
         if(num==0):
             count+=1
     return len(ind)-count
-
-def genind_old(low,up,size): # function for generating random portfolio,  utilizzato per esperimento 1,2 con nuove mate e mutate di examples/ga/nsga2.py
-    maxbudg=BUDG+1
-    while maxbudg>BUDG:
-        ind=[0 for i in range(size)] # initialization of portfolio
-        numstock=random.randint(MINAZIONI,MAXAZIONI) # random number of different stocks to buy for this portfolio 
-        stockused=[]  # list of actions already used (bought)
-        for i in range(numstock): 
-            stock=random.randint(0,size-1) # randomly chooses the 'stock' to buy for this portfolio
-            while stock in stockused: 
-                stock=random.randint(0,size-1) # stock has already been used, so try again with another random stock
-            stockused.append(stock) # 'stock' has been used, so it adds stock to the list of used stock
-            ind[stock]=random.randint(low+1,up) # random number of actions to buy of 'stock'
-        maxbudg=middlestart(stockdf,ind) # check whether the portfolio value is too high
-    return ind # returns the generated portfolio 
-
-def genind(low,up,size): # function for generating random portfolio, utilizzato per esperimento 3 con nuove mate e mutate mutUniformIntAdaptive
-    """
-    Customized generator of individual. Checks for its validity based on budget's constraints.
-
-    param low:
-    param up: unused for this version.
-    param size:
-
-    """
-    maxbudg=BUDG+1
-    while maxbudg>BUDG:
-        ind=[0 for i in range(size)]  # initialization of portfolio
-        numstock=random.randint(MINAZIONI,MAXAZIONI) # random number of different stocks to buy for this portfolio
-        stockused=[] # list of actions already used (bought)
-        currentbudg=BUDG #money in bank account
-        for i in range(numstock):
-            stock=random.randint(0,size-1) # randomly chooses the 'stock' to buy for this portfolio
-            while stock in stockused:
-                stock=random.randint(0,size-1) # stock has already been used, so try again with another random stock
-            stockused.append(stock)  # 'stock' has been used, so it adds stock to the list of used stock
-            upperbound_default=int(currentbudg/np.max(stockdf[stock]["Close"])) #max no. of stocks of type 'stock' purchasable with my current money
-            if upperbound_default>1:
-                ind[stock]=random.randint(low+1,upperbound_default) # random number of actions to buy of 'stock'
-            currentbudg=BUDG-middlestart(stockdf,ind) #update current money available
-        maxbudg=int(middlestart(stockdf,ind))  # check whether the portfolio value is too high
-    return ind # returns the generated portfolio 
 
 def set_tkPREF(): # GUI used for choosing the list of favorite stocks
     
@@ -192,55 +172,156 @@ def getTitlePREF(listpref): # returns the list of favorite stock names
     else: return listpreftitle
     return listpreftitle
 
+def genelite(pop,pref): # returns a list of individuals who have multiple preferred actions
+    indliked=[]
+    for i in range(len(pref)):
+        if(pref[i]==1):
+            indmaxazioni=0
+            for ind in pop:
+                if(ind[i]>=indmaxazioni):
+                    indmaxazioni=ind[i]
+                    maxind=ind
+            indliked.append(maxind)
+    return indliked
+
 def closestMultiple(n,mult=4): #find the closest minor multiple
     x=n%mult
     z=n-x 
     return z
 
-creator.create("FitnessMulti", base.Fitness, weights=(-1.0, 1.0)) # definition of fitness for deap
-creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMulti) # definition of individual for deap
+def calclistyield(df,col,tempo): # Yield calculation function
+    """
+    param df: dataframe of a stock
+    param col: column to calculate
+    param tempo: df row until which time to calculate
+    """
+    listyield=[]
+    if tempo>=2:
+        for i in reversed(range(1,len(df[col][:tempo]))):
+            listyield.append(np.log(df[col][tempo-i]/df[col][tempo-i-1]))
+        return listyield
+    else: 
+        listyield=[0]
+        return listyield
+
+def calccov(list1,list2,tempo): # Covariance calculation function
+    """
+    param list1: list of yields of the first stock
+    param list2: list of yields of the second stock
+    param tempo: df row until which time to calculate
+    """
+    if tempo>=3:
+        cov=np.cov(list1,list2)
+        cov=float(cov[1][0])
+        return cov
+    else:
+        return 0 
+
+def calcrisk(az1,az2,var1,var2,cov): # Risk calculation function
+    """
+    param az1: percentage of the number of shares of the first stock respect to portfolio
+    param az2: percentage of the number of shares of the second stock respect to portfolio
+    param var1: variance of the first stock
+    param var2: variance of the first stock
+    param cov: covariance of the first and second stock
+    """
+    risk=(az1*var1)+(az2*var2)+(2*(az1*az2*cov)) 
+    return risk
+
+def myfitness(ind): # function that returns an individual's fitness, returns total risk and total yield
+    comb=combinator(len(ind))
+    listyield=[]
+    listvar=[]
+    listrisk=[]
+    totyield=0
+    for i in range(len(ind)):
+        if(ind[i]!=0):
+            df=stockdf[i]
+            yeld=calclistyield(df,"Close",tempo)
+            listyield.append(yeld)
+            listvar.append(np.var(yeld))
+            totyield += ind[i]*np.mean(yeld)
+        else:
+            listyield.append(0)
+            listvar.append(0)
+    for coppia in comb:
+        if(ind[coppia[0]]!=0 and ind[coppia[1]]!=0):
+            x=coppia[0]
+            y=coppia[1]
+            risk=calcrisk(ind[x]/sum(ind),ind[y]/sum(ind),listvar[x],listvar[y],calccov(listyield[x],listyield[y],tempo))
+            listrisk.append(risk)
+    totrisk=sum(listrisk)
+    return (totrisk,totyield)
+
+def genind_old(low,up,size): # function for generating random portfolio,  utilizzato per esperimento 1,2 con nuove mate e mutate di examples/ga/nsga2.py
+    maxbudg=BUDG+1
+    while maxbudg>BUDG:
+        ind=[0 for i in range(size)] # initialization of portfolio
+        numstock=random.randint(MINAZIONI,MAXAZIONI) # random number of different stocks to buy for this portfolio 
+        stockused=[]  # list of actions already used (bought)
+        for i in range(numstock): 
+            stock=random.randint(0,size-1) # randomly chooses the 'stock' to buy for this portfolio
+            while stock in stockused: 
+                stock=random.randint(0,size-1) # stock has already been used, so try again with another random stock
+            stockused.append(stock) # 'stock' has been used, so it adds stock to the list of used stock
+            ind[stock]=random.randint(low+1,up) # random number of actions to buy of 'stock'
+        maxbudg=middlestart(stockdf,ind) # check whether the portfolio value is too high
+    return ind # returns the generated portfolio 
+
+def genind(low,up,size): # function for generating random portfolio, utilizzato per esperimento 3 con nuove mate e mutate mutUniformIntAdaptive
+    """
+    Customized generator of individual. Checks for its validity based on budget's constraints.
+
+    param low:
+    param up: unused for this version.
+    param size:
+
+    """
+    maxbudg=BUDG+1
+    while maxbudg>BUDG:
+        ind=[0 for i in range(size)]  # initialization of portfolio
+        numstock=random.randint(MINAZIONI,MAXAZIONI) # random number of different stocks to buy for this portfolio
+        stockused=[] # list of actions already used (bought)
+        currentbudg=BUDG #money in bank account
+        for i in range(numstock):
+            stock=random.randint(0,size-1) # randomly chooses the 'stock' to buy for this portfolio
+            while stock in stockused:
+                stock=random.randint(0,size-1) # stock has already been used, so try again with another random stock
+            stockused.append(stock)  # 'stock' has been used, so it adds stock to the list of used stock
+            upperbound_default=int(currentbudg/np.max(stockdf[stock]["Close"])) #max no. of stocks of type 'stock' purchasable with my current money
+            if upperbound_default>1:
+                ind[stock]=random.randint(low+1,upperbound_default) # random number of actions to buy of 'stock'
+            currentbudg=BUDG-middlestart(stockdf,ind) #update current money available
+        maxbudg=int(middlestart(stockdf,ind))  # check whether the portfolio value is too high
+    return ind # returns the generated portfolio 
 
 stockdf,stocknames = genstockdf(PATHCSVFOLDER) 
-comb=combinator(len(stockdf))
+NDIM = len(stockdf) #portfolio size (number of stock's files)
+countfile=1
 
+#### Setting favourite stocks
 PREF=[] 
 set_tkPREF()
 preftitle=getTitlePREF(PREF)
 
-print(f"\nSTOCK NAMES {len(stocknames)} :\n{stocknames}\n")
-print(f'FAVORITE STOCK {len(preftitle)} : {preftitle}\n')
-
-
-##### Defaul parameters ##### 
-BUDG = 1000000 #initial budget of portfolios
-BOUND_LOW, BOUND_UP = 0, BUDG # min and max number of equal stock that a portfolio can hold
-NDIM = len(stockdf) #portfolio size (number of stock's files)
-
-##### these below are overwritten by the next "for", edit or remove them
-MU = 100 # population size, number of individuals in the population.
-TOURNPARAM= 0.9 # number of generation of nsga2
-SELPARAM= 0.8 # NSGA-II selection parameter, e.g. 0.8 selects 80% of the pop
-CXPB = 0.9 # probability of mating each individual at each generation 
-NGEN = 250 # number of generation of nsga2
-ELITEPARAM=0.3 # number of generation of nsga2
-
-##### Registration of functions for population generation #####
+#### Registration object of deap
 random.seed()
+creator.create("FitnessMulti", base.Fitness, weights=(-1.0, 1.0))
+creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMulti)
 toolbox = base.Toolbox()
 toolbox.register("attr_float", genind, BOUND_LOW, BOUND_UP, NDIM) #generation portfolios
 toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float) #crates an individuals with attr_float
 toolbox.register("population", tools.initRepeat, list, toolbox.individual) #repeates the "individual" function
-###################
 
-#### adapt maxtime to csv with fewer rows
-MAXTIME=len(stockdf[0])
-for df in stockdf:
-    if len(df)<MAXTIME:
-        MAXTIME=len(df)
+#### Adapt maxtime to csv with fewer rows
+# MAXTIME=len(stockdf[0])
+# for df in stockdf:
+#     if len(df)<MAXTIME:
+#         MAXTIME=len(df)
 
-MAXTIME=24 # maximum csv row to read, the row is the date in the csv, in this case using /stock/WEEK each csv row equals one week, 24 is 6 months, comment to use the maximum length of the csv
-
-while True:
+print(f"\nSTOCK NAMES {len(stocknames)} :\n{stocknames}\n")
+print(f'FAVORITE STOCK {len(preftitle)} : {preftitle}\n')
+while True: # Choose of configuration
     choose=input("Select a configuration - select 1 for monthly and 2 for trimestral: ")
     if choose == '1':
         foldertosave="mensile"
@@ -255,49 +336,23 @@ while True:
     else:
         print("Invalid Case, retry\n")
 
-i=0
 for TOURNPARAM in [0.9,0.7,0.5]: #for different configuration of TOURNPARAM , this overrides default parameter
     print(f'TOURNPARAM:{TOURNPARAM}', end=', ')
     for SELPARAM in [0.8,0.6,0.4]:  #for different configuration of SELPARAM, this overrides default parameter
         print(f'SELPARAM:{SELPARAM}', end=', ')
         for CXPB in [0.9,0.7,0.5]:  #for different configuration of CXPB, this overrides default parameter
             print(f'CXPB:{CXPB}', end=', ')
-            for MU in [250,500,1000]: #for different configuration of MU, this overrides default parameter
+            for MU in [50,250,500,1000]: #for different configuration of MU, this overrides default parameter
                 pop = toolbox.population(n=MU) #population creation
                 print(f'MU:{MU}', end=', ')
                 for NGEN in [10,50,100,200]:  #for different configuration of NGEN, this overrides default parameter
                     print(f'NGEN:{NGEN}')
-                    print(f"{i+1}) MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG} - STARTED")
                     statslist=[]
                     listguadagno=[]
-                    i+=1
-                    if (not (os.path.isfile(f"output/{foldertosave}/guadagni/Guad_{i}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump") and os.path.isfile(f"output/{foldertosave}/logbook/Logb_{i}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump"))):
+                    print(f"{countfile}) MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG} - STARTED")
+                    if (not (os.path.isfile(f"output/{foldertosave}/guadagni/Guad_{countfile}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump") and os.path.isfile(f"output/{foldertosave}/logbook/Logb_{countfile}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump"))):
                         for tempo in range(offset,MAXTIME+1,offset): #arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY
                             
-                            def myfitness(ind): # function that returns an individual's fitness, returns total risk and total yield
-                                listyield=[]
-                                listvar=[]
-                                listrisk=[]
-                                totyield=0
-                                for i in range(len(ind)):
-                                    if(ind[i]!=0):
-                                        df=stockdf[i]
-                                        yeld=calclistyield(df,"Close",tempo)
-                                        listyield.append(yeld)
-                                        listvar.append(np.var(yeld))
-                                        totyield += ind[i]*np.mean(yeld)
-                                    else:
-                                        listyield.append(0)
-                                        listvar.append(0)
-                                for coppia in comb:
-                                    if(ind[coppia[0]]!=0 and ind[coppia[1]]!=0):
-                                        x=coppia[0]
-                                        y=coppia[1]
-                                        risk=calcrisk(ind[x]/sum(ind),ind[y]/sum(ind),listvar[x],listvar[y],calccov(listyield[x],listyield[y],tempo))
-                                        listrisk.append(risk)
-                                totrisk=sum(listrisk)
-                                return (totrisk,totyield)
-
                             toolbox.register("evaluate", myfitness) #registration of fitness function
                             toolbox.register("mate", tools.cxOnePoint)
                             toolbox.register("mutate", tools.mutUniformIntAdaptive, low=BOUND_LOW, up=BOUND_UP, indpb=1.0/NDIM,dfstocks=stockdf)
@@ -308,7 +363,7 @@ for TOURNPARAM in [0.9,0.7,0.5]: #for different configuration of TOURNPARAM , th
                             def main():
                                 global pop
                                 data=str(pd.to_datetime(stockdf[0]["Date"][tempo-1]))[:-9] # -9 taglia i caratteri dei hh:mm:ss dalla stringa
-                                print(f"\t{tempo} ---- {data}")
+                                print(f"TIME {tempo} ---- {data}")
                                 pop,logbook=nsga2(pop) #pop is iterated 'tempo' times, using the pop of the previous call for the new call of nsga2()
                                 statslist.append(logbook)
 
@@ -417,79 +472,15 @@ for TOURNPARAM in [0.9,0.7,0.5]: #for different configuration of TOURNPARAM , th
 
                                 return pop ,logbook
 
-                            def calclistyield(df,col,tempo): # Yield calculation function
-                                """
-                                param df: dataframe of a stock
-                                param col: column to calculate
-                                param tempo: df row until which time to calculate
-                                """
-                                listyield=[]
-                                if tempo>=2:
-                                    for i in reversed(range(1,len(df[col][:tempo]))):
-                                        listyield.append(np.log(df[col][tempo-i]/df[col][tempo-i-1]))
-                                    return listyield
-                                else: 
-                                    listyield=[0]
-                                    return listyield
-
-                            def calccov(list1,list2,tempo): # Covariance calculation function
-                                """
-                                param list1: list of yields of the first stock
-                                param list2: list of yields of the second stock
-                                param tempo: df row until which time to calculate
-                                """
-                                if tempo>=3:
-                                    cov=np.cov(list1,list2)
-                                    cov=float(cov[1][0])
-                                    return cov
-                                else:
-                                    return 0 
-
-                            def calcrisk(az1,az2,var1,var2,cov): # Risk calculation function
-                                """
-                                param az1: percentage of the number of shares of the first stock respect to portfolio
-                                param az2: percentage of the number of shares of the second stock respect to portfolio
-                                param var1: variance of the first stock
-                                param var2: variance of the first stock
-                                param cov: covariance of the first and second stock
-                                """
-                                risk=(az1*var1)+(az2*var2)+(2*(az1*az2*cov)) 
-                                return risk
-
-                            def genelite(pop,pref): # returns a list of individuals who have multiple preferred actions
-                                indliked=[]
-                                for i in range(len(pref)):
-                                    if(pref[i]==1):
-                                        indmaxazioni=0
-                                        for ind in pop:
-                                            if(ind[i]>=indmaxazioni):
-                                                indmaxazioni=ind[i]
-                                                maxind=ind
-                                        indliked.append(maxind)
-                                return indliked
-
-                            def lucky(stockdf,ind): # returns portfolio's value calculated with the min of every action's value
-                                lowtotal=0
-                                for i in range(len(ind)):
-                                    if(ind[i]!=0):
-                                        low = (stockdf[i]["Low"][tempo-1])*ind[i]
-                                        lowtotal+=low
-                                return lowtotal
-
-                            def murphy(stockdf,ind): # returns portfolio's value calculated with the max of every action's value
-                                hightotal=0
-                                for i in range(len(ind)):
-                                    if(ind[i]!=0):
-                                        high = (stockdf[i]["High"][tempo-1])*ind[i]
-                                        hightotal+=high
-                                return hightotal
-
                             if __name__ == "__main__":
                                 main()
 
                         # save .dump files
-                        pickle.dump(listguadagno,open(f"output/{foldertosave}/guadagni/Guad_{i}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump","wb"))
-                        pickle.dump(statslist,open(f"output/{foldertosave}/logbook/Logb_{i}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump","wb"))
-                        print(f"{i}) MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG} - END\n")
-                    
-                    else: print('Configuration already done\n')
+                        pickle.dump(listguadagno,open(f"output/{foldertosave}/guadagni/Guad_{countfile}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump","wb"))
+                        pickle.dump(statslist,open(f"output/{foldertosave}/logbook/Logb_{countfile}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump","wb"))
+                        print(f"{countfile}) MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG} - END\n")
+                        countfile+=1
+
+                    else: 
+                        countfile+=1
+                        print('Configuration already done\n')

@@ -53,16 +53,16 @@ MINAZIONI, MAXAZIONI= 10, 14 # min and max number of different stocks that a por
 BUDG = 1000000 # initial budget of portfolios (USD$)
 BOUND_LOW, BOUND_UP = 0, BUDG # min and max number of equal stock that a portfolio can hold
 NDIM = len(stockdf) # portfolio size (number of stock's files)
+MAXTIME=24 # maximum csv row to read, the row is the date in the csv
+ELITEPARAM=0.3 # elite parameter, e.g. 0.3 selects 30% of the pop
 ```
 ##### Note: these below are overwritten by the `for`, if you want to change them, edit them in the `evoportfolio.py`
 ```python
-MU = 100 # population size, number of individuals in the population
-TOURNPARAM= 0.9 # number of generation of nsga2
+MU = 100 # population size, number of individuals in the population.
+TOURNPARAM= 0.9 # tournament parameter, e.g. 0.9 selects 90% of the pop
 SELPARAM= 0.8 # NSGA-II selection parameter, e.g. 0.8 selects 80% of the pop
 CXPB = 0.9 # probability of mating each individual at each generation 
 NGEN = 250 # number of generation of nsga2
-ELITEPARAM=0.3 # number of generation of nsga2
-MAXTIME=24 # maximum csv row to read, the row is the date in the csv
 ```
 <b>Default path</b> for input and output, if you want to change them, edit them in the `evoportfolio.py` and in `loadfile.py`
 ```python

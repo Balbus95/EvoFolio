@@ -8,13 +8,9 @@ import re
 from tkinter import *
 from tkinter import ttk
 
-
 ABSPATH=os.path.dirname(os.path.abspath(__file__))
 
-def isWindows():
-    return os.name=="nt"
-
-if(isWindows()): #path per windows
+if(os.name=="nt"): #path per windows
     PATHCSVFOLDER=ABSPATH+"\\stock\\WEEK\\" 
     PATHLOGBMONFOLDER=ABSPATH+"\\output\\mensile\\logbook\\"
     PATHGUADMONFOLDER=ABSPATH+"\\output\\mensile\\guadagni\\"
