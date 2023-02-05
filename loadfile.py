@@ -27,7 +27,7 @@ else: #path per unix
     PATHLOGBTRIFOLDER=ABSPATH+"/output/trimestrale/logbook/"
     PATHGUADTRIFOLDER=ABSPATH+"/output/trimestrale/guadagni/"
 
-def genstockdf(pathfolder):
+def genstockdf(pathfolder): # returns a list of dataframe and the list of stock names
     stockdf=[]
     stocknames=[] 
     pattern="*.csv"
@@ -41,7 +41,7 @@ def genstockdf(pathfolder):
             i+=1
     return (stockdf,stocknames)
 
-def gendumpnames(path):
+def gendumpnames(path):  # returns a list of dump name 
 
     def lensort(filename):
         return len(filename[:filename.find("_MU")])
@@ -74,7 +74,7 @@ def gendumpnamesReg(path): # non usato
     dumpnames.sort(key=lambda l: grp(r'\d+', l))
     return dumpnames
 
-def genportfolio(ind):
+def genportfolio(ind): #returns the portfolio of ind with titles
     listportfoliotitle=[]
     for i,stock in enumerate(stocknames):
         if(ind[i]!=0):
@@ -82,7 +82,7 @@ def genportfolio(ind):
             # listportfoliotitle.append([stock,int(ind[i])])
     return listportfoliotitle
 
-def tkChooseButton():
+def tkChooseButton(): # GUI used to choose which configuration to see
     win = Tk()
     win.title("PlotLoader")
     win.geometry("250x160")
@@ -108,7 +108,7 @@ def tkChooseButton():
     Button(win, text='EXIT', command=closewin,bg='#7B1B02',fg='black',width=15,pady=10).pack()
     win.mainloop()   
 
-def tkloadmensile(logbnames,guadagninames):
+def tkloadmensile(logbnames,guadagninames): # GUI used to choose which monthly configuration to see
   
     win = Tk()
     win.title("PlotLoader Monthly")
@@ -173,7 +173,7 @@ def tkloadmensile(logbnames,guadagninames):
 
     win.mainloop()   
 
-def tkloadtrimestrale(logbnames,guadagninames):
+def tkloadtrimestrale(logbnames,guadagninames): # GUI used to choose which trimestral configuration to see
   
     win = Tk()
     win.title("PlotLoader Trimestral")
@@ -238,7 +238,7 @@ def tkloadtrimestrale(logbnames,guadagninames):
 
     win.mainloop()   
 
-def loadmon(logbpath,guadpath):
+def loadmon(logbpath,guadpath): # reads the monthly file and plots it
     logbfile=logbpath[len(PATHLOGBMONFOLDER):-5]
     guadfile=guadpath[len(PATHGUADMONFOLDER):-5]
     logbooks=pickle.load(open(logbpath,"rb"))
@@ -263,7 +263,7 @@ def loadmon(logbpath,guadpath):
 
     plotall(listguadagni,bestind,listavgrisk,listavgyield,logbfile,guadfile)
 
-def loadtrim(logbpath,guadpath):
+def loadtrim(logbpath,guadpath): # reads the trimestral file and plots it
     logbfile=logbpath[len(PATHLOGBTRIFOLDER):-5]
     guadfile=guadpath[len(PATHGUADTRIFOLDER):-5]
     logbooks=pickle.load(open(logbpath,"rb"))
@@ -288,7 +288,7 @@ def loadtrim(logbpath,guadpath):
 
     plotall(listguadagni,bestind,listavgrisk,listavgyield,logbfile,guadfile)
 
-def plotall(listguadagni,bestind,listavgrisk,listavgyield,logbfile,guadfile):
+def plotall(listguadagni,bestind,listavgrisk,listavgyield,logbfile,guadfile): #plots two compatible guad and logb files
 
     paramRegex=r"^[A-Z\[a-z\]]+[_]?[ ]?[0-9]+|[A-Z\[a-z\]]+[=][0-9\[.\]]+"
     matchlogb= re.findall(paramRegex, logbfile)
@@ -335,7 +335,7 @@ def plotall(listguadagni,bestind,listavgrisk,listavgyield,logbfile,guadfile):
     else:
         return print("Files are not compatible")
 
-def genlistavgtuple(logbpathfolder,logbnames):
+def genlistavgtuple(logbpathfolder,logbnames): # Returns a list of tuples with all risk and return avg of all files 
     listavgtuple=[]
     for dump in logbnames:
         logbpathfile=os.path.join(logbpathfolder, dump)+'.dump'
@@ -352,7 +352,7 @@ def genlistavgtuple(logbpathfolder,logbnames):
 
     return listavgtuple
 
-def findbestconfig(logbpathfolder,logbnames):
+def findbestconfig(logbpathfolder,logbnames): # Returns the best configurations for minimum risk and maximum return among all files
     maxyield=0
     minrisk=1
     for dump in logbnames:

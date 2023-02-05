@@ -203,7 +203,6 @@ creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessM
 stockdf,stocknames = genstockdf(PATHCSVFOLDER) 
 comb=combinator(len(stockdf))
 
-# PREF=[0 for i in range(len(stockdf))] # nessuna pref
 PREF=[] 
 set_tkPREF()
 preftitle=getTitlePREF(PREF)
@@ -217,7 +216,7 @@ BUDG = 1000000 #initial budget of portfolios
 BOUND_LOW, BOUND_UP = 0, BUDG # min and max number of equal stock that a portfolio can hold
 NDIM = len(stockdf) #portfolio size (number of stock's files)
 
-###### these are overwritten by the next "for", edit or remove them
+##### these below are overwritten by the next "for", edit or remove them
 MU = 100 # population size, number of individuals in the population.
 TOURNPARAM= 0.9 # number of generation of nsga2
 SELPARAM= 0.8 # NSGA-II selection parameter, e.g. 0.8 selects 80% of the pop
@@ -356,7 +355,7 @@ for TOURNPARAM in [0.9,0.7,0.5]: #for different configuration of TOURNPARAM , th
                                 # Begin the generational process
                                 for gen in range(1, NGEN):
                                     
-                                    #C
+                                    #C creates an elite population
                                     elite=genelite(pop,PREF)
                                     elite = [toolbox.clone(ind) for ind in elite]
 
