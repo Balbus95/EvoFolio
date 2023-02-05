@@ -60,7 +60,7 @@ MU = 100 # population size, number of individuals in the population
 TOURNPARAM= 0.9 # number of generation of nsga2
 SELPARAM= 0.8 # NSGA-II selection parameter, e.g. 0.8 selects 80% of the pop
 CXPB = 0.9 # probability of mating each individual at each generation 
-NGEN = 250 # number of generation of nsga2()
+NGEN = 250 # number of generation of nsga2
 ELITEPARAM=0.3 # number of generation of nsga2
 MAXTIME=24 # maximum csv row to read, the row is the date in the csv
 ```

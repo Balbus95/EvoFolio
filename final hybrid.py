@@ -93,7 +93,7 @@ def conta_azioni_possedute(ind): # return the number of different actions purcha
             count+=1
     return len(ind)-count
 
-def genind_old(low,up,size): # function for generating random portfolio
+def genind_old(low,up,size): # function for generating random portfolio,  utilizzato per esperimento 1,2 con nuove mate e mutate di examples/ga/nsga2.py
     maxbudg=BUDG+1
     while maxbudg>BUDG:
         ind=[0 for i in range(size)] # initialization of portfolio
@@ -108,7 +108,7 @@ def genind_old(low,up,size): # function for generating random portfolio
         maxbudg=middlestart(stockdf,ind) # check whether the portfolio value is too high
     return ind # returns the generated portfolio 
 
-def genind(low,up,size): #utilizzato per esperimento 3 con nuove mate e mutate mutUniformIntAdaptive
+def genind(low,up,size): # function for generating random portfolio, utilizzato per esperimento 3 con nuove mate e mutate mutUniformIntAdaptive
     """
     Customized generator of individual. Checks for its validity based on budget's constraints.
 
@@ -197,8 +197,8 @@ def closestMultiple(n,mult=4): #find the closest minor multiple
     z=n-x 
     return z
 
-creator.create("FitnessMulti", base.Fitness, weights=(-1.0, 1.0))
-creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMulti)
+creator.create("FitnessMulti", base.Fitness, weights=(-1.0, 1.0)) # definition of fitness for deap
+creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMulti) # definition of individual for deap
 
 stockdf,stocknames = genstockdf(PATHCSVFOLDER) 
 comb=combinator(len(stockdf))
@@ -218,12 +218,12 @@ BOUND_LOW, BOUND_UP = 0, BUDG # min and max number of equal stock that a portfol
 NDIM = len(stockdf) #portfolio size (number of stock's files)
 
 ###### these are overwritten by the next "for", edit or remove them
-MU = 100 #population size, number of individuals in the population.
-TOURNPARAM= 0.9 # #number of generation of nsga2()
+MU = 100 # population size, number of individuals in the population.
+TOURNPARAM= 0.9 # number of generation of nsga2
 SELPARAM= 0.8 # NSGA-II selection parameter, e.g. 0.8 selects 80% of the pop
 CXPB = 0.9 # probability of mating each individual at each generation 
-NGEN = 250 # number of generation of nsga2()
-ELITEPARAM=0.3 # number of generation of nsga2()
+NGEN = 250 # number of generation of nsga2
+ELITEPARAM=0.3 # number of generation of nsga2
 
 ##### Registration of functions for population generation #####
 random.seed()
@@ -418,7 +418,12 @@ for TOURNPARAM in [0.9,0.7,0.5]: #for different configuration of TOURNPARAM , th
 
                                 return pop ,logbook
 
-                            def calclistyield(df,col,tempo):
+                            def calclistyield(df,col,tempo): # Yield calculation function
+                                """
+                                param df: dataframe of a stock
+                                param col: column to calculate
+                                param tempo: df row until which time to calculate
+                                """
                                 listyield=[]
                                 if tempo>=2:
                                     for i in reversed(range(1,len(df[col][:tempo]))):
@@ -428,7 +433,12 @@ for TOURNPARAM in [0.9,0.7,0.5]: #for different configuration of TOURNPARAM , th
                                     listyield=[0]
                                     return listyield
 
-                            def calccov(list1,list2,tempo):
+                            def calccov(list1,list2,tempo): # Covariance calculation function
+                                """
+                                param list1: list of yields of the first stock
+                                param list2: list of yields of the second stock
+                                param tempo: df row until which time to calculate
+                                """
                                 if tempo>=3:
                                     cov=np.cov(list1,list2)
                                     cov=float(cov[1][0])
@@ -436,11 +446,18 @@ for TOURNPARAM in [0.9,0.7,0.5]: #for different configuration of TOURNPARAM , th
                                 else:
                                     return 0 
 
-                            def calcrisk(az1,az2,var1,var2,cov): 
+                            def calcrisk(az1,az2,var1,var2,cov): # Risk calculation function
+                                """
+                                param az1: percentage of the number of shares of the first stock respect to portfolio
+                                param az2: percentage of the number of shares of the second stock respect to portfolio
+                                param var1: variance of the first stock
+                                param var2: variance of the first stock
+                                param cov: covariance of the first and second stock
+                                """
                                 risk=(az1*var1)+(az2*var2)+(2*(az1*az2*cov)) 
                                 return risk
 
-                            def genelite(pop,pref):
+                            def genelite(pop,pref): # returns a list of individuals who have multiple preferred actions
                                 indliked=[]
                                 for i in range(len(pref)):
                                     if(pref[i]==1):
@@ -452,7 +469,7 @@ for TOURNPARAM in [0.9,0.7,0.5]: #for different configuration of TOURNPARAM , th
                                         indliked.append(maxind)
                                 return indliked
 
-                            def lucky(stockdf,ind): #non usato
+                            def lucky(stockdf,ind): # returns portfolio's value calculated with the min of every action's value
                                 lowtotal=0
                                 for i in range(len(ind)):
                                     if(ind[i]!=0):
@@ -460,7 +477,7 @@ for TOURNPARAM in [0.9,0.7,0.5]: #for different configuration of TOURNPARAM , th
                                         lowtotal+=low
                                 return lowtotal
 
-                            def murphy(stockdf,ind): #non usato
+                            def murphy(stockdf,ind): # returns portfolio's value calculated with the max of every action's value
                                 hightotal=0
                                 for i in range(len(ind)):
                                     if(ind[i]!=0):
@@ -471,7 +488,7 @@ for TOURNPARAM in [0.9,0.7,0.5]: #for different configuration of TOURNPARAM , th
                             if __name__ == "__main__":
                                 main()
 
-                        ## save .dump files
+                        # save .dump files
                         pickle.dump(listguadagno,open(f"output/{foldertosave}/guadagni/Guad_{i}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump","wb"))
                         pickle.dump(statslist,open(f"output/{foldertosave}/logbook/Logb_{i}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump","wb"))
                         print(f"{i}) MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG} - END\n")
