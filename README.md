@@ -66,9 +66,9 @@ NGEN = 250 # number of generation of nsga2
 ```
 <b>Default path</b> for input and output, if you want to change them, edit them in the `evoportfolio.py` and in `loadfile.py`
 ```python
-# Input
+# Input - `evoportfolio.py`
 PATHCSVFOLDER = "./stock/WEEK/" # path of portfolio stock folder
-# Output
+# Output - `loadfile.py`
 PATHLOGBMONFOLDER = "./output/mensile/logbook/" # path where saves monthly `Logb_x` files
 PATHGUADMONFOLDER = "./output/mensile/guadagni/" # path where saves monthly `Guad_x` files
 PATHLOGBTRIFOLDER = "./output/trimestrale/logbook/" # path where saves monthly `Logb_x` files

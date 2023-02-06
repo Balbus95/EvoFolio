@@ -322,7 +322,7 @@ toolbox.register("population", tools.initRepeat, list, toolbox.individual) #repe
 print(f"\nSTOCK NAMES {len(stocknames)} :\n{stocknames}\n")
 print(f'FAVORITE STOCK {len(preftitle)} : {preftitle}\n')
 while True: # Choose of configuration
-    choose=input("Select a configuration - select 1 for monthly and 2 for trimestral: ")
+    choose=input("Select a configuration\nType 1 for monthly and 2 for trimestral: ")
     if choose == '1':
         foldertosave="mensile"
         offset=4
@@ -349,6 +349,7 @@ for TOURNPARAM in [0.9,0.7,0.5]: #for different configuration of TOURNPARAM , th
                     print(f'NGEN:{NGEN}')
                     statslist=[]
                     listguadagno=[]
+                    relativebudget=BUDG
                     print(f"{countfile}) MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG} - STARTED")
                     if (not (os.path.isfile(f"output/{foldertosave}/guadagni/Guad_{countfile}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump") and os.path.isfile(f"output/{foldertosave}/logbook/Logb_{countfile}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump"))):
                         for tempo in range(offset,MAXTIME+1,offset): #arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY
@@ -368,6 +369,8 @@ for TOURNPARAM in [0.9,0.7,0.5]: #for different configuration of TOURNPARAM , th
                                 statslist.append(logbook)
 
                             def nsga2(pop): # nsga2 algorithm of deap modified, the line next to #C is a custom line.
+                                
+                                global relativebudget
 
                                 stats = tools.Statistics(lambda ind: ind.fitness.values)
                                 stats.register("avg", np.mean, axis=0)
@@ -378,8 +381,9 @@ for TOURNPARAM in [0.9,0.7,0.5]: #for different configuration of TOURNPARAM , th
                                 logbook = tools.Logbook()
                                 logbook.header = "gen", "evals", "std", "min", "avg", "max"
 
-                                if tempo>1: #C
-                                    listguadagno.append([tempo,middle(stockdf,pop[0]),[i for i in pop[0]]])
+                                if tempo>offset: #C
+                                    relativebudget+=middle(stockdf,pop[0])
+                                    listguadagno.append([tempo,relativebudget,[i for i in pop[0]]])
 
                                 # Evaluate the individuals with an invalid fitness
                                 invalid_ind = [ind for ind in pop if not ind.fitness.valid]
@@ -390,7 +394,7 @@ for TOURNPARAM in [0.9,0.7,0.5]: #for different configuration of TOURNPARAM , th
                                 # Decreases one stock at a time until the portfolio is within budget #C
                                 for ind in pop:
                                     cb=middle(stockdf,ind)
-                                    while cb>BUDG:
+                                    while cb>relativebudget:
                                         r=random.randint(0,len(ind)-1)
                                         while ind[r]==0 or (ind[r]==1 and conta_azioni_possedute(ind)==MINAZIONI):
                                             r=random.randint(0,len(ind)-1)
@@ -442,7 +446,7 @@ for TOURNPARAM in [0.9,0.7,0.5]: #for different configuration of TOURNPARAM , th
                                     # Decreases one stock at a time until the portfolio is within budget #C
                                     for ind in offspring: 
                                         cb=middle(stockdf,ind)
-                                        while cb>BUDG:
+                                        while cb>relativebudget:
                                             r=random.randint(0,len(ind)-1)
                                             while ind[r]==0 or (ind[r]==1 and conta_azioni_possedute(ind)==MINAZIONI):
                                                 r=random.randint(0,len(ind)-1)
@@ -466,9 +470,13 @@ for TOURNPARAM in [0.9,0.7,0.5]: #for different configuration of TOURNPARAM , th
                                     # print(logbook.stream) #print row gen
 
                                 # print("Final population hypervolume is %f" % hypervolume(pop, [11.0, 11.0]))
+                                relativebudget-=middle(stockdf,pop[0])
 
-                                if tempo==1: #C
-                                    listguadagno.append([tempo,middle(stockdf,pop[0]),[i for i in pop[0]]])
+                                if tempo==offset: #C
+                                    listguadagno.append([tempo,relativebudget+middle(stockdf,pop[0]),[i for i in pop[0]]])
+                                elif tempo==MAXTIME:
+                                    relativebudget+=middle(stockdf,pop[0])
+                                    listguadagno.append([tempo,relativebudget,[i for i in pop[0]]])
 
                                 return pop ,logbook
 
