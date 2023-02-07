@@ -254,6 +254,10 @@ def myfitness(ind): # function that returns an individual's fitness, returns tot
     return (totrisk,totyield)
 
 def genind_old(low,up,size): # function for generating random portfolio,  utilizzato per esperimento 1,2 con nuove mate e mutate di examples/ga/nsga2.py
+    """ Customized generator of individual. Checks for its validity based on budget's constraints.
+        param low: min number of equal stock that a portfolio can hold.
+        param up: max number of equal stock that a portfolio can hold.
+        param size: portfolio size (number of stock's files). """
     maxbudg=BUDG+1
     while maxbudg>BUDG:
         ind=[0 for i in range(size)] # initialization of portfolio
@@ -269,14 +273,10 @@ def genind_old(low,up,size): # function for generating random portfolio,  utiliz
     return ind # returns the generated portfolio 
 
 def genind(low,up,size): # function for generating random portfolio, utilizzato per esperimento 3 con nuove mate e mutate mutUniformIntAdaptive
-    """
-    Customized generator of individual. Checks for its validity based on budget's constraints.
-
-    param low:
-    param up: unused for this version.
-    param size:
-
-    """
+    """ Customized generator of individual. Checks for its validity based on budget's constraints.
+        param low: min number of equal stock that a portfolio can hold.
+        param up: unused for this version.
+        param size: portfolio size (number of stock's files). """
     maxbudg=BUDG+1
     while maxbudg>BUDG:
         ind=[0 for i in range(size)]  # initialization of portfolio
@@ -299,12 +299,12 @@ stockdf,stocknames = genstockdf(PATHCSVFOLDER)
 NDIM = len(stockdf) #portfolio size (number of stock's files)
 countfile=1
 
-#### Setting favourite stocks
+# Setting favourite stocks
 PREF=[] 
 set_tkPREF()
 preftitle=getTitlePREF(PREF)
 
-#### Registration object of deap
+# Registration object of deap and functions to generate population individuals
 random.seed()
 creator.create("FitnessMulti", base.Fitness, weights=(-1.0, 1.0))
 creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMulti)
@@ -342,7 +342,7 @@ for TOURNPARAM in [0.9,0.7,0.5]: #for different configuration of TOURNPARAM , th
         print(f'SELPARAM:{SELPARAM}', end=', ')
         for CXPB in [0.9,0.7,0.5]:  #for different configuration of CXPB, this overrides default parameter
             print(f'CXPB:{CXPB}', end=', ')
-            for MU in [50,250,500,1000]: #for different configuration of MU, this overrides default parameter
+            for MU in [250,500,1000]: #for different configuration of MU, this overrides default parameter
                 pop = toolbox.population(n=MU) #population creation
                 print(f'MU:{MU}', end=', ')
                 for NGEN in [10,50,100,200]:  #for different configuration of NGEN, this overrides default parameter
@@ -354,9 +354,10 @@ for TOURNPARAM in [0.9,0.7,0.5]: #for different configuration of TOURNPARAM , th
                     if (not (os.path.isfile(f"output/{foldertosave}/guadagni/Guad_{countfile}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump") and os.path.isfile(f"output/{foldertosave}/logbook/Logb_{countfile}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump"))):
                         for tempo in range(offset,MAXTIME+1,offset): #arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY
                             
+                            # Registration functions for genetic and fitness operators
                             toolbox.register("evaluate", myfitness) #registration of fitness function
                             toolbox.register("mate", tools.cxOnePoint)
-                            toolbox.register("mutate", tools.mutUniformIntAdaptive, low=BOUND_LOW, up=BOUND_UP, indpb=1.0/NDIM,dfstocks=stockdf)
+                            toolbox.register("mutate", tools.mutUniformIntAdaptive, low=BOUND_LOW, up=relativebudget, indpb=1.0/NDIM,dfstocks=stockdf) #custom function, use 'relativebudget' and stockdf
                             # toolbox.register("mate", tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0) #crossover function customized for return a INT
                             # toolbox.register("mutate", tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0/NDIM) #mutation function customized for return a INT
                             toolbox.register("select", tools.selNSGA2) # selection function
@@ -410,7 +411,7 @@ for TOURNPARAM in [0.9,0.7,0.5]: #for different configuration of TOURNPARAM , th
                                 record = stats.compile(pop) #compile() Applica ai dati della sequenza di input ogni funzione registrata e restituisce un dizionario. 
                                 logbook.record(gen=0, evals=len(invalid_ind), **record)
                                 # print(logbook.stream) #print header e gen0
-
+ 
                                 # Begin the generational process
                                 for gen in range(1, NGEN):
                                     
@@ -470,7 +471,7 @@ for TOURNPARAM in [0.9,0.7,0.5]: #for different configuration of TOURNPARAM , th
                                     # print(logbook.stream) #print row gen
 
                                 # print("Final population hypervolume is %f" % hypervolume(pop, [11.0, 11.0]))
-                                relativebudget-=middle(stockdf,pop[0])
+                                relativebudget-=middle(stockdf,pop[0]) # earnings calculation 
 
                                 if tempo==offset: #C
                                     listguadagno.append([tempo,relativebudget+middle(stockdf,pop[0]),[i for i in pop[0]]])
