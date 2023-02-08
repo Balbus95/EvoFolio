@@ -387,26 +387,6 @@ def main():
             tkloadmensile(gendumpnames(PATHLOGBMONFOLDER),gendumpnames(PATHGUADMONFOLDER))
         elif scelta==2:
             tkloadtrimestrale(gendumpnames(PATHLOGBTRIFOLDER),gendumpnames(PATHGUADTRIFOLDER))
-    
-    dati = genlistavgtuple(PATHLOGBTRIFOLDER,gendumpnames(PATHLOGBTRIFOLDER))
-    print(dati)
-    # Calcola la frequenza cumulativa
-    # cumulative = np.cumsum(data, axis=0)
-
-    # Ordina i dati
-    dati = sorted(dati, key=lambda x: x[1], reverse=True)
-    dati = [dati[0]] + sorted(dati[1:], key=lambda x: x[0])
-    print('\n\n',dati)
-    # Crea il grafico Pareto Front
-    x = [d[0] for d in dati]
-    print('\n\n',x)
-    y = [d[1] for d in dati]
-    print('\n\n',y)
-    plt.scatter(x,y,color='blue')
-    plt.plot(x,y,color='red')
-    plt.xlabel("Fitness Function 1")
-    plt.ylabel("Fitness Function 2")
-    plt.show()
 
 if __name__ == "__main__":
     stockdf,stocknames= genstockdf(PATHCSVFOLDER)
