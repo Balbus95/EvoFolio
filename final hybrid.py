@@ -14,7 +14,7 @@ MINAZIONI, MAXAZIONI= 10, 14 # min and max number of different stocks that a por
 BUDG = 1000000 # initial budget of portfolios
 BOUND_LOW, BOUND_UP = 0, BUDG # min and max number of equal stock that a portfolio can hold
 MAXTIME=24 # maximum csv row to read, the row is the date in the csv, in this case using /stock/WEEK each csv row equals one week, 24 is 6 months, comment to use the maximum length of the csv
-ELITEPARAM=0.3 # elite parameter, e.g. 0.3 selects 30% of the pop
+ELITECXPB=0.3 # probability of mating with an elite
 
 #### These below are overwritten by the next "for", edit or remove them
 MU = 100 # population size, number of individuals in the population.
@@ -437,7 +437,7 @@ for TOURNPARAM in [0.9,0.7,0.5]: #for different configuration of TOURNPARAM , th
                                     for ind1 in elite:
                                         for ind2 in offspring:
 
-                                            if random.random() <= ELITEPARAM:
+                                            if random.random() <= ELITECXPB:
                                                 toolbox.mate(ind1, ind2)
                         
                                             toolbox.mutate(ind1)
