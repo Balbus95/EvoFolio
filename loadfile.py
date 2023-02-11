@@ -239,7 +239,8 @@ def loadmon(logbpath,guadpath): # reads the monthly file and plots it
     guadfile=guadpath[len(PATHGUADMONFOLDER):-5]
     logbooks=pickle.load(open(logbpath,"rb"))
     guadagni=pickle.load(open(guadpath,"rb"))
-    
+    mod='mensil_out'
+
     listguadagni=[]
     maxguadagno=0
     for ind in guadagni:
@@ -257,14 +258,14 @@ def loadmon(logbpath,guadpath): # reads the monthly file and plots it
             listavgrisk.append(avgrisk)
             listavgyield.append(avgyield)
 
-    plotall(listguadagni,bestind,listavgrisk,listavgyield,logbfile,guadfile)
+    plotall(listguadagni,bestind,listavgrisk,listavgyield,logbfile,guadfile,mod)
 
 def loadtrim(logbpath,guadpath): # reads the trimestral file and plots it
     logbfile=logbpath[len(PATHLOGBTRIFOLDER):-5]
     guadfile=guadpath[len(PATHGUADTRIFOLDER):-5]
     logbooks=pickle.load(open(logbpath,"rb"))
     guadagni=pickle.load(open(guadpath,"rb"))
-    
+    mod='trimestr_out'
     listguadagni=[]
     maxguadagno=0
     for ind in guadagni:
@@ -282,9 +283,9 @@ def loadtrim(logbpath,guadpath): # reads the trimestral file and plots it
             listavgrisk.append(avgrisk)
             listavgyield.append(avgyield)
 
-    plotall(listguadagni,bestind,listavgrisk,listavgyield,logbfile,guadfile)
+    plotall(listguadagni,bestind,listavgrisk,listavgyield,logbfile,guadfile,mod)
 
-def plotall(listguadagni,bestind,listavgrisk,listavgyield,logbfile,guadfile): #plots two compatible guad and logb files
+def plotall(listguadagni,bestind,listavgrisk,listavgyield,logbfile,guadfile,mod): #plots two compatible guad and logb files
 
     paramRegex=r"^[A-Z\[a-z\]]+[_]?[ ]?[0-9]+|[A-Z\[a-z\]]+[=][0-9\[.\]]+"
     matchlogb= re.findall(paramRegex, logbfile)
@@ -318,15 +319,17 @@ def plotall(listguadagni,bestind,listavgrisk,listavgyield,logbfile,guadfile): #p
         rplt.legend(frameon=False)
 
         gplt = plt.subplot2grid((3, 3), loc=(2, 0),colspan=3)
-        gplt.plot(dateguad,listguadagni,label=f"Portfolio value with € {str(idfileRegex.search(matchguad[-1]).group())}",color="blue",marker='o')
+        gplt.plot(dateguad,listguadagni,label=f"Portfolio value",color="blue",marker='o')
+        # gplt.plot(dateguad,listguadagni,label=f"Portfolio value with € {str(idfileRegex.search(matchguad[-1]).group())}",color="blue",marker='o')
         # gplt.plot(dateguad,listguadagni,label=f"Valore Portfolio con {str(matchguad[-1:])[2:-2]}€",color="blue",marker='o')
-        gplt.scatter(bestdate,(np.max(listguadagni)),s=125,label=f"Best Earnings Portfolio: {np.max(listguadagni)}")
+        # gplt.scatter(bestdate,(np.max(listguadagni)),s=125,label=f"Best Earnings Portfolio: {np.max(listguadagni)}")
         gplt.set_xlabel(f'Date\nfrom {stockdf[0]["Date"][0]} to {stockdf[0]["Date"][maxtime-1]}') 
         gplt.legend(frameon=False)
         
         # fig.legend(loc="lower left", title="", frameon=False)
         fig.tight_layout(h_pad=-1)
         plt.gcf().autofmt_xdate()
+        plt.savefig(f"loadfile_out/{mod}/{logbfile}.pdf")
         plt.show()
     else:
         return print("Files are not compatible")
@@ -373,14 +376,6 @@ def findbestconfig(logbpathfolder,logbnames): # Returns the best configurations 
 def main():
     global scelta
     scelta=-1
-    bestconfigriskmon,bestconfigyieldmon=findbestconfig(PATHLOGBMONFOLDER,gendumpnames(PATHLOGBMONFOLDER))
-    bestconfigrisktrim,bestconfigyieldtrim=findbestconfig(PATHLOGBTRIFOLDER,gendumpnames(PATHLOGBTRIFOLDER))
-    print('\nBest portfolios found among MONTHLY configurations:')
-    print(f'MIN RISK: {bestconfigriskmon[0][1]} with yield {bestconfigriskmon[0][2]} - configuration {bestconfigriskmon[0][0]}')
-    print(f'MAX YIELD: {bestconfigyieldmon[0][1]} with risk {bestconfigyieldmon[0][2]} - configuration {bestconfigyieldmon[0][0]}')
-    print('\nBest portfolios found among TRIMESTRAL configurations:')
-    print(f'MIN RISK: {bestconfigrisktrim[0][1]} with yield {bestconfigrisktrim[0][2]} - configuration {bestconfigrisktrim[0][0]}')
-    print(f'MAX YIELD: {bestconfigyieldtrim[0][1]} with risk {bestconfigyieldtrim[0][2]} - configuration {bestconfigyieldtrim[0][0]}')
     while(not scelta==0):
         tkChooseButton()
         if scelta==1:
