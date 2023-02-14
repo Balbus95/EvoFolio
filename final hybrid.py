@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 import array
 import pickle
+import datetime
 from tkinter import *
 from deap.benchmarks.tools import diversity, convergence, hypervolume
 from deap import creator, base, tools
@@ -13,14 +14,14 @@ from deap import creator, base, tools
 MINAZIONI, MAXAZIONI= 10, 14 # Min and max number of different stocks that a portfolio can hold
 BUDG = 1000000 # Initial budget of portfolios
 BOUND_LOW, BOUND_UP = 0, BUDG # Min and max number of equal stock that a portfolio can hold
-MAXTIME=24 # Maximum csv row to read, the row is the date in the csv, in this case using /stock/WEEK each csv row equals one week, 24 is 6 months, comment to use the maximum length of the csv
-ELITECXPB=0.3 # Probability of mating with an elite
-
-#### These below are overwritten by the next "for", edit or remove them
-MU = 100 # Population size, number of individuals in the population.
-TOURNPARAM= 0.9 # Tournament parameter, e.g. 0.9 selects 90% of the pop
 SELPARAM= 0.8 # NSGA-II selection parameter, e.g. 0.8 selects 80% of the pop
 CXPB = 0.9 # Probability of mating each individual at each generation 
+ELITECXPB=0.3 # Probability of mating with an elite
+MAXTIME=24 # Maximum csv row to read, the row is the date in the csv, in this case using /stock/WEEK each csv row equals one week, 24 is 6 months, comment to use the maximum length of the csv
+
+#### These below are overwritten by the next "for", edit or remove them
+TOURNPARAM= 0.9 # Tournament parameter, e.g. 0.9 selects 90% of the pop
+MU = 100 # Population size, number of individuals in the population.
 NGEN = 250 # Number of generation of nsga2
 
 ABSPATH=os.path.dirname(os.path.abspath(__file__)) # Takes the path of this folder
@@ -272,11 +273,11 @@ def genind_old(low,up,size): # Function for generating random portfolio,  utiliz
         maxbudg=middlestart(stockdf,ind) # check whether the portfolio value is too high
     return ind # returns the generated portfolio 
 
-def genind(low,offset,size): # Function for generating random portfolio, utilizzato per esperimento 3 con nuove mate e mutate mutUniformIntAdaptive
+def genind(low,size,offset): # Function for generating random portfolio, utilizzato per esperimento 3 con nuove mate e mutate mutUniformIntAdaptive
     """ Customized generator of individual. Checks for its validity based on budget's constraints.
         param low: min number of equal stock that a portfolio can hold.
-        param up: date of mutation.
-        param size: portfolio size (number of stock's files). """
+        param size: portfolio size (number of stock's files).
+        param offset: date of mutation. """
     maxbudg=BUDG+1
     while maxbudg>BUDG:
         ind=[0 for i in range(size)]  # initialization of portfolio
@@ -326,7 +327,7 @@ random.seed()
 creator.create("FitnessMulti", base.Fitness, weights=(-1.0, 1.0))
 creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMulti)
 toolbox = base.Toolbox()
-toolbox.register("attr_float", genind, BOUND_LOW, offset, NDIM) # Generation portfolio
+toolbox.register("attr_float", genind, BOUND_LOW, NDIM, offset) # Generation portfolio
 toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float) # Crates an individuals with attr_float
 toolbox.register("population", tools.initRepeat, list, toolbox.individual) # Repeates the "individual" function
 
@@ -345,9 +346,10 @@ for TOURNPARAM in [0.9,0.7]: # For different configuration of TOURNPARAM , this 
             print(f'NGEN:{NGEN}')
             statslist=[]
             hvolumelist=[]
-            listguadagno=[]
+            guadagnolist=[]
             relativebudget=BUDG
             print(f"{countfile}) MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG} - STARTED")
+            print(f"DATA ORA \t\t RIGACSV \t DATA GENERAZIONE")
             if (not (os.path.isfile(f"output/{foldertosave}/guadagni/Guad_{countfile}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump") and os.path.isfile(f"output/{foldertosave}/logbook/Logb_{countfile}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump"))):
                 for tempo in range(offset,MAXTIME+1,offset): # Arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY
                     
@@ -362,7 +364,7 @@ for TOURNPARAM in [0.9,0.7]: # For different configuration of TOURNPARAM , this 
                     def main():
                         global pop
                         data=str(pd.to_datetime(stockdf[0]["Date"][tempo-1]))[:-9] # -9 taglia i caratteri dei hh:mm:ss dalla stringa
-                        print(f"TIME {tempo} ---- {data}")
+                        print(f"{str(datetime.datetime.now())[:-10]} \t {tempo} \t\t {data}")
                         pop,logbook,hvolume = nsga2(pop) # `pop` is iterated `tempo` times, using the pop of the previous call for the new call of nsga2()
                         statslist.append(logbook)
                         hvolumelist.append(hvolume)
@@ -382,7 +384,7 @@ for TOURNPARAM in [0.9,0.7]: # For different configuration of TOURNPARAM , this 
 
                         if tempo>offset: #C
                             relativebudget+=middle(stockdf,pop[0])
-                            listguadagno.append([tempo,relativebudget,[i for i in pop[0]]])
+                            guadagnolist.append([tempo,relativebudget,[i for i in pop[0]]])
 
                         # Evaluate the individuals with an invalid fitness
                         invalid_ind = [ind for ind in pop if not ind.fitness.valid]
@@ -472,10 +474,10 @@ for TOURNPARAM in [0.9,0.7]: # For different configuration of TOURNPARAM , this 
                         relativebudget-=middle(stockdf,pop[0]) # earnings calculation 
 
                         if tempo==offset: #C
-                            listguadagno.append([tempo,relativebudget+middle(stockdf,pop[0]),[i for i in pop[0]]])
+                            guadagnolist.append([tempo,relativebudget+middle(stockdf,pop[0]),[i for i in pop[0]]])
                         elif tempo==MAXTIME:
                             relativebudget+=middle(stockdf,pop[0])
-                            listguadagno.append([tempo,relativebudget,[i for i in pop[0]]])
+                            guadagnolist.append([tempo,relativebudget,[i for i in pop[0]]])
 
                         return pop ,logbook,hvolume
 
@@ -483,7 +485,7 @@ for TOURNPARAM in [0.9,0.7]: # For different configuration of TOURNPARAM , this 
                         main()
 
                 # Save .dump files
-                pickle.dump(listguadagno,open(f"output/{foldertosave}/guadagni/Guad_{countfile}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump","wb"))
+                pickle.dump(guadagnolist,open(f"output/{foldertosave}/guadagni/Guad_{countfile}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump","wb"))
                 pickle.dump(statslist,open(f"output/{foldertosave}/logbook/Logb_{countfile}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump","wb"))
                 pickle.dump(hvolumelist,open(f"output/{foldertosave}/logbook/Hvol_{countfile}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump","wb"))
                 print(f"{countfile}) MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG} - END\n")
