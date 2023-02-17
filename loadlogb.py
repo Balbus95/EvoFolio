@@ -67,7 +67,7 @@ def tkloadlogbook(dumpnames):
 
     def funprov(event):
         path=os.path.join(logbpathfolder, file.get()+'.dump')
-        plotlogbook(path)
+        plotlogbooktime(path)
 
     file=StringVar()
     file_combobox = ttk.Combobox(win, textvariable=file)
@@ -93,6 +93,20 @@ def plotlogbook(path):
             listavgrisk.append(avgrisk)
             listavgyield.append(avgyield)
     graficoriskyield(listavgrisk,listavgyield,filename)
+
+def plotlogbooktime(path):
+    filename=path[len(logbpathfolder):-5]
+    stats=pickle.load(open(path,"rb"))
+    for i,logb in enumerate(stats):
+        print(len(stats))
+        listavgrisk=[]
+        listavgyield=[]
+        for stat in logb:
+            avgrisk=stat["avg"][0]
+            avgyield=stat["avg"][1]
+            listavgrisk.append(avgrisk)
+            listavgyield.append(avgyield)
+        graficoriskyieldtime(listavgrisk,listavgyield,filename,i+1)
 
 def graficoriskyield(listavgrisk,listavgyield,filename):
     
@@ -125,6 +139,39 @@ def graficoriskyield(listavgrisk,listavgyield,filename):
     # fig.legend()
     plt.gcf().autofmt_xdate()
     plt.savefig(f"loadfile_out/{filename}.pdf")
+    plt.show()
+
+def graficoriskyieldtime(listavgrisk,listavgyield,filename,time=None):
+    
+    paramRegex=r"^[A-Z\[a-z\]]+[_]?[ ]?[0-9]+|[A-Z\[a-z\]]+[=][0-9\[.\]]+"
+    matchlogb= re.findall(paramRegex, filename)
+
+    fig = plt.figure(f"PLOT OF {str(matchlogb[1:])[1:-1]}_time={time}",figsize=(12,6))
+
+    maxtime=int(str(matchlogb[4])[8:])
+
+    plt.style.use("ggplot")
+
+    datelogb=pd.date_range(stockdf[0]["Date"][0],stockdf[0]["Date"][maxtime-1], periods=len(listavgrisk))
+    
+    # plt.gca().xaxis.set_major_locator(mdates.DayLocator(interval=8))
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%d-%m-%Y')) # '%d-%m-%Y' ----- gca() get current axis, gcf() get current figure 
+    # plt.gca().yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.8f}'))
+  
+    fig.suptitle(f"Config: {str(filename)[7:]}\nTime {time}")
+    
+    yplt = plt.subplot2grid((2, 2), loc=(0, 0),colspan=2)
+    yplt.plot(datelogb,listavgyield,label=f"Yield avg: {np.mean(listavgyield)}",color="green")
+    # yplt.set_title(f"Config: {str(matchlogb[1:-1])[1:-1]}")
+    yplt.legend(frameon=False)
+
+    rplt = plt.subplot2grid((2, 2), loc=(1, 0),colspan=2)
+    rplt.plot(datelogb,listavgrisk,label=f"Risk avg:  {np.mean(listavgrisk)}",color="red")
+    rplt.legend(frameon=False)
+    # rplt.set_xlabel(f'Date\nfrom {stockdf[0]["Date"][0]} to {stockdf[0]["Date"][maxtime-1]}') 
+    # fig.legend()
+    plt.gcf().autofmt_xdate()
+    plt.savefig(f"loadfile_out/{filename}_time={time}.pdf")
     plt.show()
 
 stockdf,stocknames= genstockdf()
