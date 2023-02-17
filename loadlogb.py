@@ -98,7 +98,6 @@ def plotlogbooktime(path):
     filename=path[len(logbpathfolder):-5]
     stats=pickle.load(open(path,"rb"))
     for i,logb in enumerate(stats):
-        print(len(stats))
         listavgrisk=[]
         listavgyield=[]
         for stat in logb:
@@ -148,12 +147,10 @@ def graficoriskyieldtime(listavgrisk,listavgyield,filename,time=None):
 
     fig = plt.figure(f"PLOT OF {str(matchlogb[1:])[1:-1]}_time={time}",figsize=(12,6))
 
-    maxtime=int(str(matchlogb[4])[8:])
-
     plt.style.use("ggplot")
 
-    datelogb=pd.date_range(stockdf[0]["Date"][0],stockdf[0]["Date"][maxtime-1], periods=len(listavgrisk))
-    
+    ngenlistlabel=list(range(int(str(matchlogb[3])[str(matchlogb[3]).find("=")+1:])))
+
     # plt.gca().xaxis.set_major_locator(mdates.DayLocator(interval=8))
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%d-%m-%Y')) # '%d-%m-%Y' ----- gca() get current axis, gcf() get current figure 
     # plt.gca().yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.8f}'))
@@ -161,14 +158,14 @@ def graficoriskyieldtime(listavgrisk,listavgyield,filename,time=None):
     fig.suptitle(f"Config: {str(filename)[7:]}\nTime {time}")
     
     yplt = plt.subplot2grid((2, 2), loc=(0, 0),colspan=2)
-    yplt.plot(datelogb,listavgyield,label=f"Yield avg: {np.mean(listavgyield)}",color="green")
+    yplt.plot(ngenlistlabel,listavgyield,label=f"Yield avg: {np.mean(listavgyield)}",color="green")
     # yplt.set_title(f"Config: {str(matchlogb[1:-1])[1:-1]}")
     yplt.legend(frameon=False)
 
     rplt = plt.subplot2grid((2, 2), loc=(1, 0),colspan=2)
-    rplt.plot(datelogb,listavgrisk,label=f"Risk avg:  {np.mean(listavgrisk)}",color="red")
+    rplt.plot(ngenlistlabel,listavgrisk,label=f"Risk avg:  {np.mean(listavgrisk)}",color="red")
     rplt.legend(frameon=False)
-    # rplt.set_xlabel(f'Date\nfrom {stockdf[0]["Date"][0]} to {stockdf[0]["Date"][maxtime-1]}') 
+    rplt.set_xlabel(f'Number of generation = {matchlogb[3][str(matchlogb[3]).find("=")+1:]}') 
     # fig.legend()
     plt.gcf().autofmt_xdate()
     plt.savefig(f"loadfile_out/{filename}_time={time}.pdf")
