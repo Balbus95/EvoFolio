@@ -156,8 +156,4 @@ cython_debug/
 .DS_Store
 *.txt
 Desktop.ini
-stock/test/
-azione.py
-provaclose.xlsx
 testacose.py
-sentiero prezzi.xlsx
