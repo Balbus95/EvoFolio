@@ -349,8 +349,8 @@ for TOURNPARAM in [0.9,0.7]: # For different configuration of TOURNPARAM , this 
             guadagnolist=[]
             relativebudget=BUDG
             print(f"{countfile}) MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG} - STARTED")
-            print(f"DATA ORA \t | DATA GENERAZIONE | RIGACSV")
             if (not (os.path.isfile(f"output/{foldertosave}/guadagni/Guad_{countfile}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump") and os.path.isfile(f"output/{foldertosave}/logbook/Logb_{countfile}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump"))):
+                print(f"DATA ORA    | DATA GENERAZIONE | RIGACSV")
                 for tempo in range(offset,MAXTIME+1,offset): # Arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY
                     
                     # Registration functions for genetic and fitness operators
@@ -364,7 +364,7 @@ for TOURNPARAM in [0.9,0.7]: # For different configuration of TOURNPARAM , this 
                     def main():
                         global pop
                         data=str(pd.to_datetime(stockdf[0]["Date"][tempo-1]))[:-9] # -9 taglia i caratteri dei hh:mm:ss dalla stringa
-                        print(f"{str(datetime.datetime.now())[:-10]} | {data}\t    | {tempo}")
+                        print(f"{str(datetime.datetime.now())[5:-10]} |\t {data}    | {tempo}")
                         pop,logbook,hvolume = nsga2(pop) # `pop` is iterated `tempo` times, using the pop of the previous call for the new call of nsga2()
                         statslist.append(logbook)
                         hvolumelist.append(hvolume)
@@ -488,7 +488,7 @@ for TOURNPARAM in [0.9,0.7]: # For different configuration of TOURNPARAM , this 
                 pickle.dump(guadagnolist,open(f"output/{foldertosave}/guadagni/Guad_{countfile}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump","wb"))
                 pickle.dump(statslist,open(f"output/{foldertosave}/logbook/Logb_{countfile}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump","wb"))
                 pickle.dump(hvolumelist,open(f"output/{foldertosave}/logbook/Hvol_{countfile}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump","wb"))
-                print(f"{countfile}) MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG} - END\n")
+                print(f"{countfile}) - END\n")
                 countfile+=1
 
             else: 
