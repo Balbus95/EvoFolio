@@ -349,7 +349,7 @@ for TOURNPARAM in [0.9,0.7]: # For different configuration of TOURNPARAM , this 
             guadagnolist=[]
             relativebudget=BUDG
             print(f"{countfile}) MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG} - STARTED")
-            if (not (os.path.isfile(f"output/{foldertosave}/guadagni/Guad_{countfile}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump") and os.path.isfile(f"output/{foldertosave}/logbook/Logb_{countfile}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump"))):
+            if (not (os.path.isfile(f"output/{foldertosave}/guadagni/Guad_{countfile}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump") and os.path.isfile(f"output/{foldertosave}/logbook/Logb_{countfile}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump") and os.path.isfile(f"output/{foldertosave}/hypervolume/Hvol_{countfile}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump"))):
                 print(f"DATA ORA    | DATA GENERAZIONE | RIGACSV")
                 for tempo in range(offset,MAXTIME+1,offset): # Arriva alla riga del csv time-1 min=1 max 153 per WEEK 738 per DAY
                     
@@ -487,7 +487,7 @@ for TOURNPARAM in [0.9,0.7]: # For different configuration of TOURNPARAM , this 
                 # Save .dump files
                 pickle.dump(guadagnolist,open(f"output/{foldertosave}/guadagni/Guad_{countfile}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump","wb"))
                 pickle.dump(statslist,open(f"output/{foldertosave}/logbook/Logb_{countfile}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump","wb"))
-                pickle.dump(hvolumelist,open(f"output/{foldertosave}/logbook/Hvol_{countfile}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump","wb"))
+                pickle.dump(hvolumelist,open(f"output/{foldertosave}/hypervolume/Hvol_{countfile}_MU={MU} NDIM={NDIM} NGEN={NGEN} MAXTIME={MAXTIME} TOURNPARAM={TOURNPARAM} SELPARAM={SELPARAM} CXPB={CXPB} BUDG={BUDG}.dump","wb"))
                 print(f"{countfile}) - END\n")
                 countfile+=1
 
