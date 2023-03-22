@@ -241,6 +241,7 @@ def loadmon(logbpath,guadpath): # reads the monthly file and plots it
     guadagni=pickle.load(open(guadpath,"rb"))
     mod='mensil_out'
 
+    # listportfolio=[]
     listguadagni=[]
     maxguadagno=0
     for ind in guadagni:
@@ -248,6 +249,7 @@ def loadmon(logbpath,guadpath): # reads the monthly file and plots it
             maxguadagno=ind[1]
             bestind=[ind[0],genportfolio(ind[2])]
         listguadagni.append(ind[1])
+        # listportfolio.append(genportfolio(ind[2]))
 
     listavgrisk=[]
     listavgyield=[]
@@ -257,6 +259,9 @@ def loadmon(logbpath,guadpath): # reads the monthly file and plots it
             avgyield=stat["avg"][1]
             listavgrisk.append(avgrisk)
             listavgyield.append(avgyield)
+            
+    # for i,portfolio in enumerate(listportfolio): # per stampare il pop[0] di ogni fine nsga
+    #     print(i,portfolio)
 
     plotall(listguadagni,bestind,listavgrisk,listavgyield,logbfile,guadfile,mod)
 

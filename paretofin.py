@@ -87,7 +87,7 @@ random.seed()
 creator.create("FitnessMulti", base.Fitness, weights=(-1.0, 1.0))
 creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMulti)
 
-logbpathfolder=PATHLOGBTRIFOLDER
+logbpathfolder=PATHLOGBMONFOLDER
 k=100
 listtuple=genlisttuple(logbpathfolder,gendumpnames(logbpathfolder))
 
