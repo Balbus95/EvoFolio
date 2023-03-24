@@ -271,6 +271,8 @@ def loadtrim(logbpath,guadpath): # reads the trimestral file and plots it
     logbooks=pickle.load(open(logbpath,"rb"))
     guadagni=pickle.load(open(guadpath,"rb"))
     mod='trimestr_out'
+
+    # listportfolio=[]
     listguadagni=[]
     maxguadagno=0
     for ind in guadagni:
@@ -278,6 +280,7 @@ def loadtrim(logbpath,guadpath): # reads the trimestral file and plots it
             maxguadagno=ind[1]
             bestind=[ind[0],genportfolio(ind[2])]
         listguadagni.append(ind[1])
+        # listportfolio.append(genportfolio(ind[2]))
 
     listavgrisk=[]
     listavgyield=[]
@@ -287,6 +290,9 @@ def loadtrim(logbpath,guadpath): # reads the trimestral file and plots it
             avgyield=stat["avg"][1]
             listavgrisk.append(avgrisk)
             listavgyield.append(avgyield)
+            
+    # for i,portfolio in enumerate(listportfolio): # per stampare il pop[0] di ogni fine nsga
+    #     print(i,portfolio)
 
     plotall(listguadagni,bestind,listavgrisk,listavgyield,logbfile,guadfile,mod)
 
