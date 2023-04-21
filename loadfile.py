@@ -241,7 +241,7 @@ def loadmon(logbpath,guadpath): # reads the monthly file and plots it
     guadagni=pickle.load(open(guadpath,"rb"))
     mod='mensil_out'
 
-    # listportfolio=[]
+    listportfolio=[]
     listguadagni=[]
     maxguadagno=0
     for ind in guadagni:
@@ -249,7 +249,7 @@ def loadmon(logbpath,guadpath): # reads the monthly file and plots it
             maxguadagno=ind[1]
             bestind=[ind[0],genportfolio(ind[2])]
         listguadagni.append(ind[1])
-        # listportfolio.append(genportfolio(ind[2]))
+        listportfolio.append(genportfolio(ind[2]))
 
     listavgrisk=[]
     listavgyield=[]
@@ -260,8 +260,8 @@ def loadmon(logbpath,guadpath): # reads the monthly file and plots it
             listavgrisk.append(avgrisk)
             listavgyield.append(avgyield)
             
-    # for i,portfolio in enumerate(listportfolio): # per stampare il pop[0] di ogni fine nsga
-    #     print(i,portfolio)
+    for i,portfolio in enumerate(listportfolio): # per stampare il pop[0] di ogni fine nsga
+        print(i,portfolio)
 
     plotall(listguadagni,bestind,listavgrisk,listavgyield,logbfile,guadfile,mod)
 
@@ -272,7 +272,7 @@ def loadtrim(logbpath,guadpath): # reads the trimestral file and plots it
     guadagni=pickle.load(open(guadpath,"rb"))
     mod='trimestr_out'
 
-    # listportfolio=[]
+    listportfolio=[]
     listguadagni=[]
     maxguadagno=0
     for ind in guadagni:
@@ -280,7 +280,7 @@ def loadtrim(logbpath,guadpath): # reads the trimestral file and plots it
             maxguadagno=ind[1]
             bestind=[ind[0],genportfolio(ind[2])]
         listguadagni.append(ind[1])
-        # listportfolio.append(genportfolio(ind[2]))
+        listportfolio.append(genportfolio(ind[2]))
 
     listavgrisk=[]
     listavgyield=[]
@@ -291,8 +291,8 @@ def loadtrim(logbpath,guadpath): # reads the trimestral file and plots it
             listavgrisk.append(avgrisk)
             listavgyield.append(avgyield)
             
-    # for i,portfolio in enumerate(listportfolio): # per stampare il pop[0] di ogni fine nsga
-    #     print(i,portfolio)
+    for i,portfolio in enumerate(listportfolio): # per stampare il pop[0] di ogni fine nsga
+        print(i,portfolio)
 
     plotall(listguadagni,bestind,listavgrisk,listavgyield,logbfile,guadfile,mod)
 

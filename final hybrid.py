@@ -21,8 +21,8 @@ MAXTIME=24 # Maximum csv row to read, the row is the date in the csv, in this ca
 
 #### These below are overwritten by the next "for", edit or remove them
 TOURNPARAM= 0.9 # Tournament parameter, e.g. 0.9 selects 90% of the pop
-MU = 100 # Population size, number of individuals in the population.
-NGEN = 250 # Number of generation of nsga2
+MU = 250 # Population size, number of individuals in the population.
+NGEN = 50 # Number of generation of nsga2
 
 ABSPATH=os.path.dirname(os.path.abspath(__file__)) # Takes the path of this folder
 if(os.name=="nt"): # Check of OS
@@ -176,13 +176,17 @@ def getTitlePREF(listpref): # Returns the list of favorite stock names
 def genelite(pop,pref): # Returns a list of individuals who have multiple preferred actions
     indliked=[]
     for i in range(len(pref)):
+        maxind=[]
         if(pref[i]==1):
             indmaxazioni=0
             for ind in pop:
-                if(ind[i]>=indmaxazioni):
+                if(ind[i]>indmaxazioni):
                     indmaxazioni=ind[i]
-                    maxind=ind
-            indliked.append(maxind)
+                    maxind = []
+                    maxind.append(ind)
+                elif(ind[i]==indmaxazioni):
+                    maxind.append(ind)
+            indliked.extend(maxind)
     return indliked
 
 def closestMultiple(n,mult=4): # Find the closest minor multiple
@@ -332,17 +336,17 @@ toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.at
 toolbox.register("population", tools.initRepeat, list, toolbox.individual) # Repeates the "individual" function
 
 #### Adapt maxtime to csv with fewer rows
-# MAXTIME=len(stockdf[0])
-# for df in stockdf:
-#     if len(df)<MAXTIME:
-#         MAXTIME=len(df)
+MAXTIME=len(stockdf[0])
+for df in stockdf:
+    if len(df)<MAXTIME:
+        MAXTIME=len(df)
 
-for TOURNPARAM in [0.9,0.7]: # For different configuration of TOURNPARAM , this overrides default parameter
+for TOURNPARAM in [0.9]: # For different configuration of TOURNPARAM , this overrides default parameter
     print(f'TOURNPARAM:{TOURNPARAM}', end=', ')
-    for MU in [250,500]: # For different configuration of MU, this overrides default parameter
+    for MU in [250]: # For different configuration of MU, this overrides default parameter
         pop = toolbox.population(n=MU) # Population creation
         print(f'MU:{MU}', end=', ')
-        for NGEN in [50,100]: # For different configuration of NGEN, this overrides default parameter
+        for NGEN in [50]: # For different configuration of NGEN, this overrides default parameter
             print(f'NGEN:{NGEN}')
             statslist=[]
             hvolumelist=[]
@@ -416,7 +420,7 @@ for TOURNPARAM in [0.9,0.7]: # For different configuration of TOURNPARAM , this 
                         for gen in range(1, NGEN):
                             
                             #C creates an elite population
-                            elite=genelite(pop,PREF)
+                            elite = genelite(pop,PREF)
                             elite = [toolbox.clone(ind) for ind in elite]
 
                             # Vary the population #C
@@ -440,8 +444,8 @@ for TOURNPARAM in [0.9,0.7]: # For different configuration of TOURNPARAM , this 
                                     if random.random() <= ELITECXPB:
                                         toolbox.mate(ind1, ind2)
                 
-                                    toolbox.mutate(ind1)
-                                    toolbox.mutate(ind2)
+                                    # toolbox.mutate(ind1)
+                                    # toolbox.mutate(ind2)
                                     del ind1.fitness.values, ind2.fitness.values
 
                             # Decreases one stock at a time until the portfolio is within budget #C
@@ -454,8 +458,18 @@ for TOURNPARAM in [0.9,0.7]: # For different configuration of TOURNPARAM , this 
                                     ind[r]-=1
                                     cb=middle(stockdf,ind)
 
+                            for ind in elite: 
+                                cb=middle(stockdf,ind)
+                                while cb>relativebudget:
+                                    r=random.randint(0,len(ind)-1)
+                                    while ind[r]==0 or (ind[r]==1 and conta_azioni_possedute(ind)==MINAZIONI):
+                                        r=random.randint(0,len(ind)-1)
+                                    ind[r]-=1
+                                    cb=middle(stockdf,ind)
+
                             # Checks the integrity of the portfolio #C
                             offspring = [ind for ind in offspring if (conta_azioni_possedute(ind)>=MINAZIONI and conta_azioni_possedute(ind)<=MAXAZIONI)] #cancella individui che hanno maxzeri azioni a 0
+                            elite = [ind for ind in elite if (conta_azioni_possedute(ind)>=MINAZIONI and conta_azioni_possedute(ind)<=MAXAZIONI)] #cancella individui che hanno maxzeri azioni a 0
 
                             # Evaluate the individuals with an invalid fitness
                             invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
@@ -463,8 +477,13 @@ for TOURNPARAM in [0.9,0.7]: # For different configuration of TOURNPARAM , this 
                             for ind, fit in zip(invalid_ind, fitnesses):
                                 ind.fitness.values = fit
 
+                            invalid_ind = [ind for ind in elite if not ind.fitness.valid]
+                            fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
+                            for ind, fit in zip(invalid_ind, fitnesses):
+                                ind.fitness.values = fit
+
                             # Select the next generation population
-                            pop = toolbox.select(pop + offspring, MU)
+                            pop = toolbox.select(pop + offspring + elite, MU)
                     
                             record = stats.compile(pop)
                             logbook.record(gen=gen, evals=len(invalid_ind), **record)
@@ -479,7 +498,7 @@ for TOURNPARAM in [0.9,0.7]: # For different configuration of TOURNPARAM , this 
                             relativebudget+=middle(stockdf,pop[0])
                             guadagnolist.append([tempo,relativebudget,[i for i in pop[0]]])
 
-                        return pop ,logbook,hvolume
+                        return pop,logbook,hvolume
 
                     if __name__ == "__main__":
                         main()

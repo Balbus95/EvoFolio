@@ -67,7 +67,7 @@ def tkloadlogbook(dumpnames):
 
     def funprov(event):
         path=os.path.join(logbpathfolder, file.get()+'.dump')
-        plotlogbooktime(path)
+        plotlogbook(path)
 
     file=StringVar()
     file_combobox = ttk.Combobox(win, textvariable=file)
