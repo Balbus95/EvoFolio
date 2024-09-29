@@ -1,4 +1,6 @@
 # EvoPortfolio 
+More informations in the article: https://rdcu.be/dI8ZF
+
 ### Table of Contents
 - [Installation](#installation)
 - [Run](#run)
