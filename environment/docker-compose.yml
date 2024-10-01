@@ -1,0 +1,17 @@
+version: '2.2'
+services:   
+  app-service:
+    build:
+      context: ./app
+    container_name: app
+    volumes:
+      - ./app:/app
+    ports:
+      - "5002:5000"
+    networks:
+      - ms-network                          
+networks:
+  ms-network:
+    driver: bridge
+ 
+
