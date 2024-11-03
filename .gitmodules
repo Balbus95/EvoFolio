@@ -1,0 +1,3 @@
+[submodule "environment/app/deap"]
+	path = environment/app/deap
+	url = https://github.com/Balbus95/deap
