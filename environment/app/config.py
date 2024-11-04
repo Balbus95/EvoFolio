@@ -14,4 +14,4 @@ NGEN = 10 # Number of generation of nsga2
 # Parametri che subiscono modifiche runtime
 MAXTIME=50 # Maximum csv row to read, the row is the date in the csv, in this case using /stock/WEEK each csv row equals one week, 24 is 6 months, comment to use the maximum length of the csv
 tempo=1
-NDIM=5 # dimensione in termini di capienza del portfolio dove a quanti azioni ha disponibili l'individio, deve essere quanti sono i file csv dei titoli # INUTILE ORA (final.py:73)
+NDIM=5 # Dimensione in termini di capienza del portfolio (equivale a quante azioni ha disponibili l'individuo), deve essere pari al numero di file .csv dei titoli nella path di PATHCSVFOLDER ------- INUTILE ORA perché settato dinamicamente (final.py:288)
