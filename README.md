@@ -1,21 +1,42 @@
-# EvoPortfolio 
-More information is available in the article: [EvoPortfolio - Research Article](https://rdcu.be/dI8ZF)
+# EvoFolio 
+More information is available in the article: [EvoFolio - Research Article](https://rdcu.be/dI8ZF)
 
 ### Table of Contents
+- [Description](#description)
 - [Installation](#installation)
 - [Run](#run)
 - [Parameters](#parameters)
+
+## Description
+EvoFolio is a project that implements the NSGA-II algorithm applied to portfolio optimization. It computes different financial metrics (like yield and risk) based on stock data, and allows visualization of the generated data.
 
 ## Installation
 The latest version can be cloned with the following command:
 
 ```bash
-`git clone --recurse-submodules https://github.com/Balbus95/EvoPortfolio.git`
+git clone --recurse-submodules https://github.com/Balbus95/EvoFolio.git
 ```
 
-<details><summary><b>Notes to manual installation of my custom DEAP submodule</b></summary>
+### Create a Virtual Environment (Optional but Recommended):
+Use the following command to create a virtual environment:
+
+```bash
+python3 -m venv venv
+```
+
+Note: to activate and deactivate the virtual environment, use `source venv/bin/activate` and `deactivate` on Linux/MacOS, or `venv\Scripts\activate` and `deactivate` on Windows.
+
+### Install Dependencies
+
+Dependencies, including the custom DEAP submodule, can be installed by running:
+
+```bash
+pip install -r requirements.txt
+```
+
+<details><summary><b>Notes on manual installation of the custom DEAP submodule</b></summary>
   
-  Use one of the following commands to install the custom DEAP library: 
+  In case you need to install the custom DEAP library manually, use one of the following commands: 
   
   ```bash
   pip install .\deap --use-pep517
@@ -28,77 +49,49 @@ The latest version can be cloned with the following command:
   ```
 </details>
 
-### Create a Virtual Environment:
-Use the following command to create a virtual environment:
-
-```bash
-python3 -m venv venv
-```
-
-Note: to activate and deactivate the virtual environment, use `source env/bin/activate` and `deactivate` on Linux/MacOS, or `venv\Scripts\activate` and `deactivate` on Windows.
-
-
-### Install Other Dependencies
-
-```bash
-`pip install -r requirements.txt`
-```
-
 ## Run
 
-To run the main script:
+To run the main optimization script:
 
 ```bash
-` python evoportfolio.py `
-```
-
-In the current version, the script to use is:
-
-```bash
-` python '.\final hybrid.py' `
+python "final hybrid.py"
 ```
 
 ### Other scripts
 
-You can run other scripts in the same way.
+You can run other utility scripts in the same way:
 
-- Run the `loadfile.py` script to view graphs of the `.dump` files created by the main script.
-
-- Run `stockToPDF.py` to generate PDFs of the trend graphs for each stock. Modify the `PATHCSVFOLDER` path (default: `./stock/WEEK`) if necessary. PDFs will be saved in the `stockToPDF_out` folder.
+- **`loadfile.py`**: Run this script to open a Tkinter GUI to view and plot graphs of the `.dump` files created by the main script. It supports both monthly and trimestral outputs.
+- **`stockToPDF.py`**: Run this script to generate PDFs of the trend graphs (close prices) for each stock. PDFs will be saved in the `stockToPDF_out` folder.
 
 ## Parameters
 
-### Default Parameters of the Scripts
+### Default Parameters of the Main Script (`final hybrid.py`)
+
+The following parameters can be modified directly at the beginning of `final hybrid.py`:
 
 ```python
 MINAZIONI, MAXAZIONI= 10, 14 # min and max number of different stocks that a portfolio can hold
 BUDG = 1000000 # initial budget of portfolios (USD$)
 BOUND_LOW, BOUND_UP = 0, BUDG # min and max number of equal stock that a portfolio can hold
 NDIM = len(stockdf) # portfolio size (number of stock's files)
-MAXTIME=24 # maximum csv row to read, the row is the date in the csv
-ELITEPARAM=0.3 # elite parameter, e.g. 0.3 selects 30% of the pop
-```
-
-**Note**: the parameters below are overwritten by the `for` loop. If you want to change them, edit them in `evoportfolio.py`.
-
-```python
-MU = 100 # population size, number of individuals in the population.
-TOURNPARAM= 0.9 # tournament parameter, e.g. 0.9 selects 90% of the pop
 SELPARAM= 0.8 # NSGA-II selection parameter, e.g. 0.8 selects 80% of the pop
 CXPB = 0.9 # probability of mating each individual at each generation 
-NGEN = 250 # number of generation of nsga2
+ELITECXPB=0.3 # probability of mating with an elite
+MAXTIME=24 # maximum csv row to read, the row is the date in the csv
+```
+
+**Note**: the parameters below might be overwritten by a loop in the script. To change them, modify the loop definitions near the bottom of `final hybrid.py`:
+
+```python
+MU = 250 # population size, number of individuals in the population.
+TOURNPARAM= 0.9 # tournament parameter, e.g. 0.9 selects 90% of the pop
+NGEN = 50 # number of generation of nsga2
 ```
 
 ### Default Paths
 
-To change the input and output paths, edit the following parameters in `evoportfolio.py` and `loadfile.py`:
+The input and output folder paths are set by default to work seamlessly on both Windows and Unix systems. If you need to change them, look for `PATHCSVFOLDER`, `PATHLOGBMONFOLDER`, etc., in the scripts:
 
-```python
-# Input - `evoportfolio.py`
-PATHCSVFOLDER = "./stock/WEEK/" # path of portfolio stock folder
-# Output - `loadfile.py`
-PATHLOGBMONFOLDER = "./output/mensile/logbook/" # path where saves monthly `Logb_x` files
-PATHGUADMONFOLDER = "./output/mensile/guadagni/" # path where saves monthly `Guad_x` files
-PATHLOGBTRIFOLDER = "./output/trimestrale/logbook/" # path where saves monthly `Logb_x` files
-PATHGUADTRIFOLDER = "./output/trimestrale/guadagni/" # path where saves trimestral `Guad_x` files
-```
+- **Inputs**: Inside `final hybrid.py`, `loadfile.py` and `stockToPDF.py`. Default stock data path is `./stock/WEEK`.
+- **Outputs**: Handled in `final hybrid.py` and `loadfile.py`. Default output paths are `./output/mensile/...` and `./output/trimestrale/...`.
